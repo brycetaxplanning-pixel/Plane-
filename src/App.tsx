@@ -14,6 +14,8 @@ import { Planning } from './modules/Planning';
 import { Spanish } from './modules/Spanish';
 import { Fitness } from './modules/Fitness';
 import { Finance } from './modules/Finance';
+import { Habits } from './modules/Habits';
+import { Goals } from './modules/Goals';
 import { Coach } from './modules/Coach';
 import { Settings } from './modules/Settings';
 
@@ -85,6 +87,8 @@ function Shell() {
         {route === 'spanish' && <Spanish />}
         {route === 'fitness' && <Fitness />}
         {route === 'finance' && <Finance />}
+        {route === 'habits' && <Habits />}
+        {route === 'goals' && <Goals />}
         {route === 'coach' && <Coach />}
         {route === 'settings' && <Settings />}
       </main>

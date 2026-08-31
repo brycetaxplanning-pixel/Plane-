@@ -14,7 +14,8 @@ interface NavEntry {
 
 const MODULE_ICONS: Record<string, () => React.ReactNode> = {
   work: Icons.folder, planning: Icons.target, spanish: Icons.chat,
-  fitness: Icons.run, finance: Icons.wallet, coach: Icons.compass,
+  fitness: Icons.run, finance: Icons.wallet, habits: Icons.repeat,
+  goals: Icons.flag, coach: Icons.compass,
 };
 
 const ENTRIES: NavEntry[] = [

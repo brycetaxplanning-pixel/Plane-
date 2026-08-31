@@ -31,8 +31,8 @@
   --series-3: #1baf7a;  /* aqua    */
   --series-4: #eda100;  /* yellow  */
   --series-5: #e87ba4;  /* magenta */
-  --series-6: #008300;  /* green   */
-  --series-7: #4a3aa7;  /* violet  */
+  --series-6: #4a3aa7;  /* violet  */
+  --series-7: #008300;  /* green   */
   --series-8: #e34948;  /* red     */
 
   /* Sequential blue ramp */
@@ -55,7 +55,9 @@
   --mod-spanish:   var(--series-3);
   --mod-fitness:   var(--series-4);
   --mod-finance:   var(--series-5);
-  --mod-coach:     var(--series-6);
+  --mod-habits:    var(--series-6);
+  --mod-goals:     var(--series-7);
+  --mod-coach:     var(--series-8);
 
   /* Type */
   --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -94,8 +96,8 @@
     --series-3: #199e70;
     --series-4: #c98500;
     --series-5: #d55181;
-    --series-6: #008300;
-    --series-7: #9085e9;
+    --series-6: #9085e9;
+    --series-7: #008300;
     --series-8: #e66767;
 
     --seq-100: #184f95;
@@ -130,8 +132,8 @@
   --series-3: #199e70;
   --series-4: #c98500;
   --series-5: #d55181;
-  --series-6: #008300;
-  --series-7: #9085e9;
+  --series-6: #9085e9;
+  --series-7: #008300;
   --series-8: #e66767;
 
   --seq-100: #184f95;

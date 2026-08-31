@@ -41,7 +41,7 @@
 
   --series-1: #d94382; --series-2: #1795a5; --series-3: #d4711c;
   --series-4: #4d7ff0; --series-5: #2f9a58; --series-6: #9a6ef0;
-  --series-7: #d94382; --series-8: #d4404a;
+  --series-7: #c23b3b; --series-8: #a8891c;
 
   --seq-100: #3b1f4d; --seq-250: #6a2f6e; --seq-400: #a83f83; --seq-550: #d94382; --seq-700: #f37eb0;
 
@@ -70,8 +70,8 @@
   --overlay:        rgba(27, 18, 6, 0.45);
 
   --series-1: #e0353a; --series-2: #2f6fd0; --series-3: #e5a400;
-  --series-4: #17a05f; --series-5: #8b46c9; --series-6: #e2662a;
-  --series-7: #2f6fd0; --series-8: #e0353a;
+  --series-4: #17a05f; --series-5: #8b46c9; --series-6: #c22f78;
+  --series-7: #e2662a; --series-8: #0080a8;
 
   --seq-100: #ffe9b8; --seq-250: #ffd070; --seq-400: #e5a400; --seq-550: #b47a00; --seq-700: #7d5300;
 
@@ -100,8 +100,8 @@
   --overlay:        rgba(6, 5, 8, 0.72);
 
   --series-1: #d4630f; --series-2: #4a8fe0; --series-3: #d4404a;
-  --series-4: #2fa87a; --series-5: #b05ce0; --series-6: #a8891c;
-  --series-7: #4a8fe0; --series-8: #d4404a;
+  --series-4: #2fa87a; --series-5: #b05ce0; --series-6: #c2417f;
+  --series-7: #a8891c; --series-8: #1f86b8;
 
   --seq-100: #3a2109; --seq-250: #6b3a0c; --seq-400: #a34e0d; --seq-550: #d4630f; --seq-700: #f09246;
 
@@ -129,8 +129,8 @@
   --overlay:        rgba(8, 9, 6, 0.72);
 
   --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70;
-  --series-4: #c98500; --series-5: #d55181; --series-6: #008300;
-  --series-7: #9085e9; --series-8: #e66767;
+  --series-4: #c98500; --series-5: #d55181; --series-6: #9085e9;
+  --series-7: #008300; --series-8: #e66767;
 
   --seq-100: #2b3018; --seq-250: #4d5426; --seq-400: #7f8a3a; --seq-550: #a8912c; --seq-700: #c9932c;
 
@@ -160,7 +160,7 @@
 
   --series-1: #20a5b5; --series-2: #d55181; --series-3: #c98500;
   --series-4: #4d8fe8; --series-5: #199e70; --series-6: #a874e0;
-  --series-7: #4d8fe8; --series-8: #d55181;
+  --series-7: #b8484a; --series-8: #4f9c3a;
 
   --seq-100: #0f3340; --seq-250: #14596b; --seq-400: #20a5b5; --seq-550: #4cc6d4; --seq-700: #8fe2ec;
 
@@ -169,14 +169,16 @@
   --skin-texture: radial-gradient(120% 70% at 50% 0%, rgba(32, 165, 181, 0.14), transparent 62%);
 }
 
-/* Module identity always tracks the active skin's first six slots. */
+/* Module identity always tracks the active skin's eight slots. */
 [data-skin] {
   --mod-work:     var(--series-1);
   --mod-planning: var(--series-2);
   --mod-spanish:  var(--series-3);
   --mod-fitness:  var(--series-4);
   --mod-finance:  var(--series-5);
-  --mod-coach:    var(--series-6);
+  --mod-habits:   var(--series-6);
+  --mod-goals:    var(--series-7);
+  --mod-coach:    var(--series-8);
 }
 
 /* A skin's accent drives primary actions and the level bar. */

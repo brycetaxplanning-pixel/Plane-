@@ -1,0 +1,399 @@
+import { useState } from 'react';
+import type { Cadence, CoachTone, Habit, HabitKind } from '../lib/schema';
+import { XP } from '../lib/gamification';
+import { dowLabel, todayKey } from '../lib/date';
+import { meetsTarget, statusColor, statusIcon, weekCompletion, type HabitRow } from '../lib/habits';
+import { uid } from '../lib/id';
+import { useApp } from '../state/context';
+import { habitStats } from '../state/selectors';
+import { Modal } from '../components/ui/Modal';
+import { EmptyState, Field, SectionHead } from '../components/ui/Field';
+import { BarChart } from '../components/charts/BarChart';
+import { Ring } from '../components/charts/Ring';
+
+const ACCENT = 'var(--mod-habits)';
+
+const TONES: { id: CoachTone; label: string; blurb: string }[] = [
+  { id: 'gentle', label: 'Gentle', blurb: 'Encouraging' },
+  { id: 'direct', label: 'Direct', blurb: 'Says it straight' },
+  { id: 'drill',  label: 'Drill sergeant', blurb: 'Gets on your case' },
+];
+
+export function Habits() {
+  const { state, update, reward, toast } = useApp();
+  const stats = habitStats(state);
+  const [editing, setEditing] = useState<Habit | 'new' | null>(null);
+  const [logging, setLogging] = useState<HabitRow | null>(null);
+
+  const commitLog = (habit: Habit, value: { amount?: number; time?: string }) => {
+    const met = meetsTarget(habit, value);
+    const today = todayKey();
+    const xp = habit.cadence === 'weekly' ? XP.habitWeekly : XP.habitDone;
+
+    const apply = (s: typeof state) => ({
+      ...s,
+      habits: {
+        ...s.habits,
+        logs: [
+          // A daily habit has one entry a day; a weekly one can have several.
+          ...s.habits.logs.filter((l) => !(l.habitId === habit.id && l.date === today && habit.cadence === 'daily')),
+          { id: uid('hl'), habitId: habit.id, date: today, met, amount: value.amount, time: value.time },
+        ],
+      },
+    });
+
+    if (met) reward('habits', xp, `${habit.title} — done`, apply);
+    else {
+      update(apply);
+      toast(`${habit.title} logged, but short of the target`);
+    }
+    setLogging(null);
+  };
+
+  const quickLog = (row: HabitRow) => {
+    if (row.habit.kind === 'check') commitLog(row.habit, {});
+    else setLogging(row);
+  };
+
+  const undoToday = (habit: Habit) => {
+    const today = todayKey();
+    update((s) => ({
+      ...s,
+      habits: { ...s.habits, logs: s.habits.logs.filter((l) => !(l.habitId === habit.id && l.date === today)) },
+    }));
+    toast('Today cleared');
+  };
+
+  if (state.habits.items.length === 0) {
+    return (
+      <div className="stack">
+        <EmptyState
+          icon="🔁"
+          title="No habits yet"
+          hint="Daily things you want to do every day, weekly things you want to hit a few times a week."
+        />
+        <button className="btn btn-accent btn-lg" style={{ ['--mod' as string]: ACCENT }} onClick={() => setEditing('new')}>
+          + Add your first habit
+        </button>
+        {editing && <HabitForm habit={null} onClose={() => setEditing(null)} onSave={(h) => {
+          update((s) => ({ ...s, habits: { ...s.habits, items: [...s.habits.items, h] } }));
+          setEditing(null);
+        }} />}
+      </div>
+    );
+  }
+
+  return (
+    <div className="stack">
+      <section className="card" style={{ ['--mod' as string]: ACCENT }}>
+        <div className="hero-split">
+          <div className="hero-figure">
+            <Ring
+              value={stats.completion}
+              color={ACCENT}
+              size={92}
+              stroke={8}
+              label={`${stats.todayDone}/${stats.todayTotal}`}
+              caption="today"
+            />
+          </div>
+          <div className="hero-body stack-2">
+            {stats.needsAttention.length === 0 ? (
+              <p className="status status-good" style={{ alignSelf: 'flex-start' }}>✓ Nothing is slipping</p>
+            ) : (
+              <>
+                <p className="t-sm t-bold">{stats.needsAttention[0].nudge}</p>
+                {stats.needsAttention.length > 1 && (
+                  <p className="t-xs t-muted">
+                    and {stats.needsAttention.length - 1} other
+                    {stats.needsAttention.length === 2 ? ' needs' : 's need'} attention
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {stats.daily.length > 0 && (
+        <section className="card">
+          <SectionHead title="Every day" sub={`${stats.todayDone} of ${stats.todayTotal} done today`} />
+          <div className="stack-2">
+            {stats.daily.map((row) => (
+              <HabitRowView key={row.habit.id} row={row} onLog={() => quickLog(row)} onUndo={() => undoToday(row.habit)} onEdit={() => setEditing(row.habit)} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {stats.weekly.length > 0 && (
+        <section className="card">
+          <SectionHead title="Every week" sub="Counts reset on Monday" />
+          <div className="stack-2">
+            {stats.weekly.map((row) => (
+              <HabitRowView key={row.habit.id} row={row} onLog={() => quickLog(row)} onUndo={() => undoToday(row.habit)} onEdit={() => setEditing(row.habit)} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {stats.daily.length > 0 && (
+        <section className="card">
+          <SectionHead title="Daily habits hit" sub="Share of your daily habits, last 7 days" />
+          <BarChart
+            data={weekCompletion(stats.rows).map((d) => ({ key: d.key, value: d.value, label: dowLabel(d.key) }))}
+            color={ACCENT}
+            target={100}
+            targetLabel="All of them"
+            highlightKey={todayKey()}
+            formatValue={(n) => `${n}%`}
+            ariaLabel="Percentage of daily habits completed each day this week"
+          />
+        </section>
+      )}
+
+      <section className="card">
+        <SectionHead title="How hard should it push?" sub="Changes the wording here and how the Life Coach talks to you" />
+        <div className="row-2 wrap">
+          {TONES.map((t) => (
+            <button
+              key={t.id}
+              className="chip"
+              aria-pressed={state.habits.tone === t.id}
+              onClick={() => update((s) => ({ ...s, habits: { ...s.habits, tone: t.id } }))}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <p className="t-xs t-muted" style={{ marginTop: 6 }}>
+          {TONES.find((t) => t.id === state.habits.tone)?.blurb}
+        </p>
+      </section>
+
+      <button className="btn btn-accent btn-lg btn-block" style={{ ['--mod' as string]: ACCENT }} onClick={() => setEditing('new')}>
+        + Add a habit
+      </button>
+
+      {editing && (
+        <HabitForm
+          habit={editing === 'new' ? null : editing}
+          onClose={() => setEditing(null)}
+          onDelete={editing === 'new' ? undefined : () => {
+            const id = (editing as Habit).id;
+            update((s) => ({
+              ...s,
+              habits: { ...s.habits, items: s.habits.items.filter((h) => h.id !== id), logs: s.habits.logs.filter((l) => l.habitId !== id) },
+            }));
+            setEditing(null);
+            toast('Habit removed');
+          }}
+          onSave={(h) => {
+            update((s) => ({
+              ...s,
+              habits: {
+                ...s.habits,
+                items: s.habits.items.some((x) => x.id === h.id) ? s.habits.items.map((x) => (x.id === h.id ? h : x)) : [...s.habits.items, h],
+              },
+            }));
+            setEditing(null);
+            toast('Habit saved');
+          }}
+        />
+      )}
+
+      {logging && (
+        <LogForm
+          row={logging}
+          onClose={() => setLogging(null)}
+          onSave={(value) => commitLog(logging.habit, value)}
+        />
+      )}
+    </div>
+  );
+}
+
+function HabitRowView({
+  row, onLog, onUndo, onEdit,
+}: {
+  row: HabitRow;
+  onLog: () => void;
+  onUndo: () => void;
+  onEdit: () => void;
+}) {
+  const weekly = row.habit.cadence === 'weekly';
+
+  return (
+    <div className="habit" style={{ ['--stat' as string]: statusColor(row.status) }}>
+      <span className="habit-dot" aria-hidden>{statusIcon(row.status)}</span>
+
+      <button className="habit-main" onClick={onEdit}>
+        <span className="row-2" style={{ gap: 6 }}>
+          <span aria-hidden>{row.habit.emoji}</span>
+          <span className="t-sm t-bold truncate">{row.habit.title}</span>
+        </span>
+        <span className="habit-sub">
+          {row.statusLabel}
+          {weekly
+            ? ` · ${row.weekCount}/${row.weekTarget} this week`
+            : row.daysSince !== null && row.daysSince > 0 ? ` · ${row.daysSince} day${row.daysSince === 1 ? '' : 's'} since` : ''}
+          {row.habit.kind === 'amount' && row.habit.target ? ` · target ${row.habit.target}${row.habit.unit ?? ''}` : ''}
+          {row.habit.kind === 'before' && row.habit.targetTime ? ` · by ${row.habit.targetTime}` : ''}
+        </span>
+        {!weekly && (
+          <span className="habit-week" aria-label="Last seven days">
+            {row.last7.map((d) => (
+              <i key={d.date} className={d.met ? 'is-met' : undefined} title={`${d.date}: ${d.met ? 'done' : 'missed'}`} />
+            ))}
+          </span>
+        )}
+      </button>
+
+      {row.metNow && !weekly ? (
+        <button className="btn btn-sm btn-ghost" onClick={onUndo}>Undo</button>
+      ) : (
+        <button className="btn btn-sm btn-accent" style={{ ['--mod' as string]: ACCENT }} onClick={onLog}>
+          {weekly ? '+1' : 'Done'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function LogForm({
+  row, onClose, onSave,
+}: {
+  row: HabitRow;
+  onClose: () => void;
+  onSave: (v: { amount?: number; time?: string }) => void;
+}) {
+  const { habit } = row;
+  const [amount, setAmount] = useState(String(habit.target ?? ''));
+  const [time, setTime] = useState(habit.targetTime ?? '23:00');
+
+  return (
+    <Modal
+      title={habit.title}
+      onClose={onClose}
+      footer={
+        <>
+          <button className="btn" onClick={onClose}>Cancel</button>
+          <button
+            className="btn btn-accent"
+            style={{ ['--mod' as string]: ACCENT }}
+            onClick={() => onSave(habit.kind === 'amount' ? { amount: Number(amount) || 0 } : { time })}
+          >
+            Log it
+          </button>
+        </>
+      }
+    >
+      {habit.kind === 'amount' ? (
+        <Field label={`How much? (target ${habit.target}${habit.unit ?? ''})`}>
+          <input className="input" type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />
+        </Field>
+      ) : (
+        <Field label={`What time? (target ${habit.targetTime})`} hint="Anything before 5am counts as the night before.">
+          <input className="input" type="time" value={time} onChange={(e) => setTime(e.target.value)} autoFocus />
+        </Field>
+      )}
+    </Modal>
+  );
+}
+
+function HabitForm({
+  habit, onClose, onSave, onDelete,
+}: {
+  habit: Habit | null;
+  onClose: () => void;
+  onSave: (h: Habit) => void;
+  onDelete?: () => void;
+}) {
+  const [title, setTitle] = useState(habit?.title ?? '');
+  const [emoji, setEmoji] = useState(habit?.emoji ?? '🔁');
+  const [cadence, setCadence] = useState<Cadence>(habit?.cadence ?? 'daily');
+  const [kind, setKind] = useState<HabitKind>(habit?.kind ?? 'check');
+  const [timesPerWeek, setTimesPerWeek] = useState(String(habit?.timesPerWeek ?? 1));
+  const [target, setTarget] = useState(String(habit?.target ?? ''));
+  const [unit, setUnit] = useState(habit?.unit ?? '');
+  const [targetTime, setTargetTime] = useState(habit?.targetTime ?? '23:30');
+
+  return (
+    <Modal
+      title={habit ? 'Edit habit' : 'New habit'}
+      onClose={onClose}
+      footer={
+        <>
+          {onDelete && <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={onDelete}>Delete</button>}
+          <button className="btn" onClick={onClose}>Cancel</button>
+          <button
+            className="btn btn-accent"
+            style={{ ['--mod' as string]: ACCENT }}
+            disabled={!title.trim()}
+            onClick={() => onSave({
+              id: habit?.id ?? uid('hab'),
+              title: title.trim(),
+              emoji: emoji.trim() || '🔁',
+              cadence,
+              kind,
+              timesPerWeek: cadence === 'weekly' ? Math.max(1, Number(timesPerWeek) || 1) : undefined,
+              target: kind === 'amount' ? Number(target) || 0 : undefined,
+              unit: kind === 'amount' ? unit.trim() || undefined : undefined,
+              targetTime: kind === 'before' ? targetTime : undefined,
+              createdAt: habit?.createdAt ?? todayKey(),
+            })}
+          >
+            Save
+          </button>
+        </>
+      }
+    >
+      <div className="stack-3">
+        <div className="row-2" style={{ alignItems: 'flex-end' }}>
+          <Field label="Icon">
+            <input className="input" style={{ width: 64, textAlign: 'center' }} value={emoji} maxLength={2} onChange={(e) => setEmoji(e.target.value)} />
+          </Field>
+          <div className="grow">
+            <Field label="Habit">
+              <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Stretch" autoFocus />
+            </Field>
+          </div>
+        </div>
+
+        <Field label="How often">
+          <div className="row-2">
+            <button type="button" className="chip" aria-pressed={cadence === 'daily'} onClick={() => setCadence('daily')}>Every day</button>
+            <button type="button" className="chip" aria-pressed={cadence === 'weekly'} onClick={() => setCadence('weekly')}>Some days a week</button>
+          </div>
+        </Field>
+
+        {cadence === 'weekly' && (
+          <Field label="Times a week">
+            <input className="input" type="number" min={1} max={7} value={timesPerWeek} onChange={(e) => setTimesPerWeek(e.target.value)} />
+          </Field>
+        )}
+
+        <Field label="What counts as done">
+          <div className="row-2 wrap">
+            <button type="button" className="chip" aria-pressed={kind === 'check'} onClick={() => setKind('check')}>Just did it</button>
+            <button type="button" className="chip" aria-pressed={kind === 'amount'} onClick={() => setKind('amount')}>Hit a number</button>
+            <button type="button" className="chip" aria-pressed={kind === 'before'} onClick={() => setKind('before')}>By a time</button>
+          </div>
+        </Field>
+
+        {kind === 'amount' && (
+          <div className="grid grid-2" style={{ gap: 'var(--sp-3)' }}>
+            <Field label="At least"><input className="input" type="number" min={0} value={target} onChange={(e) => setTarget(e.target.value)} placeholder="180" /></Field>
+            <Field label="Unit"><input className="input" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="g" /></Field>
+          </div>
+        )}
+
+        {kind === 'before' && (
+          <Field label="No later than">
+            <input className="input" type="time" value={targetTime} onChange={(e) => setTargetTime(e.target.value)} />
+          </Field>
+        )}
+      </div>
+    </Modal>
+  );
+}

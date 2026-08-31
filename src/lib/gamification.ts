@@ -14,7 +14,9 @@ export const XP = {
   fitnessLongRun: 30,
   txReviewed: 4,
   checkIn: 20,
-  goalDone: 50,
+  habitDone: 6,
+  habitWeekly: 14,
+  goalDone: 120,
   weeklyTargetHit: 100,
 } as const;
 
@@ -122,6 +124,18 @@ export const BADGES: BadgeDef[] = [
     },
   },
   {
+    id: 'habit-week', name: 'Perfect week', description: 'Every daily habit, seven days running', icon: '🧱',
+    earned: (s) => {
+      const daily = s.habits.items.filter((h) => h.cadence === 'daily' && !h.archived);
+      if (daily.length === 0) return false;
+      return weekDays().every((d) => daily.every((h) => s.habits.logs.some((l) => l.habitId === h.id && l.date === d && l.met)));
+    },
+  },
+  {
+    id: 'goal-done', name: 'Crossed the line', description: 'Finished a goal', icon: '🏁',
+    earned: (s) => s.goals.items.some((g) => g.done),
+  },
+  {
     id: 'inbox-zero', name: 'Nothing unexplained', description: 'Every transaction categorised', icon: '🧾',
     earned: (s) => s.finance.transactions.length >= 5 && s.finance.transactions.every((t) => t.reviewed),
   },
@@ -137,5 +151,6 @@ export function earnedBadges(s: AppState): BadgeDef[] {
 
 export const MODULE_XP_LABEL: Record<ModuleId | 'general', string> = {
   work: 'Abitos', planning: 'Tax Planning', spanish: 'Spanish',
-  fitness: 'Fitness', finance: 'Finances', coach: 'Life Coach', general: 'General',
+  fitness: 'Fitness', finance: 'Finances', habits: 'Habits',
+  goals: 'Goals', coach: 'Life Coach', general: 'General',
 };

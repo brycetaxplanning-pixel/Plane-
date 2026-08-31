@@ -3,7 +3,7 @@ import type { SkinId } from './themes';
 
 export const SCHEMA_VERSION = 1;
 
-export type ModuleId = 'work' | 'planning' | 'spanish' | 'fitness' | 'finance' | 'coach';
+export type ModuleId = 'work' | 'planning' | 'spanish' | 'fitness' | 'finance' | 'habits' | 'goals' | 'coach';
 
 /* ------------------------------------------------------------------ */
 /* Module 1 — Abitos Tax Prep (day job)                               */
@@ -229,18 +229,89 @@ export interface VendorRule {
 }
 
 /* ------------------------------------------------------------------ */
-/* Module 6 — Life Coach                                               */
+/* Module 6 — Habits                                                   */
 /* ------------------------------------------------------------------ */
+
+export type Cadence = 'daily' | 'weekly';
+
+/** How a habit is satisfied.
+ *  - check: did it or didn't
+ *  - amount: hit at least a number (protein, minutes)
+ *  - before: happened no later than a clock time (in bed by 23:30) */
+export type HabitKind = 'check' | 'amount' | 'before';
+
+export interface Habit {
+  id: string;
+  title: string;
+  emoji: string;
+  cadence: Cadence;
+  kind: HabitKind;
+  /** Weekly habits: how many times a week counts as done. */
+  timesPerWeek?: number;
+  /** amount: the floor to clear. */
+  target?: number;
+  unit?: string;
+  /** before: 24h clock time, e.g. "23:30". */
+  targetTime?: string;
+  note?: string;
+  archived?: boolean;
+  createdAt: DateKey;
+}
+
+export interface HabitLog {
+  id: string;
+  habitId: string;
+  date: DateKey;
+  /** For amount and before habits this records whether the entry met the
+   *  target, so history stays correct if the target later changes. */
+  met: boolean;
+  amount?: number;
+  time?: string;
+  note?: string;
+}
+
+/** How hard the app pushes when something slips. */
+export type CoachTone = 'gentle' | 'direct' | 'drill';
+
+/* ------------------------------------------------------------------ */
+/* Module 7 — Goals                                                    */
+/* ------------------------------------------------------------------ */
+
+export const GOAL_KINDS = ['Purchase', 'Recurring cost', 'Training', 'Custom'] as const;
+export type GoalKind = (typeof GOAL_KINDS)[number];
 
 export interface Goal {
   id: string;
   title: string;
+  kind: GoalKind;
+  /** The picture. An emoji always; a photo when one has been added. */
+  emoji: string;
+  image?: string;
+  /** One-off price (Purchase), e.g. a used car. */
+  cost?: number;
+  /** Per-month price (Recurring cost), or the monthly alternative to a
+   *  purchase — "$24k cash, or $400/mo". */
+  monthly?: number;
+  /** Anything else that belongs on the cost line: "$3k up front". */
+  costNote?: string;
+  /** Training: how many weeks the plan takes. */
+  weeks?: number;
+  /** Progress, in whatever unit the goal counts in. */
+  current?: number;
+  target?: number;
+  unit?: string;
+  /** The third line: how you actually get there. */
+  plan?: string;
   module?: ModuleId;
-  target?: string;
   due?: DateKey;
   done: boolean;
+  notes?: string;
   createdAt: DateKey;
 }
+
+/* ------------------------------------------------------------------ */
+/* Module 8 — Life Coach                                               */
+/* ------------------------------------------------------------------ */
 
 export interface CheckIn {
   id: string;
@@ -321,7 +392,9 @@ export interface AppState {
     accounts: InvestmentAccount[];
     projection: Projection;
   };
-  coach: { goals: Goal[]; checkIns: CheckIn[]; chat: ChatMessage[] };
+  habits: { items: Habit[]; logs: HabitLog[]; tone: CoachTone };
+  goals: { items: Goal[] };
+  coach: { checkIns: CheckIn[]; chat: ChatMessage[] };
 }
 
 /* ------------------------------------------------------------------ */
@@ -376,7 +449,9 @@ export function emptyState(): AppState {
       accounts: [],
       projection: { years: 20, returnPct: 8, inflationPct: 3, real: false, monthlyOverride: null },
     },
-    coach: { goals: [], checkIns: [], chat: [] },
+    habits: { items: [], logs: [], tone: 'direct' },
+    goals: { items: [] },
+    coach: { checkIns: [], chat: [] },
   };
 }
 
@@ -424,14 +499,42 @@ export function migrate(raw: unknown): AppState {
       accounts: s.finance?.accounts ?? [],
       projection: { ...base.finance.projection, ...(s.finance?.projection ?? {}) },
     },
+    habits: {
+      ...base.habits,
+      ...(s.habits ?? {}),
+      items: s.habits?.items ?? [],
+      logs: s.habits?.logs ?? [],
+    },
+    // Goals used to live inside the coach slice; lift any legacy ones out so
+    // an older save keeps them.
+    goals: { items: s.goals?.items ?? liftLegacyGoals(raw) },
     coach: {
       ...base.coach,
       ...(s.coach ?? {}),
-      goals: s.coach?.goals ?? [],
       checkIns: s.coach?.checkIns ?? [],
       chat: s.coach?.chat ?? [],
     },
   };
+}
+
+/** Legacy saves kept goals under `coach.goals` with a much thinner shape. */
+function liftLegacyGoals(raw: unknown): Goal[] {
+  const legacy = (raw as { coach?: { goals?: unknown[] } })?.coach?.goals;
+  if (!Array.isArray(legacy)) return [];
+  return legacy.map((g) => {
+    const old = g as { id?: string; title?: string; module?: ModuleId; target?: string; due?: DateKey; done?: boolean; createdAt?: DateKey };
+    return {
+      id: old.id ?? `goal_${Math.random().toString(36).slice(2, 10)}`,
+      title: old.title ?? 'Goal',
+      kind: 'Custom' as GoalKind,
+      emoji: '🎯',
+      plan: old.target,
+      module: old.module,
+      due: old.due,
+      done: Boolean(old.done),
+      createdAt: old.createdAt ?? '2026-01-01',
+    };
+  });
 }
 
 export const MODULES: { id: ModuleId; num: number; name: string; blurb: string; icon: string; color: string }[] = [
@@ -439,6 +542,8 @@ export const MODULES: { id: ModuleId; num: number; name: string; blurb: string; 
   { id: 'planning', num: 2, name: 'Bryce Tax Planning', blurb: 'S-corp outreach and pipeline',        icon: '🎯', color: 'var(--mod-planning)' },
   { id: 'spanish',  num: 3, name: 'Spanish',         blurb: 'italki, Babbel and time on the clock',    icon: '🇪🇸', color: 'var(--mod-spanish)' },
   { id: 'fitness',  num: 4, name: 'Fitness',         blurb: 'MMA, lifting, half marathon, AI coach',   icon: '🏃', color: 'var(--mod-fitness)' },
-  { id: 'finance',  num: 5, name: 'Finances',        blurb: 'Budget, spend by category, transactions', icon: '💵', color: 'var(--mod-finance)' },
-  { id: 'coach',    num: 6, name: 'Life Coach',      blurb: 'Goals, check-ins and a thinking partner', icon: '🧭', color: 'var(--mod-coach)' },
+  { id: 'finance',  num: 5, name: 'Finances',        blurb: 'Budget, investing, spend by category',    icon: '💵', color: 'var(--mod-finance)' },
+  { id: 'habits',   num: 6, name: 'Habits',          blurb: 'Daily and weekly, and what is slipping',  icon: '🔁', color: 'var(--mod-habits)' },
+  { id: 'goals',    num: 7, name: 'Goals',           blurb: 'What you are actually working toward',    icon: '🏁', color: 'var(--mod-goals)' },
+  { id: 'coach',    num: 8, name: 'Life Coach',      blurb: 'Check-ins and a thinking partner',        icon: '🧭', color: 'var(--mod-coach)' },
 ];

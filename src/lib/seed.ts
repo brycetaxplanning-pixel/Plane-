@@ -126,11 +126,79 @@ export function sampleState(): AppState {
     { id: uid('acct'), name: 'Roth IRA', type: 'Roth IRA', balance: 24500, monthly: 583, updatedAt: today },
   ];
 
-  s.coach.goals = [
-    { id: uid('goal'), title: 'Finish the half marathon under 1:55', module: 'fitness', target: 'Race day finish time', due: addDays(today, 63), done: false, createdAt: addDays(today, -30) },
-    { id: uid('goal'), title: 'Sign 20 S-corp planning clients', module: 'planning', target: '20 signed engagements', done: false, createdAt: addDays(today, -60) },
-    { id: uid('goal'), title: 'Hold a 10-minute conversation in Spanish', module: 'spanish', target: 'Unscripted, with a tutor', done: false, createdAt: addDays(today, -40) },
+  s.goals.items = [
+    {
+      id: uid('goal'), title: 'Own a used Tesla', kind: 'Purchase', emoji: '🚗',
+      cost: 24000, monthly: 400, costNote: '≈$3k down on a lease',
+      current: 6500, target: 24000, unit: '$',
+      plan: 'Make $400 more a month, or put every S-corp close toward it',
+      module: 'finance', done: false, createdAt: addDays(today, -50),
+    },
+    {
+      id: uid('goal'), title: 'Move into a one-bedroom', kind: 'Recurring cost', emoji: '🏙️',
+      monthly: 2500, costNote: 'plus ~$5k deposit and first month',
+      plan: 'Needs about $600/mo more than the current budget clears',
+      module: 'finance', done: false, createdAt: addDays(today, -20),
+    },
+    {
+      id: uid('goal'), title: 'Run a half marathon', kind: 'Training', emoji: '🏃',
+      weeks: 9, current: 3, target: 9, unit: 'weeks',
+      plan: 'Four runs a week, long run up 10% each week, two-week taper',
+      module: 'fitness', due: addDays(today, 63), done: false, createdAt: addDays(today, -30),
+    },
+    {
+      id: uid('goal'), title: 'Hold a 10-minute conversation in Spanish', kind: 'Custom', emoji: '🗣️',
+      current: 4, target: 10, unit: 'minutes',
+      plan: 'Twenty minutes a day, one italki lesson a week',
+      module: 'spanish', done: false, createdAt: addDays(today, -40),
+    },
   ];
+
+  s.habits.items = [
+    { id: uid('hab'), title: 'Stretch',            emoji: '🧘', cadence: 'daily',  kind: 'amount', target: 15, unit: 'min', createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'Pray',               emoji: '🙏', cadence: 'daily',  kind: 'check',  createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'Hit protein',        emoji: '🥩', cadence: 'daily',  kind: 'amount', target: 180, unit: 'g', createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'In bed by 11:30',    emoji: '😴', cadence: 'daily',  kind: 'before', targetTime: '23:30', createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'Call five friends',  emoji: '📱', cadence: 'weekly', kind: 'check',  timesPerWeek: 5, createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'Get some sun',       emoji: '🌞', cadence: 'weekly', kind: 'check',  timesPerWeek: 2, createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'Spar',               emoji: '🥊', cadence: 'weekly', kind: 'check',  timesPerWeek: 1, createdAt: addDays(today, -30) },
+  ];
+
+  // A fortnight of history with deliberate gaps, so green, yellow and red all
+  // show up straight away rather than everything reading as failing.
+  const [stretch, pray, protein, bed, callFriends, sun, spar] = s.habits.items;
+  for (let i = 13; i >= 0; i--) {
+    const date = addDays(today, -i);
+    // Pray: solid, including today — the green case.
+    if (i !== 4) s.habits.logs.push({ id: uid('hl'), habitId: pray.id, date, met: true });
+    // Stretch: done today but with a gap earlier in the fortnight.
+    if (i === 0 || (i > 2 && i % 4 !== 0)) s.habits.logs.push({ id: uid('hl'), habitId: stretch.id, date, met: true, amount: 15 + (i % 3) * 5 });
+    // Protein: missed the last two days — the red case.
+    if (i > 1) s.habits.logs.push({ id: uid('hl'), habitId: protein.id, date, met: true, amount: 180 + (i % 5) * 8 });
+    // Bed: missed yesterday — the yellow case — and late a few times before.
+    if (i !== 1) {
+      const late = i > 1 && i % 5 === 0;
+      s.habits.logs.push({ id: uid('hl'), habitId: bed.id, date, met: !late, time: late ? '00:40' : '23:05' });
+    }
+  }
+
+  // Weekly habits need history in earlier weeks, or every one of them reads as
+  // a long-running miss on day one.
+  for (let w = 1; w <= 5; w++) {
+    const start = addDays(ws, -7 * w);
+    // Friends: hit the target in most past weeks.
+    if (w !== 2) for (let k = 0; k < 5; k++) s.habits.logs.push({ id: uid('hl'), habitId: callFriends.id, date: addDays(start, k), met: true });
+    // Sun: steady.
+    for (let k = 0; k < 2; k++) s.habits.logs.push({ id: uid('hl'), habitId: sun.id, date: addDays(start, k * 3), met: true });
+    // Sparring: missed the last two weeks — the weekly red case.
+    if (w > 2) s.habits.logs.push({ id: uid('hl'), habitId: spar.id, date: addDays(start, 2), met: true });
+  }
+  const elapsedDays = Math.max(0, diffDays(today, ws));
+  for (let k = 0; k < 3; k++) {
+    s.habits.logs.push({ id: uid('hl'), habitId: callFriends.id, date: addDays(ws, Math.min(k, elapsedDays)), met: true });
+  }
+  s.habits.logs.push({ id: uid('hl'), habitId: sun.id, date: ws, met: true });
+
   s.coach.checkIns = [4, 3, 5, 4, 3, 4, 4].map((mood, i) => ({
     id: uid('ci'),
     date: addDays(today, i - 6),

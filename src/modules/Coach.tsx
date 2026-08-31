@@ -1,15 +1,14 @@
 import { useState } from 'react';
-import { MODULES, type ChatMessage, type Goal, type ModuleId } from '../lib/schema';
-import { XP } from '../lib/gamification';
-import { fmtDate, relativeDay, todayKey } from '../lib/date';
+import { MODULES, type ChatMessage } from '../lib/schema';
+import { XP, streakOf } from '../lib/gamification';
+import { fmtDate, todayKey } from '../lib/date';
 import { uid } from '../lib/id';
 import { fmtMoney } from '../lib/finance';
 import { useApp } from '../state/context';
-import { coachStats, financeStats, fitnessStats, planningStats, spanishStats, workStats } from '../state/selectors';
-import { streakOf } from '../lib/gamification';
-import { CompletionFx, useCompletionFx } from '../components/CompletionFx';
+import { coachStats, financeStats, fitnessStats, habitStats, planningStats, spanishStats, workStats } from '../state/selectors';
+import { routeOf } from '../lib/router';
 import { Modal } from '../components/ui/Modal';
-import { EmptyState, Field, SectionHead } from '../components/ui/Field';
+import { Field, SectionHead } from '../components/ui/Field';
 import { Sparkline } from '../components/charts/Sparkline';
 import { StatTile } from '../components/charts/StatTile';
 import { Chat } from '../components/Chat';
@@ -18,9 +17,8 @@ const ACCENT = 'var(--mod-coach)';
 const SCALE = [1, 2, 3, 4, 5];
 
 export function Coach() {
-  const { state, update, reward, toast } = useApp();
+  const { state, update, reward } = useApp();
   const stats = coachStats(state);
-  const [goalOpen, setGoalOpen] = useState<Goal | 'new' | null>(null);
   const [checkingIn, setCheckingIn] = useState(false);
 
   return (
@@ -32,6 +30,7 @@ export function Coach() {
           <StatTile label="Open goals" value={stats.openGoals.length} caption={`${stats.doneGoals} done`} small />
           <StatTile label="Streak" value={`${streakOf(state.activeDays).current}d`} caption="active days" small />
         </div>
+
         {stats.checkedInToday ? (
           <div className="spread" style={{ marginTop: 'var(--sp-4)' }}>
             <span className="status status-good">✓ Checked in today</span>
@@ -65,36 +64,6 @@ export function Coach() {
       )}
 
       <section className="card">
-        <SectionHead
-          title="Goals"
-          sub="The things the modules are actually for"
-          action={<button className="btn btn-sm" onClick={() => setGoalOpen('new')}>+ Goal</button>}
-        />
-        {state.coach.goals.length === 0 ? (
-          <EmptyState icon="🧭" title="No goals set" hint="Run a half marathon. Sign 20 S-corp clients. Hold a 10-minute conversation in Spanish." />
-        ) : (
-          <div className="stack-2">
-            {[...state.coach.goals].sort((a, b) => Number(a.done) - Number(b.done)).map((g) => (
-              <GoalRow
-                key={g.id}
-                goal={g}
-                fxEnabled={state.settings.completionFx}
-                onOpen={() => setGoalOpen(g)}
-                onToggle={() => {
-                  const apply = (s: typeof state) => ({
-                    ...s,
-                    coach: { ...s.coach, goals: s.coach.goals.map((x) => (x.id === g.id ? { ...x, done: !x.done } : x)) },
-                  });
-                  if (!g.done) reward('coach', XP.goalDone, `Goal reached: ${g.title}`, apply);
-                  else update(apply);
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="card">
         <SectionHead title="Talk it through" sub="Sees every module's numbers" />
         <Chat
           accent={ACCENT}
@@ -103,7 +72,7 @@ export function Coach() {
           buildSystem={() => buildLifeCoachSystem(state)}
           offlineReply={(input) => offlineCoachReply(input, state)}
           placeholder="What's on your mind…"
-          emptyHint="I can see all six modules — work projects, outreach, Spanish, training, spending and your goals. Ask me what to prioritise, where you're slipping, or how to plan the week."
+          emptyHint="I can see every module — work, outreach, Spanish, training, spending, habits and goals. Ask me what to prioritise, where you're slipping, or how to plan the week."
           suggestions={['What should I focus on this week?', 'Where am I slipping?', 'Plan my week around 3 MMA classes']}
         />
         {state.coach.chat.length > 0 && (
@@ -115,6 +84,12 @@ export function Coach() {
             Clear conversation
           </button>
         )}
+      </section>
+
+      <section className="card card-sunken">
+        <p className="t-sm t-sec">
+          Goals moved to their own module. <a href={routeOf('goals')}>Open Goals →</a>
+        </p>
       </section>
 
       {checkingIn && (
@@ -135,65 +110,7 @@ export function Coach() {
           }}
         />
       )}
-
-      {goalOpen && (
-        <GoalForm
-          goal={goalOpen === 'new' ? null : goalOpen}
-          onClose={() => setGoalOpen(null)}
-          onDelete={goalOpen === 'new' ? undefined : () => {
-            const id = (goalOpen as Goal).id;
-            update((s) => ({ ...s, coach: { ...s.coach, goals: s.coach.goals.filter((g) => g.id !== id) } }));
-            setGoalOpen(null);
-            toast('Goal removed');
-          }}
-          onSave={(goal) => {
-            update((s) => ({
-              ...s,
-              coach: {
-                ...s.coach,
-                goals: s.coach.goals.some((g) => g.id === goal.id)
-                  ? s.coach.goals.map((g) => (g.id === goal.id ? goal : g))
-                  : [...s.coach.goals, goal],
-              },
-            }));
-            setGoalOpen(null);
-            toast('Goal saved');
-          }}
-        />
-      )}
     </div>
-  );
-}
-
-function GoalRow({
-  goal, fxEnabled, onToggle, onOpen,
-}: {
-  goal: Goal;
-  fxEnabled: boolean;
-  onToggle: () => void;
-  onOpen: () => void;
-}) {
-  const { effect, play } = useCompletionFx(fxEnabled, onToggle);
-
-  return (
-    <CompletionFx effect={effect}>
-      <div className={`rowitem${goal.done ? ' rowitem-done' : ''}`}>
-        <input
-          className="checkbox"
-          type="checkbox"
-          checked={goal.done}
-          onChange={() => (goal.done ? onToggle() : play())}
-        />
-        <button className="grow" style={{ background: 'none', border: 0, textAlign: 'left', cursor: 'pointer', minWidth: 0 }} onClick={onOpen}>
-          <span className="rowitem-title t-sm t-bold truncate" style={{ display: 'block' }}>{goal.title}</span>
-          <span className="t-xs t-muted">
-            {goal.module ? `${MODULES.find((m) => m.id === goal.module)?.name} · ` : ''}
-            {goal.target ?? 'no target'}
-            {goal.due ? ` · due ${relativeDay(goal.due)}` : ''}
-          </span>
-        </button>
-      </div>
-    </CompletionFx>
   );
 }
 
@@ -251,77 +168,17 @@ function CheckInForm({
   );
 }
 
-function GoalForm({
-  goal, onClose, onSave, onDelete,
-}: {
-  goal: Goal | null;
-  onClose: () => void;
-  onSave: (g: Goal) => void;
-  onDelete?: () => void;
-}) {
-  const [title, setTitle] = useState(goal?.title ?? '');
-  const [module, setModule] = useState<ModuleId | ''>(goal?.module ?? '');
-  const [target, setTarget] = useState(goal?.target ?? '');
-  const [due, setDue] = useState(goal?.due ?? '');
-
-  return (
-    <Modal
-      title={goal ? 'Edit goal' : 'New goal'}
-      onClose={onClose}
-      footer={
-        <>
-          {onDelete && <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={onDelete}>Delete</button>}
-          <button className="btn" onClick={onClose}>Cancel</button>
-          <button
-            className="btn btn-accent"
-            style={{ ['--mod' as string]: ACCENT }}
-            disabled={!title.trim()}
-            onClick={() => onSave({
-              id: goal?.id ?? uid('goal'),
-              title: title.trim(),
-              module: module || undefined,
-              target: target.trim() || undefined,
-              due: due || undefined,
-              done: goal?.done ?? false,
-              createdAt: goal?.createdAt ?? todayKey(),
-            })}
-          >
-            Save
-          </button>
-        </>
-      }
-    >
-      <div className="stack-3">
-        <Field label="Goal">
-          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Run a half marathon under 1:55" autoFocus />
-        </Field>
-        <Field label="Module">
-          <select className="select" value={module} onChange={(e) => setModule(e.target.value as ModuleId | '')}>
-            <option value="">None</option>
-            {MODULES.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-          </select>
-        </Field>
-        <Field label="How you'll know">
-          <input className="input" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="Finish time under 1:55:00" />
-        </Field>
-        <Field label="Target date">
-          <input className="input" type="date" value={due} onChange={(e) => setDue(e.target.value)} />
-        </Field>
-      </div>
-    </Modal>
-  );
-}
-
 /* ---------------- prompting ---------------- */
 
 /** One snapshot of every module, so the coach can weigh trade-offs across
  *  them rather than optimising one in isolation. */
-function buildSnapshot(state: ReturnType<typeof useApp>['state']): string {
+export function buildSnapshot(state: ReturnType<typeof useApp>['state']): string {
   const w = workStats(state);
   const p = planningStats(state);
   const e = spanishStats(state);
   const f = fitnessStats(state);
   const m = financeStats(state);
+  const h = habitStats(state);
   const c = coachStats(state);
   const cur = state.settings.currency;
 
@@ -339,18 +196,31 @@ MODULE 4 — Fitness
 ${f.total}/${f.targets.total} sessions this week. MMA ${f.mma}/${f.targets.mma}, strength ${f.strength}/${f.targets.strength}, flexible ${f.flexDone}/${f.flexTarget}. ${f.runKmThisWeek.toFixed(1)} km run this week; longest run ever ${f.longestRun.toFixed(1)} km. Race: ${state.fitness.race.name}${state.fitness.race.date ? ` on ${state.fitness.race.date}` : ' (no date set)'}.
 
 MODULE 5 — Finances
-${fmtMoney(m.spent, cur)} spent this month${m.budgetTotal ? ` against a ${fmtMoney(m.budgetTotal, cur)} budget` : ' (no budget set)'}. ${m.reviewCount} transactions still need a category.
+${fmtMoney(m.spent, cur)} spent this month${m.budgetTotal ? ` against a ${fmtMoney(m.budgetTotal, cur)} budget` : ' (no budget set)'}. ${m.reviewCount} transactions still need a category. Invested: ${fmtMoney(m.invested, cur)} across ${state.finance.accounts.length} accounts.
 
-MODULE 6 — Goals and check-ins
-Open goals: ${c.openGoals.map((g) => g.title).join('; ') || 'none'}.
+MODULE 6 — Habits
+${h.rows.map((r) => `- ${r.habit.title} (${r.habit.cadence}): ${r.statusLabel}${r.daysSince === null ? ', never done' : `, ${r.daysSince} day(s) since`}`).join('\n') || '- none set up'}
+
+MODULE 7 — Goals
+${state.goals.items.filter((g) => !g.done).map((g) => `- ${g.title} (${g.kind})${g.cost ? `, ${fmtMoney(g.cost, cur)}` : ''}${g.monthly ? `, ${fmtMoney(g.monthly, cur)}/mo` : ''}${g.plan ? ` — plan: ${g.plan}` : ''}`).join('\n') || '- none set'}
+
+MODULE 8 — Check-ins
 ${c.checkedInToday ? 'Checked in today.' : 'No check-in today.'} Last mood ${c.moodTrend.at(-1)?.value ?? '—'}/5, energy ${c.energyTrend.at(-1)?.value ?? '—'}/5.
 Active-day streak: ${streakOf(state.activeDays).current} days.`;
 }
 
+const TONE_LINE: Record<string, string> = {
+  gentle: 'Be warm and encouraging. Name what slipped without making them feel bad about it.',
+  direct: 'Be direct and unsentimental. Say plainly what slipped and what to do about it. No pep talk.',
+  drill: 'Be blunt and demanding, like a coach who expects better. Call out what slipped in short, hard sentences and tell them to go fix it now. Never insult them personally and never swear.',
+};
+
 function buildLifeCoachSystem(state: ReturnType<typeof useApp>['state']): string {
   return `You are the user's life coach inside their personal tracking app. You can see every module's live numbers below. Today is ${todayKey()}.
 
-Be direct and specific. Name the trade-off rather than telling them to do everything: they have a demanding tax job, a side practice they are trying to grow, a language habit, twelve training sessions a week and a household budget. When something is slipping, say which one and what it costs to fix. Prefer one concrete next action over a list. Keep replies under about 200 words unless they ask for a full plan.
+${TONE_LINE[state.habits.tone] ?? TONE_LINE.direct}
+
+Name the trade-off rather than telling them to do everything: they have a demanding tax job, a side practice they are trying to grow, a language habit, twelve training sessions a week, a household budget and a set of daily habits. When something is slipping, say which one and what it costs to fix. Prefer one concrete next action over a list. Keep replies under about 200 words unless they ask for a full plan.
 
 Do not invent numbers. If you need something that isn't below, ask for it.
 
@@ -363,6 +233,7 @@ function offlineCoachReply(input: string, state: ReturnType<typeof useApp>['stat
   const w = workStats(state);
   const e = spanishStats(state);
   const m = financeStats(state);
+  const h = habitStats(state);
   const q = input.toLowerCase();
 
   const slipping: string[] = [];
@@ -371,6 +242,9 @@ function offlineCoachReply(input: string, state: ReturnType<typeof useApp>['stat
   if (f.total < f.targets.total) slipping.push(`${f.targets.total - f.total} fitness sessions short`);
   if (e.todayMinutes < e.dailyGoal) slipping.push(`${e.dailyGoal - e.todayMinutes} min of Spanish left today`);
   if (m.reviewCount) slipping.push(`${m.reviewCount} transactions uncategorised`);
+  for (const r of h.rows) {
+    if (r.status === 'red') slipping.push(`${r.habit.title} — ${r.statusLabel.toLowerCase()}`);
+  }
 
   const head = q.includes('slip') || q.includes('behind')
     ? 'Where you are behind right now:'
@@ -385,7 +259,7 @@ function offlineCoachReply(input: string, state: ReturnType<typeof useApp>['stat
       : p.remaining > p.perDayNeeded * 2
         ? 'Outreach is the constraint on the practice growing. It is also the easiest to front-load early in the week.'
         : 'Nothing is urgent. Pick the one you least want to do and start there.',
-    '',
-    'Add an Anthropic API key in Settings and this becomes a real conversation.',
   ].join('\n');
 }
+
+export { MODULES };

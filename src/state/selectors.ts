@@ -1,6 +1,8 @@
 import { bucketOf, type AppState, type ModuleId } from '../lib/schema';
 import { inWeek, lastDays, lastWeeks, monthKey, todayKey, weekDays, weekStart, type DateKey } from '../lib/date';
 import { needsReview } from '../lib/finance';
+import { allRows, attention, dailyCompletion, type HabitRow } from '../lib/habits';
+import { startingTotal } from '../lib/invest';
 
 export interface ModuleSummary {
   id: ModuleId;
@@ -138,16 +140,58 @@ export function financeStats(s: AppState, month = monthKey()) {
   const review = needsReview(s.finance.transactions);
   return {
     month, inMonth, spent, budgetTotal, review,
+    invested: startingTotal(s.finance.accounts),
     reviewCount: review.length,
     remaining: budgetTotal - spent,
     pctOfBudget: budgetTotal > 0 ? spent / budgetTotal : 0,
   };
 }
 
-/* ---------------- Module 6: Life Coach ---------------- */
+/* ---------------- Module 6: Habits ---------------- */
+
+export interface HabitSummary {
+  rows: HabitRow[];
+  daily: HabitRow[];
+  weekly: HabitRow[];
+  needsAttention: HabitRow[];
+  todayDone: number;
+  todayTotal: number;
+  completion: number;
+}
+
+export function habitStats(s: AppState): HabitSummary {
+  const rows = allRows(s);
+  const daily = rows.filter((r) => r.habit.cadence === 'daily');
+  return {
+    rows,
+    daily,
+    weekly: rows.filter((r) => r.habit.cadence === 'weekly'),
+    needsAttention: attention(rows),
+    todayDone: daily.filter((r) => r.metNow).length,
+    todayTotal: daily.length,
+    completion: dailyCompletion(rows),
+  };
+}
+
+/* ---------------- Module 7: Goals ---------------- */
+
+export function goalStats(s: AppState) {
+  const open = s.goals.items.filter((g) => !g.done);
+  const withProgress = open.filter((g) => g.target && g.target > 0);
+  const avg = withProgress.length
+    ? withProgress.reduce((n, g) => n + Math.min(1, (g.current ?? 0) / (g.target ?? 1)), 0) / withProgress.length
+    : 0;
+  return {
+    open,
+    done: s.goals.items.filter((g) => g.done),
+    avgProgress: avg,
+  };
+}
+
+/* ---------------- Module 8: Life Coach ---------------- */
 
 export function coachStats(s: AppState) {
-  const openGoals = s.coach.goals.filter((g) => !g.done);
+  const openGoals = s.goals.items.filter((g) => !g.done);
   const checkedInToday = s.coach.checkIns.some((c) => c.date === todayKey());
   const weekCheckIns = s.coach.checkIns.filter((c) => inWeek(c.date));
   const recent = [...s.coach.checkIns].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 14).reverse();
@@ -155,7 +199,7 @@ export function coachStats(s: AppState) {
     openGoals, checkedInToday, weekCheckIns,
     moodTrend: recent.map((c) => ({ key: c.date, value: c.mood })),
     energyTrend: recent.map((c) => ({ key: c.date, value: c.energy })),
-    doneGoals: s.coach.goals.filter((g) => g.done).length,
+    doneGoals: s.goals.items.filter((g) => g.done).length,
   };
 }
 
@@ -167,6 +211,8 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
   const esp = spanishStats(s);
   const fit = fitnessStats(s);
   const fin = financeStats(s);
+  const hab = habitStats(s);
+  const goal = goalStats(s);
   const coach = coachStats(s);
 
   return {
@@ -216,6 +262,22 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
       headline: fin.budgetTotal ? `${Math.round(fin.pctOfBudget * 100)}%` : `${fin.inMonth.length}`,
       caption: fin.budgetTotal ? 'of budget' : 'transactions',
       nudge: fin.reviewCount ? `${fin.reviewCount} need a category` : undefined,
+    },
+    habits: {
+      id: 'habits',
+      progress: hab.completion,
+      headline: `${hab.todayDone}/${hab.todayTotal}`,
+      caption: 'daily habits',
+      nudge: hab.needsAttention.length
+        ? hab.needsAttention[0].statusLabel.toLowerCase() + ` · ${hab.needsAttention[0].habit.title}`
+        : hab.todayTotal === 0 ? 'none set up yet' : 'all on track',
+    },
+    goals: {
+      id: 'goals',
+      progress: goal.avgProgress,
+      headline: `${goal.open.length}`,
+      caption: goal.open.length === 1 ? 'open goal' : 'open goals',
+      nudge: goal.open[0]?.title,
     },
     coach: {
       id: 'coach',

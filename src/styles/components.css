@@ -349,3 +349,85 @@
 }
 .skin-swatch > i { width: 13px; height: 13px; border-radius: 4px; }
 .skin-name { font-size: 12px; font-weight: 620; }
+
+/* ---------- habit rows ---------- */
+/* The status colour is a reserved status token; it never carries meaning on
+   its own — the dot ships a glyph and the row states the status in words. */
+.habit {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--stat, var(--text-muted));
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+}
+.habit-dot {
+  display: grid; place-content: center;
+  flex: none; width: 26px; height: 26px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--stat, var(--text-muted)) 18%, var(--surface-1));
+  color: var(--stat, var(--text-muted));
+  font-size: 13px; font-weight: 800; line-height: 1;
+}
+.habit-main {
+  display: flex; flex-direction: column; gap: 3px;
+  flex: 1 1 auto; min-width: 0;
+  background: none; border: 0; padding: 0;
+  text-align: left; cursor: pointer;
+}
+.habit-sub { font-size: 11px; color: var(--text-muted); line-height: 1.35; }
+.habit-week { display: flex; gap: 3px; margin-top: 2px; }
+.habit-week > i {
+  width: 13px; height: 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--text-muted) 26%, transparent);
+}
+.habit-week > i.is-met { background: var(--status-good); }
+
+/* ---------- goal cards ---------- */
+.goal-grid { display: grid; gap: var(--sp-4); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 700px)  { .goal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1150px) { .goal-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.goal {
+  display: flex; flex-direction: column;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--tile-radius, var(--r-lg));
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+
+/* The picture is the point: it takes the top of the card and nothing
+   competes with it. */
+.goal-cover {
+  position: relative;
+  display: grid; place-items: center;
+  width: 100%; height: 148px;
+  padding: 0; border: 0;
+  cursor: pointer;
+  background:
+    radial-gradient(120% 100% at 50% 0%, color-mix(in srgb, var(--mod) 34%, var(--surface-1)), var(--surface-2));
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+.goal-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.goal-emoji { font-size: 62px; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22)); }
+
+.goal-body { display: flex; flex-direction: column; gap: 7px; padding: var(--sp-4); flex: 1 1 auto; }
+.goal-title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.goal-line { font-size: 13px; color: var(--text-secondary); line-height: 1.45; }
+.goal-key {
+  display: block;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.goal-progress { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+.goal-bar { height: 7px; border-radius: var(--r-pill); background: var(--surface-sunken); overflow: hidden; }
+.goal-bar > i {
+  display: block; height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--mod);
+  transition: width 520ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
