@@ -17,6 +17,7 @@ import { Sparkline } from '../components/charts/Sparkline';
 import { StatTile } from '../components/charts/StatTile';
 import { Ring } from '../components/charts/Ring';
 import { Bloodwork } from './health/Bloodwork';
+import { ImportHealth } from './health/ImportHealth';
 
 const ACCENT = 'var(--mod-health)';
 
@@ -356,6 +357,7 @@ function TargetsForm({ onClose }: { onClose: () => void }) {
 function Body() {
   const { state, update, reward, toast } = useApp();
   const [logging, setLogging] = useState<Vitals | 'new' | null>(null);
+  const [importing, setImporting] = useState(false);
   const vitals = state.health.vitals;
   const unit = state.health.weightUnit;
   const targets = state.health.targets;
@@ -390,7 +392,12 @@ function Body() {
         <SectionHead
           title="Where you are"
           sub={weights.length ? `Last weighed ${fmtDateLong(weights[weights.length - 1].key)}` : 'Nothing recorded yet'}
-          action={<button className="btn btn-sm" onClick={() => setLogging('new')}>+ Reading</button>}
+          action={
+            <div className="row-2">
+              <button className="btn btn-sm" onClick={() => setImporting(true)}>Import</button>
+              <button className="btn btn-sm" onClick={() => setLogging('new')}>+ Reading</button>
+            </div>
+          }
         />
         <div className="grid grid-3" style={{ gap: 'var(--sp-3)' }}>
           <StatTile
@@ -469,6 +476,8 @@ function Body() {
           </div>
         </section>
       )}
+
+      {importing && <ImportHealth onClose={() => setImporting(false)} />}
 
       {logging && (
         <VitalsForm

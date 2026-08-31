@@ -138,6 +138,26 @@ the browser from oscillators and filtered noise. It only starts when you press
 play, there is no audio file anywhere in the app, and nothing is fetched to
 draw or play it. `prefers-reduced-motion` holds the whole thing still.
 
+## Getting health data in
+
+The Body tab imports from a file, so a watch's history does not have to be
+retyped:
+
+- **CSV** — Garmin Connect, Whoop, a spreadsheet of your own. The header row is
+  read and each column guessed, and you correct the guesses before anything is
+  saved.
+- **Apple Health** — on the iPhone, *Health → your picture → Export All Health
+  Data*. Unzip it and pick `export.xml`. Weight, resting heart rate, blood
+  pressure, sleep and dietary protein and calories are pulled out; everything
+  else is ignored. The file is streamed rather than read whole — a 99 MB export
+  parses in about a second and never holds more than a chunk in memory.
+
+Two rules hold for both. Numbers are stored exactly as the file wrote them —
+nothing is converted between pounds and kilos, and the unit is whichever you set
+under Targets. And an import fills gaps rather than overwriting: anything you
+typed by hand survives unless you tick the box, and the number of clashes is
+shown before you decide. Everything is read on the device; no file is uploaded.
+
 ## Putting it on a phone
 
 The app is a static bundle with no server behind it, so any static host will do.
