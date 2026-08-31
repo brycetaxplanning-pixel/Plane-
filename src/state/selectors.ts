@@ -3,6 +3,7 @@ import { inWeek, lastDays, lastWeeks, monthKey, todayKey, weekDays, weekStart, t
 import { needsReview, spendByCategory } from '../lib/finance';
 import { allRows, attention, dailyCompletion, type HabitRow } from '../lib/habits';
 import { startingTotal } from '../lib/invest';
+import { goalRows } from '../lib/budgetGoals';
 import { weekPlan } from '../lib/fitplan';
 
 export interface ModuleSummary {
@@ -161,7 +162,10 @@ export function financeStats(s: AppState, month = monthKey()) {
   const spent = inMonth.reduce((n, t) => n + t.amount, 0);
   const budgetTotal = Object.values(s.finance.budgets).reduce((n, v) => n + v, 0);
   const review = needsReview(s.finance.transactions);
+  const saving = goalRows(s);
   return {
+    savingBehind: saving.filter((g) => g.status === 'behind' || g.status === 'stalled').length,
+    savingGoals: saving,
     month, inMonth, spent, budgetTotal, review,
     invested: startingTotal(s.finance.accounts),
     reviewCount: review.length,
@@ -295,7 +299,11 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
       progress: Math.min(1, fin.pctOfBudget),
       headline: fin.budgetTotal ? `${Math.round(fin.pctOfBudget * 100)}%` : `${fin.inMonth.length}`,
       caption: fin.budgetTotal ? 'of budget' : 'transactions',
-      nudge: fin.reviewCount ? `${fin.reviewCount} need a category` : undefined,
+      nudge: fin.reviewCount
+        ? `${fin.reviewCount} need a category`
+        : fin.savingBehind
+          ? `${fin.savingBehind} saving goal${fin.savingBehind === 1 ? '' : 's'} behind`
+          : undefined,
     },
     habits: {
       id: 'habits',

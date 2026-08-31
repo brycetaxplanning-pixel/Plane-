@@ -1,10 +1,17 @@
-import type { ReactNode } from 'react';
+import { cloneElement, isValidElement, useId, type ReactElement, type ReactNode } from 'react';
 
+/** A labelled control. When there is exactly one child and it has no id of its
+ *  own, the label is wired to it — so tapping the label focuses the field, and
+ *  a screen reader reads the two together. */
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
+  const id = useId();
+  const single = isValidElement(children) ? (children as ReactElement<{ id?: string }>) : null;
+  const wired = single !== null && !single.props.id;
+
   return (
     <div className="field">
-      <label>{label}</label>
-      {children}
+      <label htmlFor={wired ? id : undefined}>{label}</label>
+      {wired ? cloneElement(single, { id }) : children}
       {hint && <span className="t-xs t-muted">{hint}</span>}
     </div>
   );

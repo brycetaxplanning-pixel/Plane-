@@ -19,6 +19,8 @@ export const XP = {
   habitDone: 6,
   habitWeekly: 14,
   goalDone: 120,
+  savingDeposit: 10,
+  savingGoalFunded: 150,
   weeklyTargetHit: 100,
 } as const;
 

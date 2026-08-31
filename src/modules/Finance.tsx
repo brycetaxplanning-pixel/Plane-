@@ -9,11 +9,13 @@ import {
   parseTransactionsCSV, spendByCategory, spendForVendor, splitsTotal,
 } from '../lib/finance';
 import { AIError, askJSON, isAIConfigured } from '../lib/ai';
+import { goalRows } from '../lib/budgetGoals';
 import { useApp } from '../state/context';
 import { financeStats } from '../state/selectors';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { Invest } from './finance/Invest';
+import { SavingGoals } from './finance/SavingGoals';
 import { BudgetBars, type BudgetRow } from '../components/charts/BudgetBars';
 import { BarChart } from '../components/charts/BarChart';
 import { StatTile } from '../components/charts/StatTile';
@@ -23,9 +25,12 @@ const ACCENT = 'var(--mod-finance)';
 export function Finance() {
   const { state, update, toast } = useApp();
   const [month, setMonth] = useState(monthKey());
-  const [tab, setTab] = useTabParam(['overview', 'invest', 'review', 'transactions', 'rules'] as const, 'overview');
+  const [tab, setTab] = useTabParam(['overview', 'goals', 'invest', 'review', 'transactions', 'rules'] as const, 'overview');
   const stats = financeStats(state, month);
   const cur = state.settings.currency;
+
+  /** Goals whose date the current monthly amount will not make. */
+  const behind = goalRows(state).filter((r) => r.status === 'behind' || r.status === 'stalled').length;
 
   const months = lastMonths(6);
   const trend = months.map((m) => ({ key: m, label: fmtMonth(m), value: monthTotal(state.finance.transactions, m) }));
@@ -59,6 +64,9 @@ export function Finance() {
 
       <div className="tabs" role="tablist">
         <button className="tab" role="tab" aria-selected={tab === 'overview'} onClick={() => setTab('overview')}>Overview</button>
+        <button className="tab" role="tab" aria-selected={tab === 'goals'} onClick={() => setTab('goals')}>
+          Saving{behind ? ` (${behind})` : ''}
+        </button>
         <button className="tab" role="tab" aria-selected={tab === 'invest'} onClick={() => setTab('invest')}>Invest</button>
         <button className="tab" role="tab" aria-selected={tab === 'review'} onClick={() => setTab('review')}>
           Review{stats.reviewCount ? ` (${stats.reviewCount})` : ''}
@@ -68,6 +76,7 @@ export function Finance() {
       </div>
 
       {tab === 'overview' && <Overview month={month} trend={trend} />}
+      {tab === 'goals' && <SavingGoals />}
       {tab === 'invest' && <Invest />}
       {tab === 'review' && <ReviewQueue />}
       {tab === 'transactions' && <TransactionsPanel month={month} />}

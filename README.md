@@ -15,7 +15,7 @@ tells you what is asking for attention.
 | 2 | **Business** | One tab per business — Bryce Tax Planning and the flaxseed gel line ship as the two examples, and you can add more. Each keeps its own weekly outreach target (the 50 S-corp contacts, the per-day pace needed to still hit it, an 8-week history) and its own deal pipeline; set a target of zero and the counter disappears for a business that does not do outreach. Plus a numbered **idea list**, where "Help me start it" turns an idea into first actions you can tick off. |
 | 3 | **Spanish** | One-tap links out to italki and Babbel, a session stopwatch, minutes logged per day — and an **AI tutor you talk to out loud**, built for a commute. It listens, replies in Spanish, speaks it back, corrects one thing at a time, and logs the time when you stop. |
 | 4 | **Fitness** | A weekly plan you build from pills: lock in the things that happen every week (4 lifts, 3 MMA), and the remainder become open slots you fill however you like. Locked lines carry over on Monday; one-off lines don't. Plus half-marathon tracking, physique goals with measurements, and an AI coach that can see the whole log. |
-| 5 | **Finances** | Monthly budget vs. actual by category, CSV import, vendor rules, a review queue that asks what a charge was actually for, and an **Invest** tab that projects your accounts forward with sliders for horizon, return and monthly contribution. |
+| 5 | **Finances** | Monthly budget vs. actual by category, CSV import, vendor rules, a review queue that asks what a charge was actually for, a **Saving** tab where a preset goal fills in what it can from your own spending and then says plainly whether the date is affordable, and an **Invest** tab that projects your accounts forward with sliders for horizon, return and monthly contribution. |
 | 6 | **Habits** | Daily and weekly habits with green / yellow / red status. Green is done, yellow is one miss, red is two or more in a row — with a "days since" count and an escalating nudge whose bluntness you set. |
 | 7 | **Goals** | One visual card per goal: a picture, what it costs, and how you get there. Fields adapt to the kind of goal — a purchase asks for a price, a training goal asks for a window in weeks. |
 | 8 | **Notes** | Journal entries, to-do lists and everything you'd otherwise put in your phone's notes app. Talk a note in without typing. |
@@ -173,8 +173,9 @@ silently losing writes.
 
 ## The AI features
 
-Three things call Claude: the fitness coach, the life coach, and turning
-"$40 snorkel gear, $70 running shoes" into two budget line items.
+Four things call Claude: the fitness coach, the life coach, turning
+"$40 snorkel gear, $70 running shoes" into two budget line items, and the
+sharper follow-up questions on a saving goal.
 
 They need your own Anthropic API key, pasted into *Settings*. It is stored only
 in this browser's local storage and is sent only to `api.anthropic.com`. The
@@ -183,11 +184,37 @@ request goes straight from the page to the API via the official SDK
 the middle — and no server to run.
 
 Without a key, both coaches still answer: they fall back to built-in advice
-computed from your actual logged numbers, and the split editor still works by
-hand.
+computed from your actual logged numbers, the split editor still works by
+hand, and every saving goal still comes with the preset's own questions.
 
 Get a key at [console.anthropic.com](https://console.anthropic.com). Calls are
 billed to your own account.
+
+## How a saving goal is checked
+
+A preset picks the shape of the goal and, where your own data can answer it,
+the amount: the emergency fund suggests three times your average logged month,
+business runway six times, moving out three times your Housing spend. The
+average is taken over the last three *complete* months, so a month that is two
+days old does not read as a cheap one.
+
+The balance is the sum of its deposits — there is no second stored figure to
+disagree with them. From that:
+
+- **the date needs** — what is left, divided by the months left;
+- **lands** — when it arrives at what you are actually putting in, to the month,
+  because a specific day would be false precision;
+- **the verdict** — on pace, short by an amount, or the maths works but the
+  month does not.
+
+That last one is the point. If every goal's monthly amount adds up to more than
+take-home minus an average month of spending, the app says so and names your
+biggest movable categories with what halving one would free. It needs a
+take-home figure to do it; without one it says the figure is unknown rather
+than inventing a number.
+
+Nothing here connects to a bank. Take-home is typed in, deposits are logged by
+hand, and the spending it is checked against is whatever you imported.
 
 ## How the finance review queue works
 

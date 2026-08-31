@@ -253,6 +253,40 @@ export interface FitnessTargets {
 /* Module 5 — Finances                                                 */
 /* ------------------------------------------------------------------ */
 
+/** Money set aside for one named thing. Kept in Finances rather than in
+ *  Goals because the honest question — can you actually afford it — can only
+ *  be answered against real spend. */
+export interface SavingGoal {
+  id: string;
+  name: string;
+  emoji: string;
+  /** What it costs in full. */
+  target: number;
+  /** What you can put in each month, as you have decided it. */
+  monthly: number;
+  /** The date you want it by. Without one there is no "behind" to be. */
+  targetDate?: DateKey;
+  /** Which preset it came from, so the follow-up questions can be tailored. */
+  preset?: string;
+  /** A goal in the Goals module this was created from. */
+  goalId?: string;
+  note?: string;
+  createdAt: DateKey;
+  /** Every deposit, including the "already saved" one made on day one.
+   *  The balance is their sum — there is no second figure to disagree. */
+  contributions: SavingDeposit[];
+  /** Answers to the follow-up questions, kept so the coach can use them. */
+  answers?: { question: string; answer: string }[];
+  archived?: boolean;
+}
+
+export interface SavingDeposit {
+  id: string;
+  date: DateKey;
+  amount: number;
+  note?: string;
+}
+
 export const DEFAULT_CATEGORIES = [
   'Groceries', 'Meat', 'Restaurants', 'Entertainment', 'Shopping', 'Transport',
   'Housing', 'Utilities', 'Health', 'Fitness', 'Education', 'Travel',
@@ -566,6 +600,10 @@ export interface AppState {
     chat: ChatMessage[];
     accounts: InvestmentAccount[];
     projection: Projection;
+    savingGoals: SavingGoal[];
+    /** Take-home a month. Zero means not set — every affordability check
+     *  says so rather than inventing a number. */
+    monthlyIncome: number;
   };
   habits: { items: Habit[]; logs: HabitLog[]; tone: CoachTone };
   notes: { items: Note[] };
@@ -648,6 +686,8 @@ export function emptyState(): AppState {
       chat: [],
       accounts: [],
       projection: { years: 20, returnPct: 8, inflationPct: 3, real: false, monthlyOverride: null },
+      savingGoals: [],
+      monthlyIncome: 0,
     },
     habits: { items: [], logs: [], tone: 'direct' },
     notes: { items: [] },
@@ -706,6 +746,11 @@ export function migrate(raw: unknown): AppState {
       chat: s.finance?.chat ?? [],
       accounts: s.finance?.accounts ?? [],
       projection: { ...base.finance.projection, ...(s.finance?.projection ?? {}) },
+      savingGoals: (s.finance?.savingGoals ?? []).map((g) => ({
+        ...g,
+        contributions: g.contributions ?? [],
+      })),
+      monthlyIncome: s.finance?.monthlyIncome ?? 0,
     },
     habits: {
       ...base.habits,
@@ -792,7 +837,7 @@ export const MODULES: { id: ModuleId; num: number; name: string; blurb: string; 
   { id: 'planning', num: 2, name: 'Business',          blurb: 'Outreach, pipeline and the idea list',  icon: '🎯', color: 'var(--mod-planning)' },
   { id: 'spanish',  num: 3, name: 'Spanish',         blurb: 'italki, Babbel and time on the clock',    icon: '🇪🇸', color: 'var(--mod-spanish)' },
   { id: 'fitness',  num: 4, name: 'Fitness',         blurb: 'MMA, lifting, half marathon, AI coach',   icon: '🏃', color: 'var(--mod-fitness)' },
-  { id: 'finance',  num: 5, name: 'Finances',        blurb: 'Budget, investing, spend by category',    icon: '💵', color: 'var(--mod-finance)' },
+  { id: 'finance',  num: 5, name: 'Finances',        blurb: 'Budget, saving goals, investing',    icon: '💵', color: 'var(--mod-finance)' },
   { id: 'habits',   num: 6, name: 'Habits',          blurb: 'Daily and weekly, and what is slipping',  icon: '🔁', color: 'var(--mod-habits)' },
   { id: 'goals',    num: 7, name: 'Goals',           blurb: 'What you are actually working toward',    icon: '🏁', color: 'var(--mod-goals)' },
   // Identity colour stops at eight hues. A ninth categorical hue cannot clear

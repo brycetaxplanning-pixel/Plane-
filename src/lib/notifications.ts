@@ -3,6 +3,7 @@ import { addDays, diffDays, inWeek, todayKey, weekStart } from './date';
 import { allRows } from './habits';
 import { findInsights } from './insights';
 import { needsReview } from './finance';
+import { goalRows } from './budgetGoals';
 import { lastCompletedWeek } from './awards';
 import { dueLabel, dueList } from './reminders';
 import { uid } from './id';
@@ -152,6 +153,27 @@ export function candidates(state: AppState): Candidate[] {
       body: 'Until they are sorted, the budget totals are wrong.',
       to: 'finance',
       tab: 'review',
+    });
+  }
+
+  /* A saving goal whose date the current monthly amount will not make.
+     Raised once a month per goal, because nothing about it changes faster. */
+  for (const r of goalRows(state)) {
+    if (r.status !== 'behind' && r.status !== 'stalled') continue;
+    if (r.monthsLeft === null || r.monthsLeft > 24) continue;
+    const month = todayKey().slice(0, 7);
+    out.push({
+      key: `saving:${r.goal.id}:${month}:${r.status}`,
+      kind: 'finance',
+      module: 'finance',
+      title: r.status === 'stalled'
+        ? `${r.goal.name} — nothing going in`
+        : `${r.goal.name} is behind its date`,
+      body: r.status === 'stalled'
+        ? `$${Math.round(r.remaining).toLocaleString()} still to find and no monthly amount set.`
+        : `The date needs $${Math.round(r.requiredMonthly ?? 0).toLocaleString()} a month; you are putting in $${Math.round(r.goal.monthly).toLocaleString()}.`,
+      to: 'finance',
+      tab: 'goals',
     });
   }
 

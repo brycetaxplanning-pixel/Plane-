@@ -179,13 +179,21 @@ export function sampleState(): AppState {
     [-13, 'SPOTIFY USA', 11.99], [-14, 'VENMO PAYMENT', 65], [-15, 'CHIPOTLE 2210', 19.4],
     [-16, 'WHOLE FOODS MKT 342', 54.8], [-18, 'UBER EATS', 27.3], [-20, 'COSTCO WHSE #443', 231.6],
   ];
-  s.finance.transactions = charges.map(([offset, vendor, amount]) => {
-    const auto = autoCategorize({ vendor }, rules);
-    return {
-      id: uid('tx'), date: addDays(today, offset), vendor, amount,
-      category: auto.category, reviewed: auto.reviewed, source: 'import' as const,
-    };
-  });
+  // The same shape of month, three times over, so the averages the saving
+  // goals are checked against have real months behind them.
+  s.finance.transactions = [0, 1, 2].flatMap((back) =>
+    charges.map(([offset, vendor, amount]) => {
+      const auto = autoCategorize({ vendor }, rules);
+      const drift = back === 0 ? 1 : back === 1 ? 0.94 : 1.08;
+      return {
+        id: uid('tx'), date: addDays(today, offset - back * 30), vendor,
+        amount: Math.round(amount * drift * 100) / 100,
+        category: auto.category, reviewed: auto.reviewed, source: 'import' as const,
+      };
+    }),
+  );
+
+  s.finance.monthlyIncome = 9200;
 
   s.finance.accounts = [
     { id: uid('acct'), name: 'Stock Account', type: 'Brokerage', balance: 80000, monthly: 1000, updatedAt: today },
@@ -217,6 +225,39 @@ export function sampleState(): AppState {
       current: 4, target: 10, unit: 'minutes',
       plan: 'Twenty minutes a day, one italki lesson a week',
       module: 'spanish', done: false, createdAt: addDays(today, -40),
+    },
+  ];
+
+  // Two saving goals with deliberately different verdicts: the emergency fund
+  // is on pace, the Tesla is not — which is the point of the check.
+  const tesla = s.goals.items.find((g) => g.title.startsWith('Own a used Tesla'));
+  s.finance.savingGoals = [
+    {
+      id: uid('sgoal'), name: 'Emergency fund', emoji: '\u{1F6DF}',
+      target: 13500, monthly: 800, targetDate: addDays(today, 330),
+      preset: 'emergency', createdAt: addDays(today, -120),
+      note: 'Three months of spending, in the high-yield account.',
+      contributions: [
+        { id: uid('dep'), date: addDays(today, -120), amount: 4000, note: 'Already saved' },
+        { id: uid('dep'), date: addDays(today, -75), amount: 800 },
+        { id: uid('dep'), date: addDays(today, -45), amount: 800 },
+        { id: uid('dep'), date: addDays(today, -14), amount: 900, note: 'Extra from a close' },
+      ],
+      answers: [
+        {
+          question: 'Three months or six? Self-employed income usually wants six.',
+          answer: 'Three for now — the day job covers the floor. Revisit if I go full-time on my own.',
+        },
+      ],
+    },
+    {
+      id: uid('sgoal'), name: 'Tesla in cash', emoji: '\u{1F697}',
+      target: 24000, monthly: 400, targetDate: addDays(today, 300),
+      preset: 'car', goalId: tesla?.id, createdAt: addDays(today, -60),
+      contributions: [
+        { id: uid('dep'), date: addDays(today, -60), amount: 6500, note: 'Already saved' },
+        { id: uid('dep'), date: addDays(today, -30), amount: 400 },
+      ],
     },
   ];
 

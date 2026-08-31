@@ -4,6 +4,7 @@ import { XP, streakOf } from '../lib/gamification';
 import { fmtDate, todayKey } from '../lib/date';
 import { uid } from '../lib/id';
 import { fmtMoney } from '../lib/finance';
+import { capacity, goalRows } from '../lib/budgetGoals';
 import { useApp } from '../state/context';
 import { budgetHeadroom, coachStats, financeStats, fitnessStats, habitStats, planningStats, spanishStats, workStats } from '../state/selectors';
 import { routeOf, useTabParam } from '../lib/router';
@@ -233,6 +234,8 @@ export function buildSnapshot(state: ReturnType<typeof useApp>['state']): string
   const e = spanishStats(state);
   const f = fitnessStats(state);
   const m = financeStats(state);
+  const cap = capacity(state);
+  const savingRows = goalRows(state);
   const h = habitStats(state);
   const c = coachStats(state);
   const cur = state.settings.currency;
@@ -254,6 +257,9 @@ MODULE 5 — Finances
 ${fmtMoney(m.spent, cur)} spent this month${m.budgetTotal ? ` against a ${fmtMoney(m.budgetTotal, cur)} budget` : ' (no budget set)'}. ${m.reviewCount} transactions still need a category. Invested: ${fmtMoney(m.invested, cur)} across ${state.finance.accounts.length} accounts.
 Headroom left this month: ${m.budgetTotal ? fmtMoney(m.remaining, cur) : 'unknown — no budget set'}.
 Category headroom: ${budgetHeadroom(state).slice(0, 8).map((h) => `${h.category} ${fmtMoney(h.left, cur)} of ${fmtMoney(h.budget, cur)}`).join('; ') || 'no budgets set'}.
+Take-home: ${cap.income > 0 ? `${fmtMoney(cap.income, cur)}/mo` : 'not given'}; average month of spending ${fmtMoney(cap.avgSpend, cur)}; ${cap.free === null ? 'free cash unknown' : `${fmtMoney(cap.free, cur)}/mo free after saving goals`}.
+Saving goals: ${savingRows.map((r) => `${r.goal.name} ${fmtMoney(r.balance, cur)} of ${fmtMoney(r.goal.target, cur)}, putting in ${fmtMoney(r.goal.monthly, cur)}/mo${r.requiredMonthly !== null ? ` (the date needs ${fmtMoney(r.requiredMonthly, cur)}/mo)` : ''} — ${r.status}${(r.goal.answers ?? []).length ? `; they decided: ${(r.goal.answers ?? []).map((a) => a.answer).join(' / ')}` : ''}`).join('\n') || 'none set'}
+Money spent on anything else comes out of those goals first — say which one slips and by how long.
 
 MODULE 6 — Habits
 ${h.rows.map((r) => `- ${r.habit.title} (${r.habit.cadence}): ${r.statusLabel}${r.daysSince === null ? ', never done' : `, ${r.daysSince} day(s) since`}`).join('\n') || '- none set up'}
@@ -330,6 +336,10 @@ function offlineCoachReply(input: string, state: ReturnType<typeof useApp>['stat
   if (f.total < f.targets.total) slipping.push(`${f.targets.total - f.total} fitness sessions short`);
   if (e.todayMinutes < e.dailyGoal) slipping.push(`${e.dailyGoal - e.todayMinutes} min of Spanish left today`);
   if (m.reviewCount) slipping.push(`${m.reviewCount} transactions uncategorised`);
+  for (const r of goalRows(state)) {
+    if (r.status === 'behind') slipping.push(`${r.goal.name} is ${fmtMoney(r.shortfall, state.settings.currency)}/mo short of its date`);
+    if (r.status === 'stalled') slipping.push(`${r.goal.name} has nothing going into it`);
+  }
   for (const r of h.rows) {
     if (r.status === 'red') slipping.push(`${r.habit.title} — ${r.statusLabel.toLowerCase()}`);
   }

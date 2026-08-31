@@ -79,6 +79,16 @@ export function fmtDate(key: DateKey): string {
   return fromKey(key).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+/** Month and year, for a projection where a specific day would be a lie. */
+export function fmtMonthYear(key: DateKey): string {
+  return fromKey(key).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+}
+
+/** A chosen date, with the year — a deadline two years out reads wrong without it. */
+export function fmtDateFull(key: DateKey): string {
+  return fromKey(key).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
 export function fmtDateLong(key: DateKey): string {
   return fromKey(key).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 }
