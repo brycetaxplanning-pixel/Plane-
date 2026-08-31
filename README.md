@@ -173,7 +173,15 @@ offline with no account, and it is also the whole risk: clearing your browsing
 data wipes it, losing the phone takes it, and Safari evicts storage for sites
 you have not opened in about a week.
 
-So Settings has a Backups card that says all of that plainly, downloads a dated
+There is one more failure mode underneath those: the storage can simply fill
+up. When a write fails, a banner comes down and stays until a write succeeds —
+because what is on screen is then ahead of what is stored, and the previous
+version of this dropped that on the floor, so the change looked saved and was
+gone on the next reload. The banner names the parts using the most space, and
+its backup button reads straight off state rather than through the storage that
+just failed.
+
+Settings also has a Backups card that says all of that plainly, downloads a dated
 JSON file in one tap, records when you last did it, and starts saying so after a
 fortnight — in the card and in the notification log. It also asks the browser to
 mark the storage persistent, which exempts it from routine eviction, and reports

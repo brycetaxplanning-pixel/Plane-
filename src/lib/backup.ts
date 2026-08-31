@@ -111,3 +111,34 @@ export function backupStatus(s: AppState): BackupStatus {
 }
 
 export const backupFilename = (): string => `plane-backup-${todayKey()}.json`;
+
+/**
+ * What is actually taking up the space, biggest first.
+ *
+ * Worth knowing because the answer is usually one thing. Photos on goal cards
+ * are stored inline as data URLs, so a handful of them can be most of the
+ * budget while a year of transactions is a rounding error.
+ */
+export function spaceByPart(s: AppState): { label: string; bytes: number }[] {
+  const size = (v: unknown): number => {
+    try {
+      return new Blob([JSON.stringify(v ?? null)]).size;
+    } catch {
+      return 0;
+    }
+  };
+
+  return [
+    { label: 'Goal photos', bytes: s.goals.items.reduce((n, g) => n + size(g.image), 0) },
+    { label: 'Transactions', bytes: size(s.finance.transactions) },
+    { label: 'Notes', bytes: size(s.notes.items) },
+    { label: 'Health log', bytes: size(s.health.meals) + size(s.health.vitals) + size(s.health.panels) },
+    { label: 'Habit log', bytes: size(s.habits.logs) },
+    { label: 'Training log', bytes: size(s.fitness.activities) },
+    { label: 'Conversations', bytes: size(s.coach.chat) + size(s.fitness.chat) + size(s.finance.chat) + size(s.spanish.tutorChat) },
+    { label: 'Notifications', bytes: size(s.notifications.items) },
+    { label: 'XP history', bytes: size(s.xp) },
+  ]
+    .filter((p) => p.bytes > 0)
+    .sort((a, b) => b.bytes - a.bytes);
+}

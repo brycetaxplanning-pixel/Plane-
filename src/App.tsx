@@ -12,6 +12,7 @@ import { EnlightenmentModal } from './components/Enlightenment';
 import { Nav } from './components/layout/Nav';
 import { Header } from './components/layout/Header';
 import { Toasts } from './components/ui/Toasts';
+import { SaveError } from './components/SaveError';
 import { Launcher } from './modules/Launcher';
 
 /**
@@ -127,6 +128,7 @@ function Shell() {
         </Suspense>
       </main>
 
+      <SaveError />
       <Toasts />
 
       {insight && (

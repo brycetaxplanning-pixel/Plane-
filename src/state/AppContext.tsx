@@ -13,6 +13,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [state, setState] = useState<AppState>(emptyState);
   const [ready, setReady] = useState(false);
+  const [saveError, setSaveError] = useState<'full' | 'failed' | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   useEffect(() => {
@@ -36,9 +37,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [adapter]);
 
   // Debounced write — typing in a notes field should not hit storage per keystroke.
+  //
+  // The rejection is caught rather than left to float. A failed write means the
+  // screen is showing something that is not stored, and the previous version of
+  // this dropped that on the floor: the change looked saved, and was gone on the
+  // next reload.
   useEffect(() => {
     if (!ready) return;
-    const t = setTimeout(() => { void adapter.save(state); }, 250);
+    const t = setTimeout(() => {
+      adapter.save(state).then(
+        () => setSaveError(null),
+        (err: unknown) => {
+          const full =
+            err instanceof DOMException &&
+            (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED');
+          console.error('[storage] save failed', err);
+          setSaveError(full ? 'full' : 'failed');
+        },
+      );
+    }, 250);
     return () => clearTimeout(t);
   }, [state, ready, adapter]);
 
@@ -73,8 +90,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const replaceAll = useCallback((next: AppState) => setState(next), []);
 
   const value = useMemo<AppContextValue>(
-    () => ({ state, ready, storageName: adapter.name, update, reward, replaceAll, toasts, toast, dismissToast }),
-    [state, ready, adapter.name, update, reward, replaceAll, toasts, toast, dismissToast],
+    () => ({ state, ready, storageName: adapter.name, saveError, update, reward, replaceAll, toasts, toast, dismissToast }),
+    [state, ready, adapter.name, saveError, update, reward, replaceAll, toasts, toast, dismissToast],
   );
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;

@@ -763,3 +763,16 @@
   color: inherit; text-decoration: none;
 }
 .tl-item:hover { text-decoration: none; background: color-mix(in srgb, var(--mod, var(--text-muted)) 18%, var(--surface-1)); }
+
+/* ---------- storage failure ----------
+   Sits above everything, including dialogs: while this is up, what is on
+   screen is not stored, and nothing else on the page matters as much. */
+.savebar {
+  position: fixed; left: 0; right: 0; top: 0; z-index: 90;
+  padding: var(--sp-3) 0 calc(var(--sp-3) + env(safe-area-inset-top, 0px));
+  padding-top: calc(var(--sp-3) + env(safe-area-inset-top, 0px));
+  background: color-mix(in srgb, var(--status-critical) 16%, var(--surface-1));
+  border-bottom: 2px solid var(--status-critical);
+  box-shadow: var(--shadow-2);
+}
+.savebar p { color: var(--text-secondary); }

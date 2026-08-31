@@ -17,6 +17,13 @@ export interface AppContextValue {
   /** Update plus an XP award and a toast. */
   reward: (module: ModuleId | 'general', amount: number, reason: string, fn: (s: AppState) => AppState) => void;
   replaceAll: (next: AppState) => void;
+  /**
+   * Set when a write to storage failed — in practice, when the browser's
+   * storage is full. While this is set, what is on screen is ahead of what is
+   * stored, which is the one situation the user has to be told about rather
+   * than left to discover after a reload.
+   */
+  saveError: 'full' | 'failed' | null;
   toasts: Toast[];
   toast: (text: string, xp?: number) => void;
   dismissToast: (id: string) => void;
