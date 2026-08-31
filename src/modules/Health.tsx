@@ -10,6 +10,7 @@ import {
 } from '../lib/health';
 import { useApp } from '../state/context';
 import { Modal } from '../components/ui/Modal';
+import { Tabs, panelProps } from '../components/ui/Tabs';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { DictateInput } from '../components/ui/Dictation';
 import { BarChart } from '../components/charts/BarChart';
@@ -32,17 +33,23 @@ export function Health() {
 
   return (
     <div className="stack">
-      <div className="tabs" role="tablist">
-        <button className="tab" role="tab" aria-selected={tab === 'today'} onClick={() => setTab('today')}>Today</button>
-        <button className="tab" role="tab" aria-selected={tab === 'body'} onClick={() => setTab('body')}>Body</button>
-        <button className="tab" role="tab" aria-selected={tab === 'blood'} onClick={() => setTab('blood')}>
-          Bloodwork{h.flaggedCount ? ` (${h.flaggedCount})` : ''}
-        </button>
-      </div>
+      <Tabs
+        idBase="health"
+        label="Health sections"
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'today', label: 'Today' },
+          { id: 'body', label: 'Body' },
+          { id: 'blood', label: `Bloodwork${h.flaggedCount ? ` (${h.flaggedCount})` : ''}` },
+        ]}
+      />
 
-      {tab === 'today' && <Today />}
-      {tab === 'body' && <Body />}
-      {tab === 'blood' && <Bloodwork />}
+      <div className="stack" {...panelProps('health', tab)}>
+        {tab === 'today' && <Today />}
+        {tab === 'body' && <Body />}
+        {tab === 'blood' && <Bloodwork />}
+      </div>
     </div>
   );
 }

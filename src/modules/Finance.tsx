@@ -13,6 +13,7 @@ import { goalRows } from '../lib/budgetGoals';
 import { useApp } from '../state/context';
 import { financeStats } from '../state/selectors';
 import { Modal } from '../components/ui/Modal';
+import { Tabs, panelProps } from '../components/ui/Tabs';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { Invest } from './finance/Invest';
 import { SavingGoals } from './finance/SavingGoals';
@@ -62,25 +63,29 @@ export function Finance() {
         </div>
       </section>
 
-      <div className="tabs" role="tablist">
-        <button className="tab" role="tab" aria-selected={tab === 'overview'} onClick={() => setTab('overview')}>Overview</button>
-        <button className="tab" role="tab" aria-selected={tab === 'goals'} onClick={() => setTab('goals')}>
-          Saving{behind ? ` (${behind})` : ''}
-        </button>
-        <button className="tab" role="tab" aria-selected={tab === 'invest'} onClick={() => setTab('invest')}>Invest</button>
-        <button className="tab" role="tab" aria-selected={tab === 'review'} onClick={() => setTab('review')}>
-          Review{stats.reviewCount ? ` (${stats.reviewCount})` : ''}
-        </button>
-        <button className="tab" role="tab" aria-selected={tab === 'transactions'} onClick={() => setTab('transactions')}>Transactions</button>
-        <button className="tab" role="tab" aria-selected={tab === 'rules'} onClick={() => setTab('rules')}>Rules</button>
-      </div>
+      <Tabs
+        idBase="finance"
+        label="Finance sections"
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'overview', label: 'Overview' },
+          { id: 'goals', label: `Saving${behind ? ` (${behind})` : ''}` },
+          { id: 'invest', label: 'Invest' },
+          { id: 'review', label: `Review${stats.reviewCount ? ` (${stats.reviewCount})` : ''}` },
+          { id: 'transactions', label: 'Transactions' },
+          { id: 'rules', label: 'Rules' },
+        ]}
+      />
 
+      <div className="stack" {...panelProps('finance', tab)}>
       {tab === 'overview' && <Overview month={month} trend={trend} />}
       {tab === 'goals' && <SavingGoals />}
       {tab === 'invest' && <Invest />}
       {tab === 'review' && <ReviewQueue />}
       {tab === 'transactions' && <TransactionsPanel month={month} />}
       {tab === 'rules' && <RulesPanel />}
+      </div>
 
       {tab === 'overview' && state.finance.transactions.length === 0 && (
         <section className="card card-sunken">

@@ -12,6 +12,7 @@ import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { BarChart } from '../components/charts/BarChart';
 import { Ring } from '../components/charts/Ring';
 import { StatTile } from '../components/charts/StatTile';
+import { Tabs, panelProps } from '../components/ui/Tabs';
 
 const ACCENT = 'var(--mod-spanish)';
 const KINDS: StudySession['kind'][] = ['Lesson', 'Self study', 'Listening', 'Conversation', 'Reading'];
@@ -42,11 +43,15 @@ export function Spanish() {
 
   return (
     <div className="stack">
-      <div className="tabs" role="tablist">
-        <button className="tab" role="tab" aria-selected={tab === 'practice'} onClick={() => setTab('practice')}>Practice</button>
-        <button className="tab" role="tab" aria-selected={tab === 'tutor'} onClick={() => setTab('tutor')}>AI tutor</button>
-      </div>
+      <Tabs
+        idBase="spanish"
+        label="Spanish sections"
+        active={tab}
+        onChange={setTab}
+        tabs={[{ id: 'practice', label: 'Practice' }, { id: 'tutor', label: 'AI tutor' }]}
+      />
 
+      <div className="stack" {...panelProps('spanish', tab)}>
       {tab === 'tutor' && <Tutor />}
 
       {tab === 'practice' && (
@@ -206,6 +211,7 @@ export function Spanish() {
       {logging !== null && (
         <LogForm initialMinutes={logging} platforms={state.spanish.links.map((l) => l.label)} onClose={() => setLogging(null)} onSave={logSession} />
       )}
+      </div>
     </div>
   );
 }

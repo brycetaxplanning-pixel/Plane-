@@ -310,7 +310,8 @@
   font-size: 13px; font-weight: 600; color: var(--text-secondary);
   cursor: pointer; white-space: nowrap;
 }
-.tab[aria-selected="true"] { background: var(--surface-1); color: var(--text-primary); box-shadow: var(--shadow-1); }
+.tab[aria-selected="true"],
+.tab[aria-pressed="true"] { background: var(--surface-1); color: var(--text-primary); box-shadow: var(--shadow-1); }
 /* Four tabs have to fit a 390px phone without a hidden horizontal scroll. */
 @media (max-width: 520px) {
   .tab { padding: 7px 5px; font-size: 11.5px; min-width: 0; letter-spacing: -0.01em; }

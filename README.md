@@ -124,6 +124,26 @@ and the next time you open the app it says so. You wear 🧘 beside your name fo
 the following week and lose it if you don't repeat. It's the only award of its
 kind on purpose — a row of five badges means nothing.
 
+## Keyboard and screen readers
+
+Audited rather than assumed, and four things were broken.
+
+Eight tab rows carried `role="tab"` without keeping the contract that role
+makes — no arrow keys, every tab a separate tab stop, and no panel to point at.
+A row that announces itself as tabs and then does not behave like them is worse
+than plain buttons. They now share one component with a roving tabindex, arrow,
+Home and End keys, and `aria-controls` wired to a real `role="tabpanel"`. The
+one row that was never really tabs — the timeline's week / five-weeks switch,
+which shows the same region over a different span — says what it is instead:
+toggle buttons with `aria-pressed`.
+
+Dialogs did not trap focus, so tabbing walked out into the page behind, and did
+not give focus back on close. Both fixed, with the opener captured during render
+because by the time effects run an autofocused field has already taken it.
+
+There was no skip link past the fourteen-item nav, and the launcher — the one
+page with no header — had no `h1` at all.
+
 ## Themes
 
 Seven skins: Classic (which follows your light/dark setting) plus Neon Miami,

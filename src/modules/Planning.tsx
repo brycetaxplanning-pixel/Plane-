@@ -14,6 +14,7 @@ import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { BarChart } from '../components/charts/BarChart';
 import { Ring } from '../components/charts/Ring';
 import { StatTile } from '../components/charts/StatTile';
+import { Tabs, panelProps } from '../components/ui/Tabs';
 
 const ACCENT = 'var(--mod-planning)';
 
@@ -91,23 +92,24 @@ export function Planning() {
 
   return (
     <div className="stack">
-      <div className="tabs" role="tablist">
-        {businesses.map((b) => (
-          <button
-            key={b.id}
-            className="tab"
-            role="tab"
-            aria-selected={tab === 'planning' && active?.id === b.id}
-            onClick={() => { setTab('planning'); setActiveId(b.id); }}
-          >
-            {b.emoji} {b.name}
-          </button>
-        ))}
-        <button className="tab" role="tab" aria-selected={tab === 'ideas'} onClick={() => setTab('ideas')}>
-          Ideas{state.planning.ideas.length ? ` (${state.planning.ideas.length})` : ''}
-        </button>
-      </div>
+      {/* One row, two kinds of tab: a business, or the idea list. They are
+          flattened onto one key so the row behaves as a single tablist. */}
+      <Tabs
+        idBase="business"
+        label="Businesses and ideas"
+        active={tab === 'ideas' ? 'ideas' : `biz-${active?.id ?? ''}`}
+        onChange={(id) => {
+          if (id === 'ideas') { setTab('ideas'); return; }
+          setTab('planning');
+          setActiveId(id.replace(/^biz-/, ''));
+        }}
+        tabs={[
+          ...businesses.map((b) => ({ id: `biz-${b.id}`, label: `${b.emoji} ${b.name}` })),
+          { id: 'ideas', label: `Ideas${state.planning.ideas.length ? ` (${state.planning.ideas.length})` : ''}` },
+        ]}
+      />
 
+      <div className="stack" {...panelProps('business', tab === 'ideas' ? 'ideas' : `biz-${active?.id ?? ''}`)}>
       {tab === 'ideas' && <Ideas />}
 
       {tab === 'planning' && (
@@ -354,6 +356,7 @@ export function Planning() {
           }}
         />
       )}
+      </div>
     </div>
   );
 }

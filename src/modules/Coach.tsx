@@ -17,6 +17,7 @@ import { Chat } from '../components/Chat';
 import { Analysis } from './coach/Analysis';
 import { realityCheck } from '../lib/insights';
 import type { CoachMode } from '../lib/schema';
+import { Tabs, panelProps } from '../components/ui/Tabs';
 
 const ACCENT = 'var(--mod-coach)';
 const SCALE = [1, 2, 3, 4, 5];
@@ -42,12 +43,19 @@ export function Coach() {
 
   return (
     <div className="stack">
-      <div className="tabs" role="tablist">
-        <button className="tab" role="tab" aria-selected={tab === 'checkin'} onClick={() => setTab('checkin')}>Check in</button>
-        <button className="tab" role="tab" aria-selected={tab === 'analysis'} onClick={() => setTab('analysis')}>Analysis</button>
-        <button className="tab" role="tab" aria-selected={tab === 'talk'} onClick={() => setTab('talk')}>Talk</button>
-      </div>
+      <Tabs
+        idBase="coach"
+        label="Life Coach sections"
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'checkin', label: 'Check in' },
+          { id: 'analysis', label: 'Analysis' },
+          { id: 'talk', label: 'Talk' },
+        ]}
+      />
 
+      <div className="stack" {...panelProps('coach', tab)}>
       {tab === 'analysis' && <Analysis />}
 
       {tab === 'checkin' && (
@@ -167,6 +175,7 @@ export function Coach() {
           }}
         />
       )}
+      </div>
     </div>
   );
 }

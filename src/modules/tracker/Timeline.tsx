@@ -37,9 +37,12 @@ export function Timeline() {
 
   return (
     <>
-      <div className="tabs" role="tablist" style={{ maxWidth: 280 }}>
-        <button className="tab" role="tab" aria-selected={view === 'week'} onClick={() => setView('week')}>This week</button>
-        <button className="tab" role="tab" aria-selected={view === 'month'} onClick={() => setView('month')}>Next 5 weeks</button>
+      {/* Not tabs: both choices show the same region over a different span, so
+          these are toggle buttons and say so, rather than promising a tablist's
+          keyboard contract they do not keep. */}
+      <div className="tabs" role="group" aria-label="How far ahead to show" style={{ maxWidth: 280 }}>
+        <button type="button" className="tab" aria-pressed={view === 'week'} onClick={() => setView('week')}>This week</button>
+        <button type="button" className="tab" aria-pressed={view === 'month'} onClick={() => setView('month')}>Next 5 weeks</button>
       </div>
 
       {late.length > 0 && (

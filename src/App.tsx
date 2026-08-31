@@ -96,11 +96,30 @@ function Shell() {
 
   return (
     <div className="app-shell">
+      {/* First tab stop on every page. The nav is fourteen links; without this
+          a keyboard user walks all of them before reaching the content.
+
+          The default is prevented because the app routes on the hash: letting
+          "#main" through would be read as an unknown route and bounce you to
+          the launcher, which is the opposite of skipping to the content. */}
+      <a
+        className="skip-link"
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById('main')?.focus();
+        }}
+      >
+        Skip to content
+      </a>
+
       <Nav route={route} />
 
       {route !== 'launcher' && <Header title={title} sub={sub} showBack route={route} />}
 
       <main
+        id="main"
+        tabIndex={-1}
         className={`container view ${direction}`}
         key={route}
         style={{ paddingTop: route === 'launcher' ? 'var(--sp-4)' : 0, paddingBottom: 'var(--sp-7)' }}

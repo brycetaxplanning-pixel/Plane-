@@ -14,6 +14,7 @@ import { StatTile } from '../components/charts/StatTile';
 import { Chat } from '../components/Chat';
 import { Physique } from './fitness/Physique';
 import { Plan } from './fitness/Plan';
+import { Tabs, panelProps } from '../components/ui/Tabs';
 
 const ACCENT = 'var(--mod-fitness)';
 
@@ -75,12 +76,20 @@ export function Fitness() {
         </button>
       </section>
 
-      <div className="tabs" role="tablist">
-        <button className="tab" role="tab" aria-selected={tab === 'week'} onClick={() => setTab('week')}>The week</button>
-        <button className="tab" role="tab" aria-selected={tab === 'race'} onClick={() => setTab('race')}>Half marathon</button>
-        <button className="tab" role="tab" aria-selected={tab === 'physique'} onClick={() => setTab('physique')}>Physique</button>
-        <button className="tab" role="tab" aria-selected={tab === 'coach'} onClick={() => setTab('coach')}>Coach</button>
-      </div>
+      <Tabs
+        idBase="fitness"
+        label="Fitness sections"
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'week', label: 'The week' },
+          { id: 'race', label: 'Half marathon' },
+          { id: 'physique', label: 'Physique' },
+          { id: 'coach', label: 'Coach' },
+        ]}
+      />
+
+      <div className="stack" {...panelProps('fitness', tab)}>
 
       {tab === 'week' && (
         <>
@@ -168,6 +177,7 @@ export function Fitness() {
       )}
 
       {logging && <ActivityForm onClose={() => setLogging(false)} onSave={logActivity} />}
+      </div>
     </div>
   );
 }

@@ -34,6 +34,9 @@ export function Launcher() {
 
   return (
     <div className="launch">
+      {/* The launcher has no header bar, so this is the page's only heading.
+          Screen readers navigate by them. */}
+      <h1 className="sr-only">Plane — all modules</h1>
       {resolveSkin(state.settings) === 'latenight' && <CatDeck />}
 
       <div className="launch-strip">
