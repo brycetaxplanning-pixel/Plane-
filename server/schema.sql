@@ -8,13 +8,12 @@ CREATE TABLE IF NOT EXISTS devices (
   created_at INTEGER NOT NULL
 );
 
--- When that device wants waking. No titles, no module names, no content:
--- `tag` is only there so a client can recognise its own rows.
+-- When that device wants waking. A device and a time, and that is the whole
+-- row: no titles, no module names, no record ids, nothing to correlate.
 CREATE TABLE IF NOT EXISTS wakes (
   id        INTEGER PRIMARY KEY AUTOINCREMENT,
   device_id TEXT NOT NULL REFERENCES devices(id),
-  fire_at   INTEGER NOT NULL,
-  tag       TEXT
+  fire_at   INTEGER NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS wakes_due ON wakes (fire_at);

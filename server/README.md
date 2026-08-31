@@ -5,7 +5,8 @@ phone when something is due. About 200 lines, one table, no framework.
 
 ## What it knows about you
 
-It stores an endpoint for your browser, and a list of times. That is all.
+It stores an endpoint for your browser, and a list of times. That is all — the
+`wakes` table is a device id and an integer, with no room for anything else.
 
 Pushes are sent **with no payload**. When one lands, the service worker on your
 phone reads the wording out of IndexedDB — written there by the app, never
@@ -44,6 +45,15 @@ with the app closed*.
 On an iPhone this only works once the app is on the home screen — Safari does
 not allow web push from a tab. Add to Home Screen first, then turn it on from
 inside the installed app.
+
+## Two things worth knowing about the endpoint
+
+`/subscribe` only accepts an endpoint belonging to a real push service —
+Google's, Mozilla's, Apple's or Microsoft's, over https, never an IP literal.
+Without that check the Worker would be an open request forwarder: anyone who
+found its URL could register any address as their "endpoint" and have the Worker
+fetch it from Cloudflare's egress. `/test` returns a status and never the push
+service's response body, for the same reason.
 
 ## Running the tests
 

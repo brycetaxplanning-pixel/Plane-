@@ -166,6 +166,19 @@ under Targets. And an import fills gaps rather than overwriting: anything you
 typed by hand survives unless you tick the box, and the number of clashes is
 shown before you decide. Everything is read on the device; no file is uploaded.
 
+## Backups, and why you need them
+
+Everything lives in one browser's localStorage. That is what makes the app work
+offline with no account, and it is also the whole risk: clearing your browsing
+data wipes it, losing the phone takes it, and Safari evicts storage for sites
+you have not opened in about a week.
+
+So Settings has a Backups card that says all of that plainly, downloads a dated
+JSON file in one tap, records when you last did it, and starts saying so after a
+fortnight — in the card and in the notification log. It also asks the browser to
+mark the storage persistent, which exempts it from routine eviction, and reports
+whether the browser agreed rather than assuming it did.
+
 ## Notifications with the app closed
 
 Everything else in this app works with no server. This does not, and cannot:
@@ -175,9 +188,9 @@ inside the free tier. `server/README.md` has them.
 
 It is built so that the server learns as little as possible. Pushes are sent
 **with no payload**; when one lands, the service worker reads the wording out of
-IndexedDB on the device and shows the notification from there. The server holds
-an endpoint and a list of times, so it — and the push service in the middle —
-know that something was due, and never what.
+IndexedDB on the device and shows the notification from there. What goes up is a
+list of timestamps — no titles, no module names, no record ids — so the server,
+and the push service in the middle, know that something was due and never what.
 
 The encryption is written from scratch on WebCrypto and checked against the test
 vector in RFC 8291 §5, which fixes the salt and both key pairs: the output is

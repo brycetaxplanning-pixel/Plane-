@@ -35,7 +35,7 @@ function makeDB() {
       return {};
     }
     if (s.startsWith('INSERT INTO wakes')) {
-      wakes.push({ id: nextWakeId++, device_id: args[0], fire_at: args[1], tag: args[2] });
+      wakes.push({ id: nextWakeId++, device_id: args[0], fire_at: args[1] });
       return {};
     }
     if (s.startsWith('DELETE FROM wakes WHERE id IN')) {
@@ -86,7 +86,7 @@ const VAPID = {
 };
 
 const SUB = {
-  endpoint: 'https://push.example.com/v1/abc',
+  endpoint: 'https://fcm.googleapis.com/fcm/send/abc',
   keys: {
     p256dh: 'BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcxaOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4',
     auth: 'BTBZMqHH6r4Tts7J_aSIgg',
@@ -97,7 +97,7 @@ let pushes = [];
 let pushStatus = 201;
 globalThis.fetch = async (url, init) => {
   pushes.push({ url: String(url), headers: init.headers, body: init.body });
-  return new Response('', { status: pushStatus });
+  return new Response(globalThis.__body ?? '', { status: pushStatus });
 };
 
 const post = (path, body, auth) =>
@@ -149,7 +149,7 @@ console.log('\n3. Setting a schedule');
   }, globalThis.__auth);
   const out = await res.json();
   check('only the sane future times are kept', out.stored, 1);
-  check('and the row carries no content beyond a tag', Object.keys(db._wakes[0]).sort(), ['device_id', 'fire_at', 'id', 'tag']);
+  check('and the row is a device and a time, nothing else', Object.keys(db._wakes[0]).sort(), ['device_id', 'fire_at', 'id']);
 
   await post('/schedule', { wakes: [{ at: now + 120_000 }] }, globalThis.__auth);
   check('a second schedule replaces the first rather than adding to it', db._wakes.length, 1);
@@ -172,7 +172,7 @@ console.log('\n4. Firing what is due');
   check('with no body at all', sent.body, undefined);
   check('and no content-encoding, because there is nothing to encode', sent.headers['Content-Encoding'], undefined);
   check('the VAPID header is present', String(sent.headers.Authorization).startsWith('vapid t='), true);
-  check('and it is addressed to the push origin', JSON.parse(atob(String(sent.headers.Authorization).split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).aud, 'https://push.example.com');
+  check('and it is addressed to the push origin', JSON.parse(atob(String(sent.headers.Authorization).split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).aud, 'https://fcm.googleapis.com');
 }
 
 console.log('\n5. A subscription the browser has thrown away is cleaned up');
@@ -195,6 +195,55 @@ console.log('\n6. Unsubscribing');
   await post('/unsubscribe', {}, auth);
   check('the device is gone', db._devices.size, 0);
   check('and so is its schedule', db._wakes.length, 0);
+}
+
+console.log('\n7. The endpoint has to be a real push service');
+{
+  db = makeDB();
+  const refused = [
+    'https://attacker.example.com/collect',
+    'http://fcm.googleapis.com/fcm/send/abc',   // not https
+    'https://169.254.169.254/latest/meta-data', // link-local, the classic probe
+    'https://127.0.0.1:8080/admin',
+    'https://[::1]/admin',
+    'https://fcm.googleapis.com.evil.example/x',
+    'file:///etc/passwd',
+    'not a url at all',
+  ];
+  let allRefused = true;
+  for (const endpoint of refused) {
+    const res = await post('/subscribe', { subscription: { endpoint, keys: { p256dh: 'x', auth: 'y' } } });
+    if (res.status !== 400) { allRefused = false; console.log('    accepted: ' + endpoint); }
+  }
+  check('an endpoint that is not a push service is refused', allRefused, true);
+  check('and nothing is stored for it', db._devices.size, 0);
+
+  const allowed = [
+    'https://fcm.googleapis.com/fcm/send/abc',
+    'https://updates.push.services.mozilla.com/wpush/v2/abc',
+    'https://web.push.apple.com/abc',
+    'https://sin.notify.windows.com/w/?token=abc',
+  ];
+  let allAccepted = true;
+  for (const endpoint of allowed) {
+    const res = await post('/subscribe', { subscription: { endpoint, keys: { p256dh: 'x', auth: 'y' } } });
+    if (res.status !== 200) { allAccepted = false; console.log('    refused: ' + endpoint); }
+  }
+  check('every real push service is accepted', allAccepted, true);
+}
+
+console.log('\n8. The test route does not reflect what the push service said');
+{
+  db = makeDB();
+  const out = await (await post('/subscribe', { subscription: SUB })).json();
+  const auth = `${out.deviceId}:${out.secret}`;
+  pushStatus = 403;
+  globalThis.__body = 'SECRET-BODY-FROM-UPSTREAM';
+  const res = await post('/test', {}, auth);
+  const seen = JSON.stringify(await res.json());
+  check('the body is not passed back to the caller', seen.includes('SECRET-BODY'), false);
+  check('only a status is', Object.keys(JSON.parse(seen)).sort(), ['ok', 'status']);
+  pushStatus = 201;
 }
 
 console.log(failed ? `\n${failed} FAILURE(S)` : '\nAll checks passed.');

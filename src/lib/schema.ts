@@ -649,6 +649,9 @@ export interface Settings {
   /** Play a random animation when a task is checked off. */
   completionFx: boolean;
   anthropicApiKey: string;
+  /** When the data was last exported. Drives the backup reminder — there is no
+   *  server holding a copy, so this is the only safety net there is. */
+  lastExport?: DateKey;
   aiModel: string;
   currency: string;
 }

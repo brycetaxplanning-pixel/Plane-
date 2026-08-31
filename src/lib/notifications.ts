@@ -5,6 +5,7 @@ import { findInsights } from './insights';
 import { needsReview } from './finance';
 import { goalRows } from './budgetGoals';
 import { flagged, latestPanel, monthsSincePanel } from './health';
+import { backupStatus } from './backup';
 import { lastCompletedWeek } from './awards';
 import { dueLabel, dueList } from './reminders';
 import { uid } from './id';
@@ -211,6 +212,23 @@ export function candidates(state: AppState): Candidate[] {
       tab: 'blood',
     });
   }
+  /* No backup, and something to lose. Raised monthly, not daily — this is a
+     standing risk, not an emergency, and nagging would only teach you to
+     ignore it. */
+  const backup = backupStatus(state);
+  if (backup.due) {
+    out.push({
+      key: `backup:${todayKey().slice(0, 7)}`,
+      kind: 'system',
+      module: undefined,
+      title: backup.lastExport
+        ? `${backup.daysSince} days since your last backup`
+        : 'Nothing here has ever been backed up',
+      body: `${backup.items.toLocaleString()} entries live in this browser and nowhere else. Settings → Backups.`,
+      to: 'settings',
+    });
+  }
+
   /* Reminders that have arrived or gone past. */
   for (const d of dueList(state)) {
     const late = -d.daysAway;

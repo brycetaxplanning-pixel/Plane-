@@ -51,6 +51,35 @@ async function authorise(request, env) {
   return row && sameSecret(row.secret, secret) ? row : null;
 }
 
+/**
+ * The hosts a real push subscription can point at.
+ *
+ * Without this, `/subscribe` plus `/test` is an open request forwarder: anyone
+ * who finds this Worker could register any URL as their "endpoint" and have
+ * the Worker fetch it from Cloudflare's egress on demand. The endpoint is the
+ * one field here that becomes an outbound request, so it is the one field that
+ * has to be pinned down.
+ */
+const PUSH_HOSTS = [
+  /^fcm\.googleapis\.com$/,                    // Chrome, Edge, and Chromium generally
+  /(^|\.)push\.services\.mozilla\.com$/,      // Firefox
+  /(^|\.)push\.apple\.com$/,                   // Safari, iOS
+  /(^|\.)notify\.windows\.com$/,               // older Edge
+];
+
+function isPushEndpoint(raw) {
+  let url;
+  try {
+    url = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== 'https:') return false;
+  // An IP literal is never a push service, and is the shape an SSRF probe takes.
+  if (/^\[|^\d+\.\d+\.\d+\.\d+$/.test(url.hostname)) return false;
+  return PUSH_HOSTS.some((re) => re.test(url.hostname));
+}
+
 export default {
   async fetch(request, env) {
     const origin = allowedOrigin(request, env);
@@ -77,6 +106,9 @@ export default {
       if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) {
         return json({ error: 'a full push subscription is required' }, 400, origin);
       }
+      if (!isPushEndpoint(sub.endpoint)) {
+        return json({ error: 'that endpoint is not a known push service' }, 400, origin);
+      }
       const id = randomId();
       const secret = randomId();
       await env.DB.prepare(
@@ -93,16 +125,19 @@ export default {
     if (url.pathname === '/schedule') {
       const wakes = Array.isArray(body.wakes) ? body.wakes : [];
       const now = Date.now();
+      // Times and nothing else. An earlier version accepted a `tag` alongside
+      // each time, and the client's tags named the module and the record —
+      // which quietly made a liar of every claim about what this server knows.
       const clean = wakes
-        .map((w) => ({ at: Number(w.at), tag: String(w.tag ?? '').slice(0, 64) }))
-        .filter((w) => Number.isFinite(w.at) && w.at > now && w.at < now + 400 * 86_400_000)
+        .map((w) => Number(w.at))
+        .filter((at) => Number.isFinite(at) && at > now && at < now + 400 * 86_400_000)
         .slice(0, 200);
 
       const stmts = [env.DB.prepare('DELETE FROM wakes WHERE device_id = ?').bind(device.id)];
-      for (const w of clean) {
+      for (const at of clean) {
         stmts.push(
-          env.DB.prepare('INSERT INTO wakes (device_id, fire_at, tag) VALUES (?, ?, ?)')
-            .bind(device.id, Math.round(w.at), w.tag),
+          env.DB.prepare('INSERT INTO wakes (device_id, fire_at) VALUES (?, ?)')
+            .bind(device.id, Math.round(at)),
         );
       }
       await env.DB.batch(stmts);
@@ -120,7 +155,9 @@ export default {
     /* Sends one push to this device now — the button in Settings. */
     if (url.pathname === '/test') {
       const result = await push(device, env);
-      return json(result, result.ok ? 200 : 502, origin);
+      // Status only. Handing back the push service's response body would make
+      // this a reflection channel for whatever the Worker can reach.
+      return json({ ok: result.ok, status: result.status }, result.ok ? 200 : 502, origin);
     }
 
     return json({ error: 'not found' }, 404, origin);

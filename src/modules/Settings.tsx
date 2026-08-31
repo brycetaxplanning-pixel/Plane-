@@ -10,6 +10,7 @@ import { downloadFile, exportJSON, importJSON } from '../lib/storage';
 import { sampleState } from '../lib/seed';
 import { InstallPrompt } from '../components/InstallPrompt';
 import { PushSetup } from '../components/PushSetup';
+import { BackupCard } from '../components/BackupCard';
 import { todayKey } from '../lib/date';
 import { useApp } from '../state/context';
 import { Field, SectionHead } from '../components/ui/Field';
@@ -247,6 +248,8 @@ export function Settings() {
 
       <InstallPrompt />
 
+      <BackupCard />
+
       <section className="card">
         <SectionHead
           title="Your data"
@@ -261,6 +264,9 @@ export function Settings() {
             className="btn"
             onClick={() => {
               downloadFile(`plane-backup-${todayKey()}.json`, exportJSON(state));
+              // Stamped here too, so the reminder above cannot disagree with
+              // what actually happened.
+              update((st) => ({ ...st, settings: { ...st.settings, lastExport: todayKey() } }));
               toast('Backup downloaded');
             }}
           >

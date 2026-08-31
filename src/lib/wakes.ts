@@ -132,6 +132,13 @@ export function wakePlan(state: AppState, now = Date.now()): Wake[] {
     .slice(0, 100);
 }
 
-/** What the server is allowed to see: a time and an opaque tag. */
-export const timesOnly = (wakes: Wake[]): { at: number; tag: string }[] =>
-  wakes.map((w) => ({ at: w.at, tag: w.tag }));
+/**
+ * What the server is allowed to see: a time, and nothing else.
+ *
+ * The tags stay here. They name the module and the record — `work:abc:2026-09-02`
+ * — which is exactly the sort of thing the server is not supposed to learn, and
+ * it does not need them: the client replaces the whole schedule each time, so
+ * there is nothing to reconcile by id.
+ */
+export const timesOnly = (wakes: Wake[]): { at: number }[] =>
+  wakes.map((w) => ({ at: w.at }));

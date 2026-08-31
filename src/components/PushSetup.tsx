@@ -125,7 +125,8 @@ export function PushSetup() {
       {error && <p className="t-xs t-crit" style={{ marginTop: 'var(--sp-2)' }}>{error}</p>}
 
       <p className="t-xs t-muted" style={{ marginTop: 'var(--sp-3)' }}>
-        The server is told <em>when</em> to wake this device and nothing else — no titles, no module names, no content.
+        The server is told <em>when</em> to wake this device and nothing else — it receives a list of timestamps, with
+        no titles, no module names and no record ids.
         The wording is written into this browser and read back when the push arrives, so what a notification says never
         leaves the device. {plan.length} thing{plan.length === 1 ? '' : 's'} would be scheduled right now.
       </p>
