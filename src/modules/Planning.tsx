@@ -15,6 +15,7 @@ import { BarChart } from '../components/charts/BarChart';
 import { Ring } from '../components/charts/Ring';
 import { StatTile } from '../components/charts/StatTile';
 import { Tabs, panelProps } from '../components/ui/Tabs';
+import { Icons } from '../components/layout/Icons';
 
 const ACCENT = 'var(--mod-planning)';
 
@@ -57,7 +58,7 @@ export function Planning() {
     return (
       <div className="stack">
         <EmptyState
-          icon="🏢"
+          icon={Icons.building()}
           title="No businesses set up"
           hint="Each one keeps its own outreach target and its own pipeline."
         />
@@ -197,7 +198,7 @@ export function Planning() {
           action={<button className="btn btn-sm" onClick={() => setDealOpen('new')}>+ Deal</button>}
         />
         {stats.deals.length === 0 ? (
-          <EmptyState icon="🎯" title="No deals tracked yet" hint="Add a prospect once a conversation turns into something real." />
+          <EmptyState icon={Icons.target()} title="No deals tracked yet" hint="Add a prospect once a conversation turns into something real." />
         ) : (
           <div className="stack-2">
             {[...stats.deals]
@@ -225,7 +226,7 @@ export function Planning() {
         />
         {thisWeek.length === 0 ? (
           <EmptyState
-            icon="📞"
+            icon={Icons.phone()}
             title="Nothing logged yet this week"
             hint={stats.target > 0 ? `Every call, email and DM counts toward the ${stats.target}.` : 'Log a contact here if this business ever needs one.'}
           />

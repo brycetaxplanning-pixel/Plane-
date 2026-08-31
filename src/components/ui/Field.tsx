@@ -17,7 +17,8 @@ export function Field({ label, children, hint }: { label: string; children: Reac
   );
 }
 
-export function EmptyState({ icon, title, hint }: { icon: string; title: string; hint?: string }) {
+/** `icon` takes a glyph from Icons — `icon={Icons.folder()}`. */
+export function EmptyState({ icon, title, hint }: { icon: React.ReactNode; title: string; hint?: string }) {
   return (
     <div className="empty">
       <span className="empty-icon" aria-hidden>{icon}</span>

@@ -70,6 +70,9 @@
 
   /* Type */
   --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Card numbers, ids and unit captions. Every platform ships one, so this
+     costs no download in an app that has to work with the radio off. */
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   /* Space & shape */
   --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
@@ -154,4 +157,39 @@
 
   --success-text: #5fd85f;
   --crit-text:    #ff9494;
+}
+
+/* ------------------------------------------------------------------
+   Card stock.
+
+   A trading card is printed on its own stock — it does not take the colour
+   of the table it is lying on. So the launcher's cards carry their own dark
+   ground and their own ink on every skin, light ones included, rather than
+   inheriting the page surface. That is what makes the module hue read as a
+   colour rather than a tint, and it is the only reason a white foil sweep
+   and a gold rank are visible at all.
+
+   Because the card supplies its own ground it must also supply its own ink:
+   nothing inside a card may take --text-primary or --text-secondary, or it
+   goes dark-on-dark the moment the page is light.
+------------------------------------------------------------------ */
+
+:root {
+  --card-stock:    #14131c;
+  --card-stock-lo: #0c0b12;
+  --card-ink:      #f4f3fa;
+  --card-ink-dim:  #a8a5bd;  /* 6.6:1 on the stock */
+  --card-rule:     rgba(255, 255, 255, 0.13);
+
+  /* Gold is a rank, not an identity — the one colour allowed on any module —
+     so it lives here rather than in the categorical series, and sits far from
+     every series hue. */
+  --rare-gold:  #e2b552;
+  --rare-medal: linear-gradient(135deg, #f7e7a0, #d9a441 55%, #f7e7a0);
+  --rare-ink:   #241a03;
+
+  /* The foil: a narrow specular band, not a wash. The first pass was 24
+     degrees wide and read as a smudge rather than a sweep. */
+  --foil-1: rgba(255, 255, 255, 0.30);
+  --foil-2: rgba(150, 225, 255, 0.20);
 }

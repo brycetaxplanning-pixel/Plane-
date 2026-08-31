@@ -10,6 +10,7 @@ import { Modal } from '../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { DictateInput } from '../components/ui/Dictation';
 import { StatTile } from '../components/charts/StatTile';
+import { Icons } from '../components/layout/Icons';
 
 const ACCENT = 'var(--mod-dating)';
 
@@ -68,7 +69,7 @@ export function Dating() {
         <Privacy />
         <section className="card">
           <EmptyState
-            icon="🌹"
+            icon={Icons.heart()}
             title="Nobody tracked yet"
             hint="Add someone by first name or initials, then log what you actually spend."
           />

@@ -1,6 +1,6 @@
 import { MODULES } from '../../lib/schema';
 import { routeOf, type Route } from '../../lib/router';
-import { Icons } from './Icons';
+import { Icons, MODULE_GLYPH } from './Icons';
 
 interface NavEntry {
   route: Route;
@@ -12,20 +12,13 @@ interface NavEntry {
   primary?: boolean;
 }
 
-const MODULE_ICONS: Record<string, () => React.ReactNode> = {
-  work: Icons.folder, planning: Icons.target, spanish: Icons.chat,
-  fitness: Icons.run, finance: Icons.wallet, habits: Icons.repeat,
-  goals: Icons.flag, notes: Icons.note, coach: Icons.compass,
-  health: Icons.pulse, dating: Icons.heart,
-};
-
 const ENTRIES: NavEntry[] = [
   { route: 'launcher', label: 'Modules', icon: Icons.grid, primary: true },
   { route: 'home', label: 'Progress', icon: Icons.home, primary: true },
   ...MODULES.map((m) => ({
     route: m.id as Route,
     label: m.name.replace('Abitos Tax Prep', 'Abitos'),
-    icon: MODULE_ICONS[m.id],
+    icon: MODULE_GLYPH[m.id],
     color: m.color,
   })),
   { route: 'tracker', label: 'Tracker', icon: Icons.calendar },
@@ -36,7 +29,7 @@ export function Nav({ route }: { route: Route }) {
   return (
     <nav className="nav" aria-label="Modules">
       <a className="nav-brand" href={routeOf('launcher')}>
-        <span aria-hidden style={{ fontSize: 19 }}>🛫</span>
+        <span className="nav-brand-mark" aria-hidden>{Icons.plane()}</span>
         <strong style={{ fontSize: 15 }}>Plane</strong>
       </a>
 

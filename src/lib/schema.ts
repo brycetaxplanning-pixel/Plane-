@@ -970,24 +970,28 @@ function liftLegacyGoals(raw: unknown): Goal[] {
   });
 }
 
-export const MODULES: { id: ModuleId; num: number; name: string; blurb: string; icon: string; color: string }[] = [
-  { id: 'work',     num: 1, name: 'Abitos Tax Prep', blurb: 'Client projects and what has to ship',   icon: '📁', color: 'var(--mod-work)' },
-  { id: 'planning', num: 2, name: 'Business',          blurb: 'Outreach, pipeline and the idea list',  icon: '🎯', color: 'var(--mod-planning)' },
-  { id: 'spanish',  num: 3, name: 'Spanish',         blurb: 'italki, Babbel and time on the clock',    icon: '🇪🇸', color: 'var(--mod-spanish)' },
-  { id: 'fitness',  num: 4, name: 'Fitness',         blurb: 'MMA, lifting, half marathon, AI coach',   icon: '🏃', color: 'var(--mod-fitness)' },
-  { id: 'finance',  num: 5, name: 'Finances',        blurb: 'Budget, saving goals, investing',    icon: '💵', color: 'var(--mod-finance)' },
-  { id: 'habits',   num: 6, name: 'Habits',          blurb: 'Daily and weekly, and what is slipping',  icon: '🔁', color: 'var(--mod-habits)' },
-  { id: 'goals',    num: 7, name: 'Goals',           blurb: 'What you are actually working toward',    icon: '🏁', color: 'var(--mod-goals)' },
+/* The mark for each of these lives in components/layout/Icons.tsx — one grid,
+   one stroke weight, so eleven modules read as one family. It used to be an
+   emoji per module, which is drawn by the platform at the platform's weight
+   in the platform's palette, and no two of them agree with each other. */
+export const MODULES: { id: ModuleId; num: number; name: string; blurb: string; color: string }[] = [
+  { id: 'work',     num: 1, name: 'Abitos Tax Prep', blurb: 'Client projects and what has to ship',   color: 'var(--mod-work)' },
+  { id: 'planning', num: 2, name: 'Business',          blurb: 'Outreach, pipeline and the idea list',  color: 'var(--mod-planning)' },
+  { id: 'spanish',  num: 3, name: 'Spanish',         blurb: 'italki, Babbel and time on the clock',    color: 'var(--mod-spanish)' },
+  { id: 'fitness',  num: 4, name: 'Fitness',         blurb: 'MMA, lifting, half marathon, AI coach',   color: 'var(--mod-fitness)' },
+  { id: 'finance',  num: 5, name: 'Finances',        blurb: 'Budget, saving goals, investing',    color: 'var(--mod-finance)' },
+  { id: 'habits',   num: 6, name: 'Habits',          blurb: 'Daily and weekly, and what is slipping',  color: 'var(--mod-habits)' },
+  { id: 'goals',    num: 7, name: 'Goals',           blurb: 'What you are actually working toward',    color: 'var(--mod-goals)' },
   // Identity colour stops at eight hues. A ninth categorical hue cannot clear
   // the separation gate, so Notes is distinguished by texture and ink instead.
-  { id: 'notes',    num: 8, name: 'Notes',           blurb: 'Journal, lists and everything else',      icon: '📝', color: 'var(--mod-notes)' },
-  { id: 'coach',    num: 9, name: 'Life Coach',      blurb: 'Check-ins and a thinking partner',        icon: '🧭', color: 'var(--mod-coach)' },
+  { id: 'notes',    num: 8, name: 'Notes',           blurb: 'Journal, lists and everything else',      color: 'var(--mod-notes)' },
+  { id: 'coach',    num: 9, name: 'Life Coach',      blurb: 'Check-ins and a thinking partner',        color: 'var(--mod-coach)' },
   // Health shares the Fitness hue on purpose: both are the body, the eight
   // categorical slots are spent, and a tile is identified by its name and
   // number, not by colour alone.
-  { id: 'health',   num: 10, name: 'Health',          blurb: 'Weight, food, sleep and bloodwork',       icon: '🩺', color: 'var(--mod-health)' },
+  { id: 'health',   num: 10, name: 'Health',          blurb: 'Weight, food, sleep and bloodwork',       color: 'var(--mod-health)' },
   // Shares the Life Coach hue for the same reason Health shares Fitness's: the
   // eight categorical slots are spent, and these two sit in the same corner of
   // life. The name and number tell them apart.
-  { id: 'dating',   num: 11, name: 'Dating',          blurb: 'Who you are seeing and what it costs',    icon: '🌹', color: 'var(--mod-dating)' },
+  { id: 'dating',   num: 11, name: 'Dating',          blurb: 'Who you are seeing and what it costs',    color: 'var(--mod-dating)' },
 ];

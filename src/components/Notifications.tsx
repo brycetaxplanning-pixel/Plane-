@@ -6,9 +6,9 @@ import { asRoute, routeOf } from '../lib/router';
 import { useApp } from '../state/context';
 import { Icons } from './layout/Icons';
 
-const KIND_ICON: Record<AppNotification['kind'], string> = {
-  insight: '⚖️', habit: '🔁', due: '⏰', award: '🧘',
-  finance: '💵', deal: '🎯', health: '🩺', system: 'ℹ️',
+const KIND_ICON: Record<AppNotification['kind'], () => React.ReactNode> = {
+  insight: Icons.scales, habit: Icons.repeat, due: Icons.clock, award: Icons.flame,
+  finance: Icons.wallet, deal: Icons.target, health: Icons.pulse, system: Icons.info,
 };
 
 export const linkFor = (n: AppNotification): string => {
@@ -101,7 +101,7 @@ export function NotificationBell() {
                   rel={n.href ? 'noopener noreferrer' : undefined}
                   onClick={() => { markRead(n.id); setOpen(false); }}
                 >
-                  <span className="ntf-icon" aria-hidden>{KIND_ICON[n.kind]}</span>
+                  <span className="ntf-icon" aria-hidden>{KIND_ICON[n.kind]()}</span>
                   <span className="grow" style={{ minWidth: 0 }}>
                     <span className="ntf-title">{n.title}</span>
                     <span className="ntf-meta">
@@ -193,7 +193,7 @@ export function NotificationsPage() {
                 rel={n.href ? 'noopener noreferrer' : undefined}
                 onClick={() => markRead(n.id)}
               >
-                <span className="ntf-icon" aria-hidden>{KIND_ICON[n.kind]}</span>
+                <span className="ntf-icon" aria-hidden>{KIND_ICON[n.kind]()}</span>
                 <span className="grow" style={{ minWidth: 0 }}>
                   <span className="ntf-title">{n.title}</span>
                   {n.body && <span className="ntf-body">{n.body}</span>}

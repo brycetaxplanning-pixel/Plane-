@@ -14,6 +14,7 @@ import { BarChart } from '../components/charts/BarChart';
 import { Ring } from '../components/charts/Ring';
 import { StatTile } from '../components/charts/StatTile';
 import { hoursAs, sinkTotals } from '../lib/insights';
+import { Icons } from '../components/layout/Icons';
 
 const ACCENT = 'var(--mod-habits)';
 
@@ -84,7 +85,7 @@ export function Habits() {
     return (
       <div className="stack">
         <EmptyState
-          icon="🔁"
+          icon={Icons.repeat()}
           title="No habits yet"
           hint="Daily things you want to do every day, weekly things you want to hit a few times a week."
         />

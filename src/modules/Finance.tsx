@@ -20,6 +20,7 @@ import { SavingGoals } from './finance/SavingGoals';
 import { BudgetBars, type BudgetRow } from '../components/charts/BudgetBars';
 import { BarChart } from '../components/charts/BarChart';
 import { StatTile } from '../components/charts/StatTile';
+import { Icons } from '../components/layout/Icons';
 
 const ACCENT = 'var(--mod-finance)';
 
@@ -135,7 +136,7 @@ function Overview({ month, trend }: { month: string; trend: { key: string; label
           <button className="btn btn-sm" onClick={() => setEditBudgets(true)}>Set budgets</button>
         } />
         {rows.length === 0 ? (
-          <EmptyState icon="💵" title="No spending recorded this month" />
+          <EmptyState icon={Icons.wallet()} title="No spending recorded this month" />
         ) : (
           <BudgetBars rows={rows} format={(n) => fmtMoney(n, cur)} color={ACCENT} />
         )}
@@ -214,7 +215,7 @@ function ReviewQueue() {
   const [active, setActive] = useState<Transaction | null>(null);
 
   if (queue.length === 0) {
-    return <EmptyState icon="✅" title="Nothing to review" hint="Every transaction has a category." />;
+    return <EmptyState icon={Icons.check()} title="Nothing to review" hint="Every transaction has a category." />;
   }
 
   return (

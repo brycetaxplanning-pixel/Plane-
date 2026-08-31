@@ -1,7 +1,19 @@
+import type { ModuleId } from '../../lib/schema';
+
+/* ------------------------------------------------------------------
+   The line set.
+
+   One 24-unit grid, one stroke weight, round caps and joins — so eleven
+   modules read as eleven members of one family rather than eleven pictures
+   borrowed from eleven places. This replaced the emoji: an emoji is drawn by
+   the platform, at the platform's weight, in the platform's palette, and no
+   two of them agree with each other.
+------------------------------------------------------------------ */
+
 const base = {
   fill: 'none',
   stroke: 'currentColor',
-  strokeWidth: 1.8,
+  strokeWidth: 1.7,
   strokeLinecap: 'round' as const,
   strokeLinejoin: 'round' as const,
 };
@@ -12,22 +24,126 @@ const wrap = (children: React.ReactNode) => (
 
 export const Icons = {
   home: () => wrap(<><path d="M3 10.5 12 3l9 7.5" /><path d="M5.5 9.5V20h13V9.5" /><path d="M9.5 20v-5.5h5V20" /></>),
-  folder: () => wrap(<><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" /><path d="M3 11h18" /></>),
-  target: () => wrap(<><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r="1" fill="currentColor" /></>),
-  chat: () => wrap(<><path d="M4 5h16v11H9l-5 4Z" /><path d="M8 9.5h8" /><path d="M8 12.5h5" /></>),
-  run: () => wrap(<><circle cx="14.5" cy="4.8" r="1.9" /><path d="M8 21l3-5-2.5-3 1-5 3.5 2 2.5 2.5 3 .6" /><path d="M9.5 10 6 11.5" /><path d="M13 13.5 15 21" /></>),
-  wallet: () => wrap(<><path d="M4 8a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /><path d="M15 12.5h4.5" /><circle cx="15.5" cy="12.5" r=".6" fill="currentColor" /></>),
-  compass: () => wrap(<><circle cx="12" cy="12" r="8.5" /><path d="m15 9-1.8 4.2L9 15l1.8-4.2Z" /></>),
+
+  /* ---- the eleven module marks ---- */
+
+  /** Abitos — a return, signed off. */
+  folder: () => wrap(<><path d="M6 3.5h7.5L18 8v12.5H6z" /><path d="M13.2 3.7V8H17.8" /><path d="m9 13.4 2 2 4-4.2" /></>),
+  /** Business — a target with the shot already leaving it. */
+  target: () => wrap(<><circle cx="11" cy="13" r="7.2" /><circle cx="11" cy="13" r="3" /><path d="m11 13 8-8" /><path d="M15.4 5h4.2v4.2" /></>),
+  /** Spanish — two bubbles, because the point is the conversation. */
+  chat: () => wrap(<>
+    <path d="M3 7.2A2.6 2.6 0 0 1 5.6 4.6h7.6a2.6 2.6 0 0 1 2.6 2.6v3.6a2.6 2.6 0 0 1-2.6 2.6H8l-3.6 2.8v-2.8h-.8a.6.6 0 0 1-.6-.6z" />
+    <path d="M18.4 8.6h.6a2 2 0 0 1 2 2v3.8a2 2 0 0 1-2 2h-.5v2.4l-3-2.4h-3.2" />
+  </>),
+  /** Fitness — a dumbbell. A running figure or a shoe turns to mush at 30px;
+   *  this shape stays itself all the way down to the nav bar. */
+  run: () => wrap(<>
+    <path d="M3.4 9.8v4.4M6.6 7.4v9.2M17.4 7.4v9.2M20.6 9.8v4.4" />
+    <path d="M6.6 12h10.8" />
+  </>),
+  /** Finances — a coin, with a second behind it. */
+  wallet: () => wrap(<>
+    <circle cx="13.4" cy="12.6" r="7.4" />
+    <path d="M13.4 8.8v7.6" />
+    <path d="M15.6 10.4h-3.1a1.6 1.6 0 0 0 0 3.2h1.8a1.6 1.6 0 0 1 0 3.2h-3.1" />
+    <path d="M8.4 19.2A7.4 7.4 0 0 1 8.4 6" />
+  </>),
+  /** Habits — the loop, broken open so it reads as a cycle you re-enter. */
+  repeat: () => wrap(<>
+    <path d="M4.2 10.4a7.8 7.8 0 0 1 13.3-4.2" />
+    <path d="M19.8 13.6a7.8 7.8 0 0 1-13.3 4.2" />
+    <path d="M17.8 2.6v3.8H14" /><path d="M6.2 21.4v-3.8H10" />
+  </>),
+  /** Goals — a pennant on a planted pole. */
+  flag: () => wrap(<><path d="M5.6 21V3.2" /><path d="M5.6 4.4h12.2l-2.6 4.1 2.6 4.1H5.6" /></>),
+  /** Notes — the same sheet as Abitos, ruled instead of signed. */
+  note: () => wrap(<>
+    <path d="M5 3.6h9L19 8.4V20.4H5z" /><path d="M13.6 3.8v4.8h4.9" />
+    <path d="M8.2 12.6h6" /><path d="M8.2 16.2h4" />
+  </>),
+  /** Life Coach — a compass needle. */
+  compass: () => wrap(<><circle cx="12" cy="12" r="9.2" /><path d="m15.6 8.4-1.9 5.3-5.3 1.9 1.9-5.3z" /></>),
+  /** Health — one heartbeat across the grid. */
+  pulse: () => wrap(<path d="M2.8 12h4l1.7-4.2 2.8 8.4 2-4.2h7.9" />),
+  /** Dating — drawn on the same grid as the rest, so it stops looking like a sticker. */
+  heart: () => wrap(<path d="M12 20.4S3.6 15.3 3.6 9.4a4.6 4.6 0 0 1 8.4-2.6 4.6 4.6 0 0 1 8.4 2.6c0 5.9-8.4 11-8.4 11z" />),
+
+  /* ---- chrome ---- */
+
   gear: () => wrap(<><path d="M4 7h6M14 7h6M4 12h11M19 12h1M4 17h3M11 17h9" /><circle cx="12" cy="7" r="2" /><circle cx="17" cy="12" r="2" /><circle cx="9" cy="17" r="2" /></>),
   flame: () => wrap(<><path d="M12 3s4.5 3.6 4.5 8a4.5 4.5 0 0 1-9 0c0-1.4.6-2.6 1.3-3.5.2 1.4 1 2.2 1.9 2.2 1 0 1.5-.9 1.3-2.3-.2-1.7-.5-3-.5-4.4Z" /><path d="M7 13.5A5 5 0 0 0 12 21a5 5 0 0 0 5-5" /></>),
-  repeat: () => wrap(<><path d="M4 9.5A3.5 3.5 0 0 1 7.5 6H18" /><path d="m15.5 3.5 3 2.5-3 2.5" /><path d="M20 14.5a3.5 3.5 0 0 1-3.5 3.5H6" /><path d="m8.5 20.5-3-2.5 3-2.5" /></>),
-  flag: () => wrap(<><path d="M6 21V4" /><path d="M6 5h11l-2 3.5L17 12H6" /></>),
-  note: () => wrap(<><path d="M6 3.5h9l3.5 3.5v13.5H6Z" /><path d="M14.5 3.5V7.5H18.5" /><path d="M9 12h6M9 15.5h4" /></>),
   calendar: () => wrap(<><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" /><path d="M3.5 10h17" /><path d="M8 3.5v3M16 3.5v3" /></>),
   bell: () => wrap(<><path d="M6 9.5a6 6 0 0 1 12 0c0 3 .7 4.6 1.6 5.6.4.5.1 1.4-.6 1.4H5c-.7 0-1-.9-.6-1.4C5.3 14.1 6 12.5 6 9.5Z" /><path d="M10 19.5a2.2 2.2 0 0 0 4 0" /></>),
   grid: () => wrap(<><rect x="3.5" y="3.5" width="7" height="7" rx="2" /><rect x="13.5" y="3.5" width="7" height="7" rx="2" /><rect x="3.5" y="13.5" width="7" height="7" rx="2" /><rect x="13.5" y="13.5" width="7" height="7" rx="2" /></>),
-  back: () => wrap(<><path d="M15 5.5 8.5 12l6.5 6.5" /></>),
+  back: () => wrap(<path d="M15 5.5 8.5 12l6.5 6.5" />),
   plus: () => wrap(<><path d="M12 5.5v13M5.5 12h13" /></>),
-  heart: () => wrap(<path d="M12 20s-7-4.6-7-9.4A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.6C19 15.4 12 20 12 20Z" />),
-  pulse: () => wrap(<><path d="M3 12.5h4l2-5 3 10 2.5-6 1.5 3h5" /></>),
+  /** Progress — bars with the trend drawn over them. */
+  chart: () => wrap(<><path d="M3.4 20.4h17.2" /><path d="M6.6 20.4v-5.6M11 20.4v-9.2M15.4 20.4v-6.4M19.8 20.4v-12" /></>),
+  /** Search. */
+  search: () => wrap(<><circle cx="10.8" cy="10.8" r="6.6" /><path d="m15.6 15.6 4.2 4.2" /></>),
+  /** A clock — anything with a date on it. */
+  clock: () => wrap(<><circle cx="12" cy="12" r="8.8" /><path d="M12 6.8V12l3.4 2" /></>),
+  /** Scales — a comparison between two things. */
+  scales: () => wrap(<>
+    <path d="M12 4.2v16.2" /><path d="M6.4 6.2h11.2" /><path d="M8.4 20.4h7.2" />
+    <path d="M6.4 6.2 3.4 13h6z" /><path d="m17.6 6.2-3 6.8h6z" />
+  </>),
+  /** A crescent — something that has gone quiet. */
+  moon: () => wrap(<path d="M20 14.4A8.6 8.6 0 0 1 9.6 4a8.8 8.8 0 1 0 10.4 10.4z" />),
+  /** Interlocking pieces — how the parts sit against each other. */
+  puzzle: () => wrap(<>
+    <path d="M9.6 3.6h4.8v2.2a1.8 1.8 0 1 0 3.6 0V3.6h2.4v4.8h-2.2a1.8 1.8 0 1 0 0 3.6h2.2v4.8h-4.8v-2.2a1.8 1.8 0 1 0-3.6 0v2.2H3.6v-4.8h2.2a1.8 1.8 0 1 0 0-3.6H3.6V3.6z" />
+  </>),
+  /** An `i` in a ring — the app talking about itself. */
+  info: () => wrap(<><circle cx="12" cy="12" r="8.8" /><path d="M12 11v5.4" /><path d="M12 7.7h.1" /></>),
+  /** The rank marker's tick. */
+  check: () => wrap(<path d="m5 12.6 4.6 4.6L19 6.4" />),
+  /** An office — Business's list of companies. */
+  building: () => wrap(<>
+    <path d="M4 20.4V5.2a1.6 1.6 0 0 1 1.6-1.6h7.2a1.6 1.6 0 0 1 1.6 1.6v15.2" />
+    <path d="M14.4 10h4a1.6 1.6 0 0 1 1.6 1.6v8.8" />
+    <path d="M2.6 20.4h18.8" /><path d="M7.4 7.4h3.6M7.4 11h3.6M7.4 14.6h3.6" />
+  </>),
+  /** A call — the outreach log. */
+  phone: () => wrap(<path d="M8.2 3.6 10.4 8l-2 2a12 12 0 0 0 5.6 5.6l2-2 4.4 2.2v3a2 2 0 0 1-2.2 2C10.5 20 4 13.5 3.2 5.8a2 2 0 0 1 2-2.2z" />),
+  /** A line going the right way — investing. */
+  trend: () => wrap(<><path d="M3.4 20.4h17.2" /><path d="m4.6 16.4 4.8-5.2 3.6 3 6.4-7.6" /><path d="M15.6 6.6h4.2v4.2" /></>),
+  /** A plate — meals. */
+  plate: () => wrap(<><circle cx="12" cy="12" r="8.6" /><circle cx="12" cy="12" r="4.2" /></>),
+  /** A drop — bloodwork. */
+  drop: () => wrap(<path d="M12 3.2c3 3.4 5.6 6.3 5.6 9.4a5.6 5.6 0 0 1-11.2 0c0-3.1 2.6-6 5.6-9.4z" />),
+  /** A vault — saving goals. */
+  bank: () => wrap(<>
+    <path d="M3.2 9.4 12 3.6l8.8 5.8" /><path d="M4.8 9.4v9.2M19.2 9.4v9.2" />
+    <path d="M8.6 12.4v4M12 12.4v4M15.4 12.4v4" /><path d="M2.8 20.4h18.4" />
+  </>),
+  /** A spark — the idea list. */
+  bulb: () => wrap(<>
+    <path d="M9 16.6a6 6 0 1 1 6 0v1.8H9z" /><path d="M9.8 21h4.4" />
+  </>),
+  /** A microphone — every talk-instead-of-type control. */
+  mic: () => wrap(<>
+    <rect x="9.2" y="2.6" width="5.6" height="11" rx="2.8" />
+    <path d="M5.6 11.4a6.4 6.4 0 0 0 12.8 0" /><path d="M12 17.8v3.6" />
+  </>),
+  /** The brand mark: a paper plane, drawn on the same grid as everything else. */
+  plane: () => wrap(<><path d="M21 3.4 2.6 11.2l7.3 2.5z" /><path d="m9.9 13.7 2.6 7.1L21 3.4z" /><path d="m9.9 13.7 3.4-3.4" /></>),
 };
+
+/** The mark for a module, keyed the way the rest of the app keys modules. */
+export const MODULE_GLYPH: Record<ModuleId, () => React.ReactNode> = {
+  work: Icons.folder, planning: Icons.target, spanish: Icons.chat,
+  fitness: Icons.run, finance: Icons.wallet, habits: Icons.repeat,
+  goals: Icons.flag, notes: Icons.note, coach: Icons.compass,
+  health: Icons.pulse, dating: Icons.heart,
+};
+
+/** A module's mark at a given size, tinted by whatever `color` is in scope. */
+export function ModuleGlyph({ id, size = 24 }: { id: ModuleId; size?: number }) {
+  return (
+    <span className="glyph" aria-hidden style={{ width: size, height: size }}>
+      {MODULE_GLYPH[id]()}
+    </span>
+  );
+}

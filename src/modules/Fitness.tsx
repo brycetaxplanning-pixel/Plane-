@@ -15,6 +15,7 @@ import { Chat } from '../components/Chat';
 import { Physique } from './fitness/Physique';
 import { Plan } from './fitness/Plan';
 import { Tabs, panelProps } from '../components/ui/Tabs';
+import { Icons } from '../components/layout/Icons';
 
 const ACCENT = 'var(--mod-fitness)';
 
@@ -108,7 +109,7 @@ export function Fitness() {
           <section className="card">
             <SectionHead title="Logged this week" sub={`${week.length} session${week.length === 1 ? '' : 's'}`} />
             {week.length === 0 ? (
-              <EmptyState icon="🏃" title="Nothing logged this week" hint="Three MMA, four lifting, five of whatever else." />
+              <EmptyState icon={Icons.run()} title="Nothing logged this week" hint="Three MMA, four lifting, five of whatever else." />
             ) : (
               <div className="stack-2">
                 {week.map((a) => (

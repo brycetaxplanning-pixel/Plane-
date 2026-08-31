@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { appendPhrase, useDictation } from '../../lib/speech';
+import { Icons } from '../layout/Icons';
 
 /** A microphone that dictates into whatever field it is attached to. */
 export function MicButton({
@@ -147,7 +148,7 @@ export function VoiceCapture({
             className={`btn btn-lg${listening ? ' btn-danger' : ''}`}
             onClick={toggle}
           >
-            {listening ? '■ Stop' : '🎙 Hold the thought — talk'}
+            {listening ? '■ Stop' : <><span className="btn-glyph" aria-hidden>{Icons.mic()}</span> Hold the thought — talk</>}
           </button>
         )}
         <button

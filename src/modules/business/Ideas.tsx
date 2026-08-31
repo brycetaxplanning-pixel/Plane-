@@ -8,6 +8,7 @@ import { useApp } from '../../state/context';
 import { Modal } from '../../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../../components/ui/Field';
 import { DictateInput, VoiceCapture } from '../../components/ui/Dictation';
+import { Icons } from '../../components/layout/Icons';
 
 const ACCENT = 'var(--mod-planning)';
 
@@ -109,7 +110,7 @@ export function Ideas() {
         ) : (
           <div className="row-2 wrap">
             <button className="btn btn-accent btn-lg grow" style={{ ['--mod' as string]: ACCENT }} onClick={() => setTalking(true)}>
-              🎙 Talk an idea
+              <span className="btn-glyph" aria-hidden>{Icons.mic()}</span> Talk an idea
             </button>
             <button className="btn btn-lg" onClick={() => setEditing('new')}>Write one</button>
           </div>
@@ -142,7 +143,7 @@ export function Ideas() {
       )}
 
       {ideas.length === 0 ? (
-        <EmptyState icon="💡" title="No ideas logged" hint="The half-formed ones count. That is the point of writing them down." />
+        <EmptyState icon={Icons.bulb()} title="No ideas logged" hint="The half-formed ones count. That is the point of writing them down." />
       ) : (
         <section className="card">
           <SectionHead title={`${ideas.length} idea${ideas.length === 1 ? '' : 's'}`} sub="Numbered in the order you had them" />

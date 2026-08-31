@@ -14,6 +14,7 @@ import { EmptyState, Field, SectionHead } from '../../components/ui/Field';
 import { AIError, askJSON, isAIConfigured } from '../../lib/ai';
 import { DictateInput } from '../../components/ui/Dictation';
 import { StatTile } from '../../components/charts/StatTile';
+import { Icons } from '../../components/layout/Icons';
 
 const ACCENT = 'var(--mod-finance)';
 
@@ -120,7 +121,7 @@ export function SavingGoals() {
       {rows.length === 0 ? (
         <section className="card">
           <EmptyState
-            icon="🏦"
+            icon={Icons.bank()}
             title="No saving goals yet"
             hint="Pick one of the presets — it fills in what it can from your own spending, then asks the questions worth answering."
           />

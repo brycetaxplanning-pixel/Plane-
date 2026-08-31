@@ -9,6 +9,7 @@ import { useApp } from '../state/context';
 import { goalStats } from '../state/selectors';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
+import { Icons } from '../components/layout/Icons';
 
 const ACCENT = 'var(--mod-goals)';
 
@@ -64,7 +65,7 @@ export function Goals() {
     return (
       <div className="stack">
         <EmptyState
-          icon="🏁"
+          icon={Icons.flag()}
           title="No goals yet"
           hint="A picture, what it costs, and how you get there. That is the whole card."
         />

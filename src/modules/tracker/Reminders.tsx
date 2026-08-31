@@ -9,6 +9,7 @@ import { useApp } from '../../state/context';
 import { Modal } from '../../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../../components/ui/Field';
 import { DictateInput, VoiceCapture } from '../../components/ui/Dictation';
+import { Icons } from '../../components/layout/Icons';
 
 const SUGGESTIONS = [
   'Haircut',
@@ -124,7 +125,7 @@ They said: ${text}`,
         ) : (
           <div className="row-2 wrap">
             <button className="btn btn-primary btn-lg grow" disabled={busy} onClick={() => setTalking(true)}>
-              {busy ? 'Working it out…' : '🎙 Talk a reminder'}
+              {busy ? 'Working it out…' : <><span className="btn-glyph" aria-hidden>{Icons.mic()}</span> Talk a reminder</>}
             </button>
             <button className="btn btn-lg" onClick={() => setEditing('new')}>Write one</button>
           </div>

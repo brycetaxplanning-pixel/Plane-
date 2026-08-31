@@ -8,6 +8,7 @@ import { Ring } from '../components/charts/Ring';
 import { BarChart, type Datum } from '../components/charts/BarChart';
 import { StatTile } from '../components/charts/StatTile';
 import { SectionHead } from '../components/ui/Field';
+import { ModuleGlyph } from '../components/layout/Icons';
 
 export function Dashboard({ navigate }: { navigate: (r: Route) => void }) {
   const { state } = useApp();
@@ -70,8 +71,8 @@ export function Dashboard({ navigate }: { navigate: (r: Route) => void }) {
                 style={{ cursor: 'pointer', textAlign: 'left', width: '100%' }}
                 onClick={() => navigate(module.id as Route)}
               >
-                <span className="mod-badge" style={{ ['--mod' as string]: module.color, width: 28, height: 28, fontSize: 14 }}>
-                  {module.icon}
+                <span className="mod-badge" style={{ ['--mod' as string]: module.color, width: 28, height: 28 }}>
+                  <ModuleGlyph id={module.id} size={16} />
                 </span>
                 <span className="grow">
                   <span className="t-sm t-bold" style={{ display: 'block' }}>{nudge}</span>
@@ -97,7 +98,7 @@ export function Dashboard({ navigate }: { navigate: (r: Route) => void }) {
                 style={{ ['--mod' as string]: m.color, textDecoration: 'none', color: 'inherit' }}
               >
                 <div className="row" style={{ alignItems: 'flex-start' }}>
-                  <span className="mod-badge" aria-hidden>{m.icon}</span>
+                  <span className="mod-badge"><ModuleGlyph id={m.id} size={19} /></span>
                   <span className="grow">
                     <span className="mod-num" style={{ display: 'block' }}>MODULE {m.num}</span>
                     <span className="t-bold truncate" style={{ display: 'block' }}>{m.name}</span>

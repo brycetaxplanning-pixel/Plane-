@@ -10,6 +10,7 @@ import { EmptyState, Field, SectionHead } from '../../components/ui/Field';
 import { Slider } from '../../components/ui/Slider';
 import { ProjectionChart } from '../../components/charts/ProjectionChart';
 import { StatTile } from '../../components/charts/StatTile';
+import { Icons } from '../../components/layout/Icons';
 
 const ACCENT = 'var(--mod-finance)';
 const RATES = [4, 6, 8, 10, 12];
@@ -46,7 +47,7 @@ export function Invest() {
       <section className="card" style={{ ['--mod' as string]: ACCENT }}>
         <SectionHead title="Investments" sub="Add what you're holding and watch it compound" />
         <EmptyState
-          icon="📈"
+          icon={Icons.trend()}
           title="No accounts yet"
           hint="Balances are typed in for now — nothing here talks to a bank or a broker."
         />

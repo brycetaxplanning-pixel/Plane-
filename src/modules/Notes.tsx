@@ -7,6 +7,7 @@ import { useApp } from '../state/context';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { DictateInput, VoiceCapture } from '../components/ui/Dictation';
+import { Icons } from '../components/layout/Icons';
 
 const ACCENT = 'var(--mod-notes)';
 
@@ -83,7 +84,9 @@ export function Notes() {
           </VoiceCapture>
         ) : (
           <div className="row-2 wrap">
-            <button className="btn btn-primary btn-lg grow" onClick={() => setTalking(true)}>🎙 Talk a note</button>
+            <button className="btn btn-primary btn-lg grow" onClick={() => setTalking(true)}>
+              <span className="btn-glyph" aria-hidden>{Icons.mic()}</span> Talk a note
+            </button>
             <button className="btn btn-lg" onClick={() => setEditing('new')}>Write one</button>
           </div>
         )}
@@ -99,7 +102,7 @@ export function Notes() {
           </div>
 
           {notes.length === 0 ? (
-            <EmptyState icon="🔍" title="Nothing matches" hint="Try a different word, or clear the filter." />
+            <EmptyState icon={Icons.search()} title="Nothing matches" hint="Try a different word, or clear the filter." />
           ) : (
             <div className="note-grid">
               {notes.map((n) => (
@@ -130,7 +133,7 @@ export function Notes() {
 
       {state.notes.items.length === 0 && !talking && (
         <EmptyState
-          icon="📝"
+          icon={Icons.note()}
           title="Nothing written yet"
           hint="To-do lists, content ideas, a journal — whatever you'd otherwise put in your phone's notes app."
         />

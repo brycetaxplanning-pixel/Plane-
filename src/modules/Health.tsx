@@ -19,6 +19,7 @@ import { StatTile } from '../components/charts/StatTile';
 import { Ring } from '../components/charts/Ring';
 import { Bloodwork } from './health/Bloodwork';
 import { ImportHealth } from './health/ImportHealth';
+import { Icons } from '../components/layout/Icons';
 
 const ACCENT = 'var(--mod-health)';
 
@@ -134,7 +135,7 @@ function Today() {
           sub={`${todays.length} item${todays.length === 1 ? '' : 's'}`}
         />
         {todays.length === 0 ? (
-          <EmptyState icon="🍽️" title="Nothing logged yet today" hint="Name it and put in what you know — a meal with only the protein filled in still counts." />
+          <EmptyState icon={Icons.plate()} title="Nothing logged yet today" hint="Name it and put in what you know — a meal with only the protein filled in still counts." />
         ) : (
           <div className="stack-2">
             {MEAL_SLOTS.filter((slot) => todays.some((m) => m.slot === slot)).map((slot) => (

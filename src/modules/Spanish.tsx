@@ -13,6 +13,7 @@ import { BarChart } from '../components/charts/BarChart';
 import { Ring } from '../components/charts/Ring';
 import { StatTile } from '../components/charts/StatTile';
 import { Tabs, panelProps } from '../components/ui/Tabs';
+import { Icons } from '../components/layout/Icons';
 
 const ACCENT = 'var(--mod-spanish)';
 const KINDS: StudySession['kind'][] = ['Lesson', 'Self study', 'Listening', 'Conversation', 'Reading'];
@@ -133,7 +134,7 @@ export function Spanish() {
           action={<button className="btn btn-sm btn-accent" style={{ ['--mod' as string]: ACCENT }} onClick={() => setLogging(0)}>+ Log time</button>}
         />
         {recent.length === 0 ? (
-          <EmptyState icon="🇪🇸" title="No sessions logged yet" hint="Twenty minutes today is a start." />
+          <EmptyState icon={Icons.chat()} title="No sessions logged yet" hint="Twenty minutes today is a start." />
         ) : (
           <div className="stack-2">
             {recent.map((s) => (

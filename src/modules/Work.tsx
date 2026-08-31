@@ -13,6 +13,7 @@ import { Modal } from '../components/ui/Modal';
 import { EmptyState, Field } from '../components/ui/Field';
 import { StatTile } from '../components/charts/StatTile';
 import { Ring } from '../components/charts/Ring';
+import { Icons } from '../components/layout/Icons';
 
 const ACCENT = 'var(--mod-work)';
 
@@ -125,7 +126,7 @@ export function Work() {
 
       {projects.length === 0 ? (
         <EmptyState
-          icon="📁"
+          icon={Icons.folder()}
           title={filter === 'open' ? 'Nothing open' : `Nothing in ${filter}`}
           hint="Add a client project and the tasks it needs."
         />

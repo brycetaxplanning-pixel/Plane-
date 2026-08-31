@@ -5,6 +5,7 @@ import { useApp } from '../../state/context';
 import { EmptyState, SectionHead } from '../../components/ui/Field';
 import { BarChart } from '../../components/charts/BarChart';
 import { StatTile } from '../../components/charts/StatTile';
+import { Icons } from '../../components/layout/Icons';
 
 const ACCENT = 'var(--mod-coach)';
 
@@ -23,8 +24,8 @@ function equivalents(hours: number, reality: ReturnType<typeof realityCheck>): s
   return `${hours}h of the week`;
 }
 
-const KIND_ICON: Record<Insight['kind'], string> = {
-  split: '⚖️', trend: '📈', neglect: '💤', streak: '🔥', balance: '🧩',
+const KIND_ICON: Record<Insight['kind'], () => React.ReactNode> = {
+  split: Icons.scales, trend: Icons.trend, neglect: Icons.moon, streak: Icons.flame, balance: Icons.puzzle,
 };
 
 export function Analysis() {
@@ -46,7 +47,7 @@ export function Analysis() {
         />
         {insights.length === 0 ? (
           <EmptyState
-            icon="🔍"
+            icon={Icons.search()}
             title="Not enough logged yet"
             hint="Findings need about six weeks of entries before they mean anything. Keep logging."
           />
@@ -54,7 +55,7 @@ export function Analysis() {
           <div className="stack-3">
             {insights.slice(0, 6).map((i) => (
               <article key={i.id} className="insight">
-                <span className="insight-icon" aria-hidden>{KIND_ICON[i.kind]}</span>
+                <span className="insight-icon" aria-hidden>{KIND_ICON[i.kind]()}</span>
                 <div className="grow" style={{ minWidth: 0 }}>
                   <h3 className="insight-title">{i.title}</h3>
                   <p className="t-sm t-sec">{i.body}</p>

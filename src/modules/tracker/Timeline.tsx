@@ -4,9 +4,10 @@ import { dowLabel, fmtDate, relativeDay } from '../../lib/date';
 import { asRoute, routeOf } from '../../lib/router';
 import { useApp } from '../../state/context';
 import { EmptyState, SectionHead } from '../../components/ui/Field';
+import { Icons } from '../../components/layout/Icons';
 
-const KIND_ICON: Record<TimelineItem['kind'], string> = {
-  project: '📁', deal: '🎯', goal: '🏁', race: '🏃', reminder: '⏰',
+const KIND_ICON: Record<TimelineItem['kind'], () => React.ReactNode> = {
+  project: Icons.folder, deal: Icons.target, goal: Icons.flag, race: Icons.run, reminder: Icons.clock,
 };
 
 const linkFor = (item: TimelineItem): string => {
@@ -28,7 +29,7 @@ export function Timeline() {
   if (items.length === 0) {
     return (
       <EmptyState
-        icon="🗓"
+        icon={Icons.calendar()}
         title="Nothing has a date on it yet"
         hint="Due dates on client projects, goals, deals and reminders all show up here."
       />
@@ -51,7 +52,7 @@ export function Timeline() {
           <div className="stack-2">
             {late.map((item) => (
               <a key={item.id} className="rowitem" href={linkFor(item)} style={{ borderLeft: '3px solid var(--status-critical)', color: 'inherit', textDecoration: 'none' }}>
-                <span aria-hidden>{KIND_ICON[item.kind]}</span>
+                <span className="tl-icon" aria-hidden>{KIND_ICON[item.kind]()}</span>
                 <span className="grow" style={{ minWidth: 0 }}>
                   <span className="t-sm t-bold truncate" style={{ display: 'block' }}>{item.title}</span>
                   <span className="t-xs t-crit">{fmtDate(item.date)} · {relativeDay(item.date)}</span>
@@ -85,7 +86,7 @@ export function Timeline() {
                       href={linkFor(item)}
                       style={{ ['--mod' as string]: moduleColor(item.module) }}
                     >
-                      <span aria-hidden>{KIND_ICON[item.kind]}</span>
+                      <span className="tl-icon" aria-hidden>{KIND_ICON[item.kind]()}</span>
                       <span className="grow" style={{ minWidth: 0 }}>
                         <span className="t-sm truncate" style={{ display: 'block', fontWeight: 600 }}>{item.title}</span>
                         {item.detail && <span className="t-xs t-muted truncate" style={{ display: 'block' }}>{item.detail}</span>}
@@ -105,7 +106,7 @@ export function Timeline() {
           <div className="stack-2">
             {later.slice(0, 12).map((item) => (
               <a key={item.id} className="rowitem" href={linkFor(item)} style={{ color: 'inherit', textDecoration: 'none' }}>
-                <span aria-hidden>{KIND_ICON[item.kind]}</span>
+                <span className="tl-icon" aria-hidden>{KIND_ICON[item.kind]()}</span>
                 <span className="grow" style={{ minWidth: 0 }}>
                   <span className="t-sm t-bold truncate" style={{ display: 'block' }}>{item.title}</span>
                   <span className="t-xs t-muted">{fmtDate(item.date)} · {relativeDay(item.date)}</span>

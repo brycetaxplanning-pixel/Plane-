@@ -12,6 +12,7 @@ import { useApp } from '../../state/context';
 import { Modal } from '../../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../../components/ui/Field';
 import { DictateInput } from '../../components/ui/Dictation';
+import { Icons } from '../../components/layout/Icons';
 
 const ACCENT = 'var(--mod-health)';
 
@@ -73,7 +74,7 @@ export function Bloodwork() {
       {panels.length === 0 ? (
         <section className="card" style={{ ['--mod' as string]: ACCENT }}>
           <EmptyState
-            icon="🩸"
+            icon={Icons.drop()}
             title="No bloodwork entered yet"
             hint="Type in the lines you care about from your last report. Common markers come with their usual units and ranges filled in, which you can overwrite with the ones your lab printed."
           />
