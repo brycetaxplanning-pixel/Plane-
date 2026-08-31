@@ -698,7 +698,8 @@
 .plan-pill.is-temp { border-style: dashed; }
 .plan-pill.is-open { border-style: dashed; color: var(--text-muted); cursor: default; }
 .plan-pill.is-open:hover { transform: none; border-color: var(--border-strong); }
-.plan-lock { font-size: 10px; opacity: 0.65; }
+.plan-lock { display: inline-flex; width: 12px; height: 12px; color: var(--text-muted); flex: none; }
+.plan-lock svg { width: 100%; height: 100%; }
 .plan-count { color: var(--text-secondary); font-size: 12px; }
 
 /* ---------- notifications ---------- */
@@ -830,3 +831,42 @@
   box-shadow: var(--shadow-2);
 }
 .savebar p { color: var(--text-secondary); }
+
+/* ------------------------------------------------------------------
+   Award medallions.
+
+   The launcher treats modules as cards you level up; the awards are struck
+   to match. Unearned ones stay on the wall — a set you can see the shape of
+   is the thing worth completing — and the locked state is carried by the
+   dashed ring, not by fading the label to something you cannot read.
+------------------------------------------------------------------ */
+
+.medal-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+  gap: var(--sp-3) var(--sp-2);
+}
+.medal { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+
+.medal-disc {
+  display: grid; place-items: center;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  border: 1px dashed var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+.medal-disc svg { width: 23px; height: 23px; }
+
+.medal-won .medal-disc {
+  border: 1px solid transparent;
+  background: var(--rare-medal);
+  color: var(--rare-ink);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--rare-gold) 34%, transparent);
+}
+
+.medal-name {
+  font-size: 10.5px; font-weight: 600; line-height: 1.25;
+  color: var(--text-secondary);
+}
+.medal-won .medal-name { color: var(--text-primary); }

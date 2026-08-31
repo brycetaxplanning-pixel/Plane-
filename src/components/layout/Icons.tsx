@@ -127,9 +127,83 @@ export const Icons = {
     <rect x="9.2" y="2.6" width="5.6" height="11" rx="2.8" />
     <path d="M5.6 11.4a6.4 6.4 0 0 0 12.8 0" /><path d="M12 17.8v3.6" />
   </>),
+  /* ---- award marks ---- */
+
+  /** First thing ever logged. */
+  sprout: () => wrap(<>
+    <path d="M12 20.4v-7.2" /><path d="M12 13.2C12 9.6 9 7.2 5.4 7.2c0 3.6 3 6 6.6 6z" />
+    <path d="M12 13.2c0-3 2.6-5.2 5.8-5.2 0 3-2.6 5.2-5.8 5.2z" />
+  </>),
+  /** A long streak. */
+  mountain: () => wrap(<><path d="m2.6 19.4 6-10.2 3.6 5.8 2.4-3.6 6.8 8z" /><path d="m8.6 9.2 2.2 3.6" /></>),
+  /** A count that has run a long way past a marker. Tally strokes rather
+   *  than another pennant — the first attempt was a flag, which made this
+   *  indistinguishable from the finished-a-goal award beside it. */
+  milestone: () => wrap(<>
+    <path d="M5.4 6.4v11.2M9.2 6.4v11.2M13 6.4v11.2M16.8 6.4v11.2" />
+    <path d="M3.6 17.4 19 6.6" />
+  </>),
+  /** A weekly quota, filled all the way round. */
+  rosette: () => wrap(<>
+    <circle cx="12" cy="9.4" r="6" /><path d="m8.4 14.6-1.6 6 5.2-2.6 5.2 2.6-1.6-6" />
+  </>),
+  /** Rounds on the mat. A fist with a thumb and a wrist strap — the first
+   *  attempt reused the dumbbell's silhouette and read as a lightbulb. */
+  glove: () => wrap(<>
+    <path d="M7.6 4.6h5a4.8 4.8 0 0 1 4.8 4.8v3.4a3 3 0 0 1-3 3H7.6z" />
+    <path d="M7.6 8.2H5.8a2.4 2.4 0 0 0 0 4.8h1.8" />
+    <path d="M7.2 15.8h9.6v2.4a1.4 1.4 0 0 1-1.4 1.4H8.6a1.4 1.4 0 0 1-1.4-1.4z" />
+  </>),
+  /** The distance. */
+  trophy: () => wrap(<>
+    <path d="M7.4 3.6h9.2v5a4.6 4.6 0 1 1-9.2 0z" />
+    <path d="M7.4 5.4H4.8v1.8a3 3 0 0 0 2.6 3" /><path d="M16.6 5.4h2.6v1.8a3 3 0 0 1-2.6 3" />
+    <path d="M12 13.2v3.6" /><path d="M8.6 20.4h6.8l-1-3.6h-4.8z" />
+  </>),
+  /** Hours put in. */
+  hourglass: () => wrap(<>
+    <path d="M6.4 3.4h11.2M6.4 20.6h11.2" />
+    <path d="M7.6 3.4v3.2L12 12l-4.4 5.4v3.2" /><path d="M16.4 3.4v3.2L12 12l4.4 5.4v3.2" />
+  </>),
+  /** Study, seven days running. */
+  book: () => wrap(<>
+    <path d="M4 4.6a1.6 1.6 0 0 1 1.6-1.6H11v16.4H5.6A1.6 1.6 0 0 0 4 21z" />
+    <path d="M20 4.6A1.6 1.6 0 0 0 18.4 3H13v16.4h5.4A1.6 1.6 0 0 1 20 21z" />
+  </>),
+  /** A week built without a gap. */
+  bricks: () => wrap(<>
+    <rect x="3" y="4.2" width="18" height="15.6" rx="1.6" />
+    <path d="M3 9.4h18M3 14.6h18" /><path d="M9.4 4.2v5.2M14.6 9.4v5.2M9.4 14.6v5.2" />
+  </>),
+  /** Every line accounted for. */
+  receipt: () => wrap(<>
+    <path d="M5.4 3.4h13.2v17.2l-2.2-1.4-2.2 1.4-2.2-1.4-2.2 1.4-2.2-1.4-2.2 1.4z" />
+    <path d="M8.6 8h6.8M8.6 12h4.6" />
+  </>),
+  /** Work sent out. */
+  outbox: () => wrap(<>
+    <path d="M3.4 13.6h4.4l1.4 2.4h5.6l1.4-2.4h4.4v5.2a1.6 1.6 0 0 1-1.6 1.6H5a1.6 1.6 0 0 1-1.6-1.6z" />
+    <path d="M12 3.6v7.2" /><path d="m8.8 6.8 3.2-3.2 3.2 3.2" />
+  </>),
+
+  /** Locked into the plan. */
+  lock: () => wrap(<>
+    <rect x="4.4" y="10.4" width="15.2" height="10" rx="2.2" />
+    <path d="M8 10.4V7.6a4 4 0 0 1 8 0v2.8" />
+  </>),
+  /** A perfect habit week — the award worn beside your name. */
+  lotus: () => wrap(<>
+    <path d="M12 4.6c2.4 2.2 3.4 4.4 3.4 6.6S13.8 15 12 16.4C10.2 15 8.6 13.4 8.6 11.2S9.6 6.8 12 4.6z" />
+    <path d="M12 16.4c-3.4 1.2-6.6.4-8.6-1.8 2.2-2.2 5.2-2.6 7.4-1" />
+    <path d="M12 16.4c3.4 1.2 6.6.4 8.6-1.8-2.2-2.2-5.2-2.6-7.4-1" />
+  </>),
   /** The brand mark: a paper plane, drawn on the same grid as everything else. */
   plane: () => wrap(<><path d="M21 3.4 2.6 11.2l7.3 2.5z" /><path d="m9.9 13.7 2.6 7.1L21 3.4z" /><path d="m9.9 13.7 3.4-3.4" /></>),
 };
+
+/** Every mark by name, so a definition elsewhere can point at one without
+ *  importing JSX. */
+export type IconName = keyof typeof Icons;
 
 /** The mark for a module, keyed the way the rest of the app keys modules. */
 export const MODULE_GLYPH: Record<ModuleId, () => React.ReactNode> = {

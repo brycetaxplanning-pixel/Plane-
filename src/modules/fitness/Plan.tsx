@@ -6,6 +6,7 @@ import { uid } from '../../lib/id';
 import { useApp } from '../../state/context';
 import { Modal } from '../../components/ui/Modal';
 import { Field, SectionHead } from '../../components/ui/Field';
+import { Icons } from '../../components/layout/Icons';
 
 const ACCENT = 'var(--mod-fitness)';
 
@@ -104,7 +105,7 @@ export function Plan() {
               onClick={() => setAdding(r.item)}
               title={r.item.locked ? 'Locked in every week' : 'This week only'}
             >
-              {r.item.locked && <span className="plan-lock" aria-hidden>🔒</span>}
+              {r.item.locked && <span className="plan-lock" aria-hidden>{Icons.lock()}</span>}
               <span className="plan-name">{r.item.activity}</span>
               <span className="plan-count t-num">{Math.min(r.done, r.item.perWeek)}/{r.item.perWeek}</span>
             </button>
@@ -141,7 +142,7 @@ export function Plan() {
                   title="Do it every week"
                   onClick={() => addItem(s.activity, 1, true)}
                 >
-                  🔒
+                  <span className="btn-glyph" aria-hidden>{Icons.lock()}</span>
                 </button>
               </div>
             ))}

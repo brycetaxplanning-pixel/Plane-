@@ -1,3 +1,4 @@
+import type { IconName } from '../components/layout/Icons';
 import type { AppState, ModuleId, XpEvent } from './schema';
 import { bucketOf } from './schema';
 import { addDays, inWeek, todayKey, weekDays, type DateKey } from './date';
@@ -81,7 +82,9 @@ export interface BadgeDef {
   id: string;
   name: string;
   description: string;
-  icon: string;
+  /** Names a mark in the line set rather than carrying JSX, so this file
+   *  stays free of components. */
+  icon: IconName;
   earned: (s: AppState) => boolean;
 }
 
@@ -89,50 +92,50 @@ const weekCount = (dates: DateKey[]) => dates.filter((d) => inWeek(d)).length;
 
 export const BADGES: BadgeDef[] = [
   {
-    id: 'first-log', name: 'Day one', description: 'Logged anything at all', icon: '🌱',
+    id: 'first-log', name: 'Day one', description: 'Logged anything at all', icon: 'sprout',
     earned: (s) => s.xp.length > 0,
   },
   {
-    id: 'streak-7', name: 'Seven straight', description: 'A 7-day check-in streak', icon: '🔥',
+    id: 'streak-7', name: 'Seven straight', description: 'A 7-day check-in streak', icon: 'flame',
     earned: (s) => streakOf(s.activeDays).longest >= 7,
   },
   {
-    id: 'streak-30', name: 'Month of showing up', description: 'A 30-day check-in streak', icon: '🏔️',
+    id: 'streak-30', name: 'Month of showing up', description: 'A 30-day check-in streak', icon: 'mountain',
     earned: (s) => streakOf(s.activeDays).longest >= 30,
   },
   {
-    id: 'outreach-50', name: 'Fifty in a week', description: 'Hit the weekly outreach target', icon: '📞',
+    id: 'outreach-50', name: 'Fifty in a week', description: 'Hit the weekly outreach target', icon: 'phone',
     earned: (s) => weekCount(s.planning.outreach.map((o) => o.date)) >= s.planning.weeklyTarget,
   },
   {
-    id: 'outreach-100', name: 'Century', description: '100 outreach conversations all time', icon: '💯',
+    id: 'outreach-100', name: 'Century', description: '100 outreach conversations all time', icon: 'milestone',
     earned: (s) => s.planning.outreach.length >= 100,
   },
   {
-    id: 'quota-12', name: 'Full dozen', description: 'Twelve fitness sessions in one week', icon: '🏅',
+    id: 'quota-12', name: 'Full dozen', description: 'Twelve fitness sessions in one week', icon: 'rosette',
     earned: (s) => weekCount(s.fitness.activities.map((a) => a.date)) >= s.fitness.targets.total,
   },
   {
-    id: 'mma-3', name: 'Three rounds', description: 'Three MMA sessions in one week', icon: '🥊',
+    id: 'mma-3', name: 'Three rounds', description: 'Three MMA sessions in one week', icon: 'glove',
     earned: (s) => s.fitness.activities.filter((a) => inWeek(a.date) && bucketOf(a.type) === 'mma').length >= s.fitness.targets.mma,
   },
   {
-    id: 'run-21', name: 'Half marathon', description: 'Covered 21.1 km in a single run', icon: '🏆',
+    id: 'run-21', name: 'Half marathon', description: 'Covered 21.1 km in a single run', icon: 'trophy',
     earned: (s) => s.fitness.activities.some((a) => (a.distanceKm ?? 0) >= 21.1),
   },
   {
-    id: 'spanish-10h', name: 'Ten hours deep', description: '10 hours of Spanish logged', icon: '🇪🇸',
+    id: 'spanish-10h', name: 'Ten hours deep', description: '10 hours of Spanish logged', icon: 'hourglass',
     earned: (s) => s.spanish.sessions.reduce((n, x) => n + x.minutes, 0) >= 600,
   },
   {
-    id: 'spanish-week', name: 'Seven days of Spanish', description: 'Studied every day for a week', icon: '📚',
+    id: 'spanish-week', name: 'Seven days of Spanish', description: 'Studied every day for a week', icon: 'book',
     earned: (s) => {
       const days = new Set(s.spanish.sessions.map((x) => x.date));
       return weekDays().every((d) => days.has(d));
     },
   },
   {
-    id: 'habit-week', name: 'Perfect week', description: 'Every daily habit, seven days running', icon: '🧱',
+    id: 'habit-week', name: 'Perfect week', description: 'Every daily habit, seven days running', icon: 'bricks',
     earned: (s) => {
       const daily = s.habits.items.filter((h) => h.cadence === 'daily' && !h.archived);
       if (daily.length === 0) return false;
@@ -140,15 +143,15 @@ export const BADGES: BadgeDef[] = [
     },
   },
   {
-    id: 'goal-done', name: 'Crossed the line', description: 'Finished a goal', icon: '🏁',
+    id: 'goal-done', name: 'Crossed the line', description: 'Finished a goal', icon: 'flag',
     earned: (s) => s.goals.items.some((g) => g.done),
   },
   {
-    id: 'inbox-zero', name: 'Nothing unexplained', description: 'Every transaction categorised', icon: '🧾',
+    id: 'inbox-zero', name: 'Nothing unexplained', description: 'Every transaction categorised', icon: 'receipt',
     earned: (s) => s.finance.transactions.length >= 5 && s.finance.transactions.every((t) => t.reviewed),
   },
   {
-    id: 'filed-10', name: 'Ten returns out', description: 'Ten client projects filed', icon: '📤',
+    id: 'filed-10', name: 'Ten returns out', description: 'Ten client projects filed', icon: 'outbox',
     earned: (s) => s.work.projects.filter((p) => p.stage === 'Filed').length >= 10,
   },
 ];

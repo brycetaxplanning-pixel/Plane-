@@ -220,7 +220,7 @@ function ReminderRow({
         rel="noopener noreferrer"
         title="Add to Google Calendar"
       >
-        📅
+        <span className="btn-glyph" aria-hidden>{Icons.calendar()}</span>
       </a>
       <button className="btn btn-sm" onClick={onDone}>Done</button>
     </div>

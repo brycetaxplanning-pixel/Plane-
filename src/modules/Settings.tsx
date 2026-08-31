@@ -16,6 +16,7 @@ import { useApp } from '../state/context';
 import { Field, SectionHead } from '../components/ui/Field';
 import { Modal } from '../components/ui/Modal';
 import { StatTile } from '../components/charts/StatTile';
+import { BadgeWall } from '../components/BadgeMedal';
 
 export function Settings() {
   const { state, update, replaceAll, toast, storageName } = useApp();
@@ -193,16 +194,8 @@ export function Settings() {
           <StatTile label="Streak" value={`${streakOf(state.activeDays).current}d`} caption={`longest ${streakOf(state.activeDays).longest}d`} small />
           <StatTile label="Badges" value={`${earned.size}/${BADGES.length}`} small />
         </div>
-        <div className="row-2 wrap" style={{ marginTop: 'var(--sp-4)' }}>
-          {BADGES.map((b) => (
-            <span
-              key={b.id}
-              className={`chip chip-static${earned.has(b.id) ? '' : ' chip-locked'}`}
-              title={b.description}
-            >
-              <span aria-hidden>{b.icon}</span>{b.name}
-            </span>
-          ))}
+        <div style={{ marginTop: 'var(--sp-4)' }}>
+          <BadgeWall badges={BADGES} earned={earned} />
         </div>
       </section>
 

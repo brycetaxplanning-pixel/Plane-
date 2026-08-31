@@ -1,6 +1,6 @@
 import { MODULES, type ModuleId } from '../lib/schema';
 import { dowLabel, lastDays, todayKey } from '../lib/date';
-import { earnedBadges, levelFor, streakOf, totalXp, xpInRange } from '../lib/gamification';
+import { BADGES, earnedBadges, levelFor, streakOf, totalXp, xpInRange } from '../lib/gamification';
 import { moduleSummaries } from '../state/selectors';
 import { useApp } from '../state/context';
 import { routeOf, type Route } from '../lib/router';
@@ -9,6 +9,7 @@ import { BarChart, type Datum } from '../components/charts/BarChart';
 import { StatTile } from '../components/charts/StatTile';
 import { SectionHead } from '../components/ui/Field';
 import { ModuleGlyph } from '../components/layout/Icons';
+import { BadgeWall } from '../components/BadgeMedal';
 
 export function Dashboard({ navigate }: { navigate: (r: Route) => void }) {
   const { state } = useApp();
@@ -128,14 +129,8 @@ export function Dashboard({ navigate }: { navigate: (r: Route) => void }) {
 
       {badges.length > 0 && (
         <section className="card">
-          <SectionHead title="Badges" sub={`${badges.length} earned`} />
-          <div className="row-2 wrap">
-            {badges.map((b) => (
-              <span key={b.id} className="chip chip-static" title={b.description}>
-                <span aria-hidden>{b.icon}</span>{b.name}
-              </span>
-            ))}
-          </div>
+          <SectionHead title="Badges" sub={`${badges.length} of ${BADGES.length} earned`} />
+          <BadgeWall badges={badges} earned={new Set(badges.map((b) => b.id))} />
         </section>
       )}
     </div>

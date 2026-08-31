@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
 import { fmtRange } from '../lib/date';
 import { addDays, type DateKey } from '../lib/date';
+import { Icons } from './layout/Icons';
 
 /** Shown once, the first time the app opens after a perfect week. */
 export function EnlightenmentModal({ week, onClose }: { week: DateKey; onClose: () => void }) {
@@ -19,7 +20,7 @@ export function EnlightenmentModal({ week, onClose }: { week: DateKey; onClose: 
           <h2 className="enl-title">Not one thing missed</h2>
           <p className="t-sm t-sec">
             Every daily habit, every day, and every weekly habit — {fmtRange(week, addDays(week, 6))}.
-            You are wearing 🧘 next to your name all week. Miss anything this week and it's gone.
+            You wear the mark next to your name all week. Miss anything this week and it's gone.
           </p>
           <button className="btn btn-primary btn-lg btn-block" style={{ marginTop: 'var(--sp-4)' }} onClick={onClose}>
             Keep it going
@@ -47,7 +48,7 @@ function MeditatorGlyph() {
 export function EnlightenedBadge({ compact }: { compact?: boolean }) {
   return (
     <span className={`enl-badge${compact ? ' is-compact' : ''}`} title="Enlightenment — a perfect habit week">
-      <span aria-hidden>🧘</span>
+      <span className="enl-mark" aria-hidden>{Icons.lotus()}</span>
       {!compact && <span>Enlightened</span>}
     </span>
   );

@@ -208,8 +208,10 @@
   font-variant-numeric: tabular-nums;
   color: var(--card-ink);
 }
-/* A word, not a figure — it needs to fit on one line at 2-up on a phone. */
-.mtile-stat-sm { font-size: 15px; letter-spacing: -0.005em; }
+/* A word, not a figure — it needs to fit on one line at 2-up on a phone. The
+   selector matches `.mtile-stat b`, or that rule's element part outweighs this
+   one and the word comes out at the size of a headline figure. */
+.mtile-stat b.mtile-stat-sm { font-size: 15px; letter-spacing: -0.005em; }
 
 .mtile-cap {
   display: block; margin-top: 4px;

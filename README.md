@@ -138,11 +138,19 @@ word was there but not read it; the habit status glyph sat on an 18% tint of its
 own colour; and light and dark shared one muted ink, which clears the floor on
 one and not the other.
 
-The audit also had three bugs of its own, all of which made it report confident
+The audit also had four bugs of its own, all of which made it report confident
 nonsense: it could not parse what `color-mix()` computes to, so dark buttons read
-as white-on-white; it ignored `opacity`, so a watermark read as solid; and it
-measured the launcher mid-animation. Emoji and disabled controls are now skipped,
-since neither is something WCAG asks you to meet.
+as white-on-white; it ignored `opacity`, so a watermark read as solid; it
+measured the launcher mid-animation; and it resolved backgrounds from
+`background-color` alone, so the launcher's cards — whose ground is a gradient —
+were measured against the page behind them and white-on-dark scored 1.05:1.
+
+That last one is why the audit now reads pixels. When any text sits on a
+gradient, an image or a filter, the page is re-shot with every glyph made
+transparent, and the colour under each label is read straight off that image
+(decoded with `zlib`, no new dependency). It was confirmed by darkening the card
+ink on purpose and watching all seven skins fail at about 1.5:1. Disabled
+controls are still skipped, since WCAG 1.4.3 exempts them.
 
 ## Keyboard and screen readers
 
@@ -163,6 +171,31 @@ because by the time effects run an autofocused field has already taken it.
 
 There was no skip link past the fourteen-item nav, and the launcher — the one
 page with no header — had no `h1` at all.
+
+## The launcher
+
+Every module is a collectible card, not a tile. The rank on the frame is real:
+under half of this week's target is a plain frame, half or more saturates the
+module's hue and starts a foil sweep across the card, and hitting the target
+gives it a gold frame and a medallion. It is read off the same weekly progress
+the meter already draws, so the frame never claims anything the numbers do not.
+`prefers-reduced-motion` stops the sweep and keeps the rank.
+
+The cards carry their own dark stock on every skin, light ones included — a
+trading card does not take the colour of the table it is lying on, and that is
+what makes the module hue read as a colour rather than a tint. Because a card
+supplies its own ground it also supplies its own ink: nothing inside one takes
+`--text-primary`, or it would go dark-on-dark the moment the page is light.
+
+There are no emoji. An emoji is drawn by the platform, at the platform's weight,
+in the platform's palette, so eleven modules end up reading as eleven pictures
+from eleven places. `components/layout/Icons.tsx` is one line set instead — a
+single 24-unit grid at 1.7 stroke with round caps — covering the modules, the
+chrome, the empty states, the timeline, the notification kinds and the awards.
+Three marks were redrawn after seeing them at 30px: a running shoe read as a
+mug, a banknote read as a camera, and a lone speech bubble read as a balloon.
+The emoji you pick yourself — on a habit, a goal, a business, a saving pot — are
+still yours and are left alone.
 
 ## Themes
 
