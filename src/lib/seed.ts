@@ -55,11 +55,11 @@ export function sampleState(): AppState {
 
   // Only fill days that have actually happened — a demo should never show
   // outreach logged on a future date.
-  const elapsed = Math.max(0, diffDays(today, ws));
+  const elapsedThisWeek = Math.max(0, diffDays(today, ws));
   s.planning.outreach = names.flatMap((name, i) =>
     Array.from({ length: i < 9 ? 2 : 1 }, (_, k) => ({
       id: uid('out'),
-      date: addDays(ws, elapsed === 0 ? 0 : (i + k) % (elapsed + 1)),
+      date: addDays(ws, elapsedThisWeek === 0 ? 0 : (i + k) % (elapsedThisWeek + 1)),
       name: k === 0 ? name : `${name.split(' ')[0]}'s referral`,
       channel: channels[(i + k) % channels.length],
       outcome: outcomes[(i * 2 + k) % outcomes.length],
@@ -71,33 +71,90 @@ export function sampleState(): AppState {
     { id: uid('deal'), name: 'Kestrel Design — entity restructure', stage: 'Won', value: 4500, createdAt: addDays(today, -25) },
   ];
 
-  s.spanish.sessions = [12, 0, 25, 30, 20, 0, 45, 20, 15, 0, 30, 25, 20, 20]
-    .map((minutes, i) => ({ minutes, i }))
-    .filter((x) => x.minutes > 0)
-    .map((x) => ({
-      id: uid('sp'),
-      date: addDays(today, x.i - 13),
-      minutes: x.minutes,
-      platform: x.i % 3 === 0 ? 'italki' : 'Babbel',
-      kind: x.i % 3 === 0 ? ('Lesson' as const) : ('Self study' as const),
-    }));
+  /* Ten weeks of history, with some weeks deliberately heavier than others.
+     The analysis engine has to have real variation to find anything, and the
+     sample should demonstrate a finding that is actually in the data rather
+     than one written into the copy. Heavier training weeks here also carry
+     more client work and more outreach. */
+  const WEEK_QUALITY = [0.9, 0.4, 0.8, 0.35, 1.0, 0.5, 0.85, 0.45, 0.95, 0.75];
+  const MMA_TYPES = ['MMA', 'Jiu-jitsu', 'Boxing'];
+  const LIFT_TYPES = ['Weightlifting', 'Calisthenics'];
+  const OTHER_TYPES = ['Run', 'Basketball', 'Cycling', 'Mobility'];
 
-  const plan: [number, string, number, number | undefined][] = [
-    [-13, 'MMA', 90, undefined], [-12, 'Weightlifting', 55, undefined], [-11, 'Run', 40, 6.5],
-    [-10, 'MMA', 90, undefined], [-9, 'Calisthenics', 45, undefined], [-8, 'Long run', 75, 14],
-    [-7, 'Basketball', 60, undefined],
-    [-6, 'MMA', 90, undefined], [-5, 'Weightlifting', 60, undefined], [-4, 'Run', 35, 5.5],
-    [-3, 'MMA', 90, undefined], [-2, 'Calisthenics', 40, undefined], [-1, 'Run', 50, 8.2],
-    [0, 'Weightlifting', 55, undefined],
-  ];
-  s.fitness.activities = plan.map(([offset, type, minutes, km]) => ({
-    id: uid('act'),
-    date: addDays(today, offset),
-    type,
-    minutes,
-    distanceKm: km,
-    rpe: km && km > 10 ? 8 : 6,
-  }));
+  const elapsed = Math.max(0, diffDays(today, ws));
+
+  WEEK_QUALITY.forEach((quality, index) => {
+    const weeksAgo = WEEK_QUALITY.length - 1 - index;
+    const start = addDays(ws, -7 * weeksAgo);
+    // The current week is only partly run, so only fill the days that exist.
+    const lastDay = weeksAgo === 0 ? elapsed : 6;
+    const sessions = Math.round(4 + quality * 8);
+
+    for (let n = 0; n < sessions; n++) {
+      const day = lastDay >= 0 ? n % (lastDay + 1) : 0;
+      if (lastDay < 0) break;
+      const bucket = n % 3 === 0 ? MMA_TYPES : n % 3 === 1 ? LIFT_TYPES : OTHER_TYPES;
+      const type = bucket[n % bucket.length];
+      const isRun = type === 'Run' || type === 'Cycling';
+      const longRun = weeksAgo % 2 === 0 && n === sessions - 1;
+      s.fitness.activities.push({
+        id: uid('act'),
+        date: addDays(start, day),
+        type: longRun ? 'Long run' : type,
+        minutes: longRun ? 70 + weeksAgo : 45 + ((n * 7) % 40),
+        distanceKm: longRun ? 12 + quality * 6 : isRun ? 5 + quality * 4 : undefined,
+        rpe: Math.min(10, 5 + Math.round(quality * 4)),
+      });
+    }
+
+    // Client tasks finished, on the projects seeded above.
+    const taskCount = Math.round(1 + quality * 6);
+    for (let n = 0; n < taskCount && lastDay >= 0; n++) {
+      s.work.projects[n % s.work.projects.length].tasks.push({
+        id: uid('t'),
+        title: `Review pass ${weeksAgo}-${n}`,
+        done: true,
+        doneAt: addDays(start, n % (lastDay + 1)),
+      });
+    }
+
+    // Outreach, in weeks before the current one (this week is seeded above).
+    if (weeksAgo > 0) {
+      const contacts = Math.round(14 + quality * 38);
+      for (let n = 0; n < contacts; n++) {
+        s.planning.outreach.push({
+          id: uid('out'),
+          date: addDays(start, n % 6),
+          name: `${names[n % names.length]}`,
+          channel: channels[n % channels.length],
+          outcome: n % 9 === 0 ? 'Meeting booked' : outcomes[n % outcomes.length],
+        });
+      }
+    }
+
+    // Spanish, loosely tracking the same weeks.
+    for (let d = 0; d <= Math.min(lastDay, 6); d++) {
+      if ((d + weeksAgo) % 3 === 0) continue;
+      s.spanish.sessions.push({
+        id: uid('sp'),
+        date: addDays(start, d),
+        minutes: Math.round(10 + quality * 25),
+        platform: d % 3 === 0 ? 'italki' : 'Babbel',
+        kind: d % 3 === 0 ? 'Lesson' : 'Self study',
+      });
+    }
+
+    // A check-in most weeks, running with the quality of the week.
+    if (lastDay >= 2) {
+      s.coach.checkIns.push({
+        id: uid('ci'),
+        date: addDays(start, 2),
+        mood: Math.max(1, Math.min(5, Math.round(2 + quality * 3))),
+        energy: Math.max(1, Math.min(5, Math.round(1.5 + quality * 3))),
+      });
+    }
+  });
+
   s.fitness.race = { name: 'Half marathon', date: addDays(today, 63), distanceKm: 21.1, targetTime: '1:55:00' };
 
   s.finance.budgets = {
@@ -199,6 +256,28 @@ export function sampleState(): AppState {
   }
   s.habits.logs.push({ id: uid('hl'), habitId: sun.id, date: ws, met: true });
 
+  s.fitness.physique = [
+    { id: uid('phy'), title: 'Bigger chest', area: 'Chest', site: 'Chest', target: 108, unit: 'cm', plan: 'Two pressing sessions a week, top set plus back-offs', done: false, createdAt: addDays(today, -60) },
+    { id: uid('phy'), title: 'Wider back', area: 'Back', site: 'Shoulders', target: 128, unit: 'cm', plan: 'Row volume up, weighted pull-ups on the second session', done: false, createdAt: addDays(today, -60) },
+    { id: uid('phy'), title: 'Straighter posture through the thoracic spine', area: 'Posture', plan: 'Daily thoracic extension and dead hangs; stop training through tight lats', done: false, createdAt: addDays(today, -30) },
+  ];
+
+  [
+    ['Chest', 103.5, 104.2, 105.0, 105.4],
+    ['Shoulders', 122.0, 122.8, 123.5, 124.1],
+    ['Waist', 84.0, 83.4, 83.1, 82.6],
+  ].forEach(([site, ...values]) => {
+    values.forEach((value, i) => {
+      s.fitness.measurements.push({
+        id: uid('meas'),
+        date: addDays(today, -63 + i * 21),
+        site: site as string,
+        value: value as number,
+        unit: 'cm',
+      });
+    });
+  });
+
   s.planning.ideas = [
     {
       id: uid('idea'), title: 'Clips channel for finance YouTubers', stage: 'Spark', effort: 'Easy start',
@@ -248,16 +327,10 @@ export function sampleState(): AppState {
     },
   ];
 
-  s.coach.checkIns = [4, 3, 5, 4, 3, 4, 4].map((mood, i) => ({
-    id: uid('ci'),
-    date: addDays(today, i - 6),
-    mood,
-    energy: Math.max(1, Math.min(5, mood - (i % 2))),
-  }));
-
   // A plausible XP ledger and streak so the dashboard has history.
-  s.activeDays = Array.from({ length: 14 }, (_, i) => addDays(today, i - 13));
-  s.xp = s.activeDays.map((date, i) => ({
+  s.activeDays = Array.from({ length: 70 }, (_, i) => addDays(today, i - 69))
+    .filter((_, i) => i % 8 !== 3);
+  s.xp = s.activeDays.slice(-30).map((date, i) => ({
     id: uid('xp'), date, amount: 40 + ((i * 37) % 90), reason: 'Logged activity', module: 'general' as const,
   }));
 

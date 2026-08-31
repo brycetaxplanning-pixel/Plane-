@@ -11,6 +11,7 @@ import { BarChart } from '../components/charts/BarChart';
 import { Ring } from '../components/charts/Ring';
 import { StatTile } from '../components/charts/StatTile';
 import { Chat } from '../components/Chat';
+import { Physique } from './fitness/Physique';
 
 const ACCENT = 'var(--mod-fitness)';
 
@@ -18,7 +19,7 @@ export function Fitness() {
   const { state, update, reward, toast } = useApp();
   const stats = fitnessStats(state);
   const [logging, setLogging] = useState(false);
-  const [tab, setTab] = useState<'week' | 'race' | 'coach'>('week');
+  const [tab, setTab] = useState<'week' | 'race' | 'physique' | 'coach'>('week');
 
   const logActivity = (a: Omit<Activity, 'id'>) => {
     const longRun = (a.distanceKm ?? 0) >= 15;
@@ -68,6 +69,7 @@ export function Fitness() {
       <div className="tabs" role="tablist">
         <button className="tab" role="tab" aria-selected={tab === 'week'} onClick={() => setTab('week')}>The week</button>
         <button className="tab" role="tab" aria-selected={tab === 'race'} onClick={() => setTab('race')}>Half marathon</button>
+        <button className="tab" role="tab" aria-selected={tab === 'physique'} onClick={() => setTab('physique')}>Physique</button>
         <button className="tab" role="tab" aria-selected={tab === 'coach'} onClick={() => setTab('coach')}>Coach</button>
       </div>
 
@@ -139,6 +141,8 @@ export function Fitness() {
       )}
 
       {tab === 'race' && <RacePanel />}
+
+      {tab === 'physique' && <Physique />}
 
       {tab === 'coach' && (
         <section className="card">
@@ -354,6 +358,10 @@ WEEKLY QUOTAS
 - Lifting or calisthenics: ${s.targets.strength} sessions/week (done: ${s.strength})
 - Total fitness sessions: ${s.targets.total}/week (done: ${s.total})
 - That leaves ${s.flexTarget} flexible slots for running, basketball or anything else (used: ${s.flexDone})
+
+PHYSIQUE AND MOVEMENT GOALS
+${state.fitness.physique.filter((g) => !g.done).map((g) => `- ${g.title} (${g.area})${g.plan ? ` — ${g.plan}` : ''}`).join('\n') || '- none set'}
+${state.fitness.measurements.length ? `Latest measurements: ${[...new Map(state.fitness.measurements.map((m) => [m.site, m])).values()].map((m) => `${m.site} ${m.value}${m.unit}`).join(', ')}` : 'No measurements logged.'}
 
 RACE GOAL
 - ${race.name}, ${race.distanceKm} km${race.targetTime ? `, target time ${race.targetTime}` : ''}

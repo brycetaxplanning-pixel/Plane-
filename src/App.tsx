@@ -3,8 +3,11 @@ import { depthOf, useRoute, type Route } from './lib/router';
 import { AppProvider } from './state/AppContext';
 import { useApp } from './state/context';
 import { MODULES } from './lib/schema';
+import { todayKey } from './lib/date';
 import { resolveSkin } from './lib/themes';
 import { pendingAward } from './lib/awards';
+import { popupInsight } from './lib/insights';
+import { InsightPopup } from './components/InsightPopup';
 import { EnlightenmentModal } from './components/Enlightenment';
 import { Nav } from './components/layout/Nav';
 import { Header } from './components/layout/Header';
@@ -69,6 +72,9 @@ function Shell() {
   }
 
   const award = pendingAward(state);
+  // Not raised over the award popup, and not on the screen that already lists
+  // every finding in full.
+  const insight = award || route === 'coach' ? null : popupInsight(state);
   const module = MODULES.find((m) => m.id === route);
   const title = route === 'home' ? 'Progress' : route === 'settings' ? 'Settings' : module?.name ?? 'Plane';
   const sub = module ? `Module ${module.num} · ${module.blurb}` : undefined;
@@ -99,6 +105,17 @@ function Shell() {
       </main>
 
       <Toasts />
+
+      {insight && (
+        <InsightPopup
+          insight={insight}
+          onSnooze={() => update((s) => ({ ...s, insights: { ...s.insights, lastPopup: todayKey() } }))}
+          onDismiss={() => update((s) => ({
+            ...s,
+            insights: { ...s.insights, lastPopup: todayKey(), dismissed: [...s.insights.dismissed, insight.id] },
+          }))}
+        />
+      )}
 
       {award && (
         <EnlightenmentModal

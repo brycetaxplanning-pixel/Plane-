@@ -66,6 +66,16 @@ export function Settings() {
           <input
             className="checkbox"
             type="checkbox"
+            checked={state.insights.enabled}
+            onChange={(e) => update((st) => ({ ...st, insights: { ...st.insights, enabled: e.target.checked } }))}
+          />
+          <span className="t-sm">Raise a finding from my own data now and then (at most once a day)</span>
+        </label>
+
+        <label className="row-2" style={{ cursor: 'pointer', marginTop: 'var(--sp-3)' }}>
+          <input
+            className="checkbox"
+            type="checkbox"
             checked={state.settings.completionFx}
             onChange={(e) => update((st) => ({ ...st, settings: { ...st.settings, completionFx: e.target.checked } }))}
           />

@@ -12,17 +12,44 @@ import { Field, SectionHead } from '../components/ui/Field';
 import { Sparkline } from '../components/charts/Sparkline';
 import { StatTile } from '../components/charts/StatTile';
 import { Chat } from '../components/Chat';
+import { Analysis } from './coach/Analysis';
+import { realityCheck } from '../lib/insights';
+import type { CoachMode } from '../lib/schema';
 
 const ACCENT = 'var(--mod-coach)';
 const SCALE = [1, 2, 3, 4, 5];
+
+const MODES: { id: CoachMode; label: string; blurb: string }[] = [
+  { id: 'coach',     label: 'Coach',          blurb: 'Tells you what to do next.' },
+  { id: 'therapist', label: 'Sounding board', blurb: 'Asks more than it tells. Not a therapist, and not a substitute for one.' },
+  { id: 'straight',  label: 'Straight talk',  blurb: 'The unfiltered read, including the part you would rather not hear.' },
+];
+
+const MODE_SUGGESTIONS: Record<CoachMode, string[]> = {
+  coach: ['What should I focus on this week?', 'Where am I slipping?', "I'm thinking about getting a massage"],
+  therapist: ['I keep putting off the outreach', "I've been feeling flat this week", 'Why do I avoid the client work?'],
+  straight: ['Can I actually do all of this?', 'What should I drop?', 'Be honest about my week'],
+};
 
 export function Coach() {
   const { state, update, reward } = useApp();
   const stats = coachStats(state);
   const [checkingIn, setCheckingIn] = useState(false);
+  const [tab, setTab] = useState<'checkin' | 'analysis' | 'talk'>('checkin');
+  const mode = state.coach.mode;
 
   return (
     <div className="stack">
+      <div className="tabs" role="tablist">
+        <button className="tab" role="tab" aria-selected={tab === 'checkin'} onClick={() => setTab('checkin')}>Check in</button>
+        <button className="tab" role="tab" aria-selected={tab === 'analysis'} onClick={() => setTab('analysis')}>Analysis</button>
+        <button className="tab" role="tab" aria-selected={tab === 'talk'} onClick={() => setTab('talk')}>Talk</button>
+      </div>
+
+      {tab === 'analysis' && <Analysis />}
+
+      {tab === 'checkin' && (
+      <>
       <section className="card" style={{ ['--mod' as string]: ACCENT }}>
         <SectionHead title="Daily check-in" sub={stats.checkedInToday ? 'Done for today' : 'Two questions, thirty seconds'} />
         <div className="grid grid-3 tight-mobile" style={{ gap: 'var(--sp-3)' }}>
@@ -63,22 +90,50 @@ export function Coach() {
         </section>
       )}
 
+      <section className="card card-sunken">
+        <p className="t-sm t-sec">
+          Goals moved to their own module. <a href={routeOf('goals')}>Open Goals →</a>
+        </p>
+      </section>
+      </>
+      )}
+
+      {tab === 'talk' && (
       <section className="card">
         <SectionHead title="Talk it through" sub="Sees every module's numbers" />
+
+        <div className="row-2 wrap" style={{ marginBottom: 'var(--sp-3)' }}>
+          {MODES.map((m) => (
+            <button
+              key={m.id}
+              className="chip"
+              aria-pressed={mode === m.id}
+              onClick={() => update((s) => ({ ...s, coach: { ...s.coach, mode: m.id } }))}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+        <p className="t-xs t-muted" style={{ marginBottom: 'var(--sp-3)' }}>
+          {MODES.find((m) => m.id === mode)?.blurb}
+        </p>
+
         <Chat
+          key={mode}
           accent={ACCENT}
           messages={state.coach.chat}
           onChange={(next) => update((s) => ({ ...s, coach: { ...s.coach, chat: next } }))}
           buildSystem={() => buildLifeCoachSystem(state)}
           offlineReply={(input) => offlineCoachReply(input, state)}
           placeholder="What's on your mind…"
-          emptyHint="I can see every module — work, outreach, Spanish, training, spending, habits and goals. Ask me what to prioritise, where you're slipping, or how to plan the week."
-          suggestions={[
-            'What should I focus on this week?',
-            'Where am I slipping?',
-            "I'm thinking about getting a massage",
-            'Plan my week around 3 MMA classes',
-          ]}
+          emptyHint={
+            mode === 'therapist'
+              ? "Say what's actually going on. I'll ask before I suggest anything."
+              : mode === 'straight'
+                ? 'Ask me something you might not like the answer to.'
+                : 'I can see every module — work, outreach, Spanish, training, spending, habits and goals.'
+          }
+          suggestions={MODE_SUGGESTIONS[mode]}
         />
         {state.coach.chat.length > 0 && (
           <button
@@ -90,12 +145,7 @@ export function Coach() {
           </button>
         )}
       </section>
-
-      <section className="card card-sunken">
-        <p className="t-sm t-sec">
-          Goals moved to their own module. <a href={routeOf('goals')}>Open Goals →</a>
-        </p>
-      </section>
+      )}
 
       {checkingIn && (
         <CheckInForm
@@ -219,6 +269,19 @@ ${c.checkedInToday ? 'Checked in today.' : 'No check-in today.'} Last mood ${c.m
 Active-day streak: ${streakOf(state.activeDays).current} days.`;
 }
 
+const MODE_BRIEF: Record<CoachMode, string> = {
+  coach: `You are their coach. Answer with what to do next. Be direct and unsentimental, prefer one concrete action over a list, and keep it under about 200 words unless they ask for a full plan.`,
+
+  therapist: `You are a sounding board, not a coach and not a therapist. Say so if they treat you as one.
+Ask before you advise. Your first reply to anything they raise should usually be a question that gets at what is underneath it — what they are avoiding, what they are afraid the answer is, what changed. Reflect back what you actually heard in their words. Do not rush to a fix, do not produce a list of tips, and do not moralise.
+Only bring in the numbers below when they help them see something about themselves, not to score them.
+If they describe anything that sounds like a crisis or thoughts of harming themselves, drop the format, say plainly that this is beyond what an app should handle, and point them to a real professional or a crisis line in their country.`,
+
+  straight: `You are giving the unfiltered read, the one they would not ask for. No encouragement, no softening, no compliment sandwich.
+Start with the thing they are least likely to want to hear, and make it specific to the numbers below rather than a general lecture. If the week does not fit in the hours available, say which commitment has to go and why that one. If a goal has not moved in a month, say the goal is not real yet. If they are doing well at something, say that too — plainly, once, without dressing it up.
+Be hard on the situation, never on them as a person. No insults and no profanity. Under about 200 words.`,
+};
+
 const TONE_LINE: Record<string, string> = {
   gentle: 'Be warm and encouraging. Name what slipped without making them feel bad about it.',
   direct: 'Be direct and unsentimental. Say plainly what slipped and what to do about it. No pep talk.',
@@ -226,9 +289,19 @@ const TONE_LINE: Record<string, string> = {
 };
 
 function buildLifeCoachSystem(state: ReturnType<typeof useApp>['state']): string {
-  return `You are the user's life coach inside their personal tracking app. You can see every module's live numbers below. Today is ${todayKey()}.
+  const r = realityCheck(state);
+  const timeLine = r.overBy > 0
+    ? `Their weekly commitments add up to ${r.committed.toFixed(1)} hours against ${r.available.toFixed(0)} available after sleep and work — ${r.overBy.toFixed(1)} hours more than exists. Treat that as a fact when they ask whether they can add something.`
+    : `Their weekly commitments add up to ${r.committed.toFixed(1)} hours against ${r.available.toFixed(0)} available after sleep and work, so there is ${Math.abs(r.overBy).toFixed(1)} hours of slack on paper.`;
+
+  return `You are inside the user's personal tracking app and can see every module's live numbers below. Today is ${todayKey()}.
+
+${MODE_BRIEF[state.coach.mode] ?? MODE_BRIEF.coach}
 
 ${TONE_LINE[state.habits.tone] ?? TONE_LINE.direct}
+
+TIME BUDGET
+${timeLine}
 
 Name the trade-off rather than telling them to do everything: they have a demanding tax job, a side practice they are trying to grow, a language habit, twelve training sessions a week, a household budget and a set of daily habits. When something is slipping, say which one and what it costs to fix. Prefer one concrete next action over a list. Keep replies under about 200 words unless they ask for a full plan.
 

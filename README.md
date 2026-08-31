@@ -19,11 +19,34 @@ tells you what is asking for attention.
 | 6 | **Habits** | Daily and weekly habits with green / yellow / red status. Green is done, yellow is one miss, red is two or more in a row — with a "days since" count and an escalating nudge whose bluntness you set. |
 | 7 | **Goals** | One visual card per goal: a picture, what it costs, and how you get there. Fields adapt to the kind of goal — a purchase asks for a price, a training goal asks for a window in weeks. |
 | 8 | **Notes** | Journal entries, to-do lists and everything you'd otherwise put in your phone's notes app. Talk a note in without typing. |
-| 9 | **Life Coach** | A daily mood/energy check-in and a conversation that has every other module's numbers in front of it — including budget headroom and goal costs, so it prices a proposed spend before agreeing to it. |
+| 9 | **Life Coach** | Three tabs. A daily mood/energy check-in; an **Analysis** tab that finds patterns in your own log and adds up whether the week fits in the hours that exist; and a conversation in one of three modes — Coach, Sounding board or Straight talk. |
 
 Home is a grid of big module buttons — one press each. Logging anything earns
 XP, which drives a level, a daily streak and fourteen badges, and checking a
 task off plays one of eighteen animations.
+
+## What the analysis does and does not claim
+
+The Analysis tab aggregates every module into weekly columns and compares
+them. A finding like *"in the 6 weeks where fitness sessions reached 10 or
+more, client tasks finished averaged 6.8; across the other 4 weeks it averaged
+3.5"* is a median split over your own log, and the sample size is printed
+under every one.
+
+It deliberately refuses to say more than that:
+
+- Findings are descriptive. One person's self-reported log cannot establish
+  that one thing causes another, so nothing here says it does.
+- Both halves of a split need at least three weeks, and the gap has to be at
+  least a third before anything is reported.
+- Two metrics are only compared over the span where **both** were being
+  tracked. Without this, anything started recently correlates with everything
+  else that happened recently — every earlier week reads as a zero.
+- A metric that is mostly zeros inside its own window, or a driver that barely
+  moves, is skipped rather than reported.
+
+At most one finding is raised unprompted, at most once a day, and dismissing
+one retires it for good. All of it can be switched off in Settings.
 
 ## Talking instead of typing
 

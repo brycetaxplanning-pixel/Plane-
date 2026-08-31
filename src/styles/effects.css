@@ -372,3 +372,35 @@
 @media (prefers-reduced-motion: reduce) {
   .enl-wave { animation: none; opacity: 0.5; transform: scale(2.4); }
 }
+
+/* ------------------------------------------------------------------
+   The unprompted insight card.
+------------------------------------------------------------------ */
+
+.pop {
+  position: fixed; z-index: 70;
+  left: var(--sp-4); right: var(--sp-4);
+  bottom: calc(var(--nav-h) + 14px + env(safe-area-inset-bottom, 0px));
+  padding: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-2);
+  animation: pop-in 420ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@media (min-width: 900px) {
+  .pop { left: auto; right: var(--sp-5); bottom: var(--sp-5); width: 380px; }
+}
+.pop-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: 4px; }
+.pop-kicker {
+  font-size: 10px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.09em;
+  color: var(--skin-accent, var(--series-1));
+}
+.pop-title { font-size: 15px; font-weight: 700; line-height: 1.3; margin-bottom: 5px; }
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .pop { animation: none; } }

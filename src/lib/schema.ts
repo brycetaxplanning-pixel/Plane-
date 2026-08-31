@@ -168,6 +168,36 @@ export interface Activity {
   notes?: string;
 }
 
+/** A body measurement, logged over time. */
+export interface Measurement {
+  id: string;
+  date: DateKey;
+  /** Which measurement — chest, waist, and so on. Free text so anyone can
+   *  track what they actually care about. */
+  site: string;
+  value: number;
+  unit: string;
+  note?: string;
+}
+
+export const PHYSIQUE_AREAS = ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core', 'Posture', 'Mobility', 'Body composition'] as const;
+export type PhysiqueArea = (typeof PHYSIQUE_AREAS)[number];
+
+/** A physique or movement goal. Some are measurable, some are qualitative —
+ *  "stand up straighter" has no number and does not need one. */
+export interface PhysiqueGoal {
+  id: string;
+  title: string;
+  area: PhysiqueArea;
+  /** Ties the goal to a measurement site so progress can be read off the log. */
+  site?: string;
+  target?: number;
+  unit?: string;
+  plan?: string;
+  done: boolean;
+  createdAt: DateKey;
+}
+
 export interface RaceGoal {
   name: string;
   date?: DateKey;
@@ -370,6 +400,9 @@ export interface CheckIn {
 /* Shared                                                             */
 /* ------------------------------------------------------------------ */
 
+/** How the Life Coach answers. Same data, different job. */
+export type CoachMode = 'coach' | 'therapist' | 'straight';
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -425,6 +458,8 @@ export interface AppState {
     race: RaceGoal;
     activities: Activity[];
     chat: ChatMessage[];
+    measurements: Measurement[];
+    physique: PhysiqueGoal[];
   };
   finance: {
     budgets: Record<string, number>;
@@ -441,7 +476,10 @@ export interface AppState {
    *  already celebrated so the popup only fires once. */
   awards: { enlightened: DateKey[]; acknowledged: DateKey[] };
   goals: { items: Goal[] };
-  coach: { checkIns: CheckIn[]; chat: ChatMessage[] };
+  coach: { checkIns: CheckIn[]; chat: ChatMessage[]; mode: CoachMode };
+  /** Which findings have been shown or waved away, so the app does not keep
+   *  raising the same one. */
+  insights: { dismissed: string[]; lastPopup: DateKey | null; enabled: boolean };
 }
 
 /* ------------------------------------------------------------------ */
@@ -486,6 +524,8 @@ export function emptyState(): AppState {
       race: { name: 'Half marathon', distanceKm: 21.1 },
       activities: [],
       chat: [],
+      measurements: [],
+      physique: [],
     },
     finance: {
       budgets: {},
@@ -500,7 +540,8 @@ export function emptyState(): AppState {
     notes: { items: [] },
     awards: { enlightened: [], acknowledged: [] },
     goals: { items: [] },
-    coach: { checkIns: [], chat: [] },
+    coach: { checkIns: [], chat: [], mode: 'coach' },
+    insights: { dismissed: [], lastPopup: null, enabled: true },
   };
 }
 
@@ -542,6 +583,8 @@ export function migrate(raw: unknown): AppState {
       race: { ...base.fitness.race, ...(s.fitness?.race ?? {}) },
       activities: s.fitness?.activities ?? [],
       chat: s.fitness?.chat ?? [],
+      measurements: s.fitness?.measurements ?? [],
+      physique: s.fitness?.physique ?? [],
     },
     finance: {
       ...base.finance,
@@ -573,6 +616,12 @@ export function migrate(raw: unknown): AppState {
       ...(s.coach ?? {}),
       checkIns: s.coach?.checkIns ?? [],
       chat: s.coach?.chat ?? [],
+      mode: s.coach?.mode ?? 'coach',
+    },
+    insights: {
+      dismissed: s.insights?.dismissed ?? [],
+      lastPopup: s.insights?.lastPopup ?? null,
+      enabled: s.insights?.enabled ?? true,
     },
   };
 }

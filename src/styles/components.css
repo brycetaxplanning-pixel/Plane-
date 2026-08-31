@@ -519,3 +519,21 @@
   color: var(--text-muted);
   font-size: 12px; font-weight: 800;
 }
+
+/* ---------- insights ---------- */
+.insight {
+  display: flex; align-items: flex-start; gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+}
+.insight-icon {
+  display: grid; place-content: center;
+  flex: none; width: 30px; height: 30px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font-size: 15px;
+}
+.insight-title { font-size: 14px; font-weight: 680; line-height: 1.3; margin-bottom: 3px; }
+.stack-4 { display: flex; flex-direction: column; }
