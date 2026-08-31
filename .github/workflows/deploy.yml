@@ -1,0 +1,66 @@
+# Builds the app and publishes it to GitHub Pages.
+#
+# One-time setup, which has to be done by hand in the browser:
+#   Repo → Settings → Pages → Build and deployment → Source: "GitHub Actions"
+# After that every push to one of the branches below redeploys the live site at
+#   https://<owner>.github.io/<repo>/
+#
+# The build is a plain static bundle. No secrets are used and none are needed:
+# the Anthropic key lives in your browser's local storage, never in the repo.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      # The app currently lives on this branch; drop this line once it merges.
+      - claude/habit-tracker-multi-module-tuagzh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a run finish rather than cancelling it, so a half-published site is never
+# left behind; queue any push that lands mid-deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # `npm run build` typechecks first, so a type error fails the deploy
+      # rather than shipping a broken bundle.
+      - name: Build
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

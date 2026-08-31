@@ -137,6 +137,24 @@ the browser from oscillators and filtered noise. It only starts when you press
 play, there is no audio file anywhere in the app, and nothing is fetched to
 draw or play it. `prefers-reduced-motion` holds the whole thing still.
 
+## Putting it on a phone
+
+The app is a static bundle with no server behind it, so any static host will do.
+A GitHub Actions workflow (`.github/workflows/deploy.yml`) is already committed:
+it lints, typechecks, builds and publishes to GitHub Pages on every push.
+
+To turn it on, once, in the browser:
+
+1. Repo → **Settings** → **Pages**
+2. **Build and deployment → Source: GitHub Actions**
+
+The next push publishes to `https://<owner>.github.io/<repo>/`. Open that on a
+phone and use *Add to Home Screen* — the manifest and service worker are already
+there, so it installs as a standalone app and works offline.
+
+Your data stays in that browser. Two devices are two separate copies until there
+is a backend; *Settings → Export* moves a snapshot between them by hand.
+
 ## Running it
 
 ```bash
