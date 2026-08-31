@@ -166,6 +166,28 @@ under Targets. And an import fills gaps rather than overwriting: anything you
 typed by hand survives unless you tick the box, and the number of clashes is
 shown before you decide. Everything is read on the device; no file is uploaded.
 
+## Notifications with the app closed
+
+Everything else in this app works with no server. This does not, and cannot:
+a push has to be sent by something that stays awake. `server/` holds that
+something — a Cloudflare Worker, one table, deployable in four commands, well
+inside the free tier. `server/README.md` has them.
+
+It is built so that the server learns as little as possible. Pushes are sent
+**with no payload**; when one lands, the service worker reads the wording out of
+IndexedDB on the device and shows the notification from there. The server holds
+an endpoint and a list of times, so it — and the push service in the middle —
+know that something was due, and never what.
+
+The encryption is written from scratch on WebCrypto and checked against the test
+vector in RFC 8291 §5, which fixes the salt and both key pairs: the output is
+reproducible byte for byte. Two things are untested here and cannot be tested
+without a real device — the browser's own `pushManager.subscribe`, and whether
+iPhone Safari accepts a payload-less push in practice.
+
+On an iPhone, add the app to the home screen first: Safari does not allow web
+push from a tab.
+
 ## Putting it on a phone
 
 The app is a static bundle with no server behind it, so any static host will do.

@@ -9,6 +9,7 @@ import { BADGES, earnedBadges, levelFor, streakOf, totalXp } from '../lib/gamifi
 import { downloadFile, exportJSON, importJSON } from '../lib/storage';
 import { sampleState } from '../lib/seed';
 import { InstallPrompt } from '../components/InstallPrompt';
+import { PushSetup } from '../components/PushSetup';
 import { todayKey } from '../lib/date';
 import { useApp } from '../state/context';
 import { Field, SectionHead } from '../components/ui/Field';
@@ -178,10 +179,11 @@ export function Settings() {
           <p className="t-xs t-muted">This browser has no notification support.</p>
         )}
         <p className="t-xs t-muted" style={{ marginTop: 'var(--sp-2)' }}>
-          Device alerts only fire while the app is open. Alerts that reach you with the app closed need a
-          server holding a push subscription, which a site with no backend cannot do.
+          Device alerts only fire while the app is open. For ones that reach you with it closed, see below.
         </p>
       </section>
+
+      <PushSetup />
 
       <section className="card">
         <SectionHead title="Progress" sub={`Level ${levelFor(totalXp(state.xp)).level}`} />

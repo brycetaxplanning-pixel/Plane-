@@ -717,6 +717,9 @@ export interface AppState {
    *  raising the same one. */
   insights: { dismissed: string[]; lastPopup: DateKey | null; enabled: boolean };
   notifications: { items: AppNotification[]; deviceAlerts: boolean };
+  /** Set once this device has registered with a push server. The secret is a
+   *  per-device token, not an account — losing it costs you one registration. */
+  push: { server: string; deviceId: string; secret: string } | null;
   reminders: { items: Reminder[] };
 }
 
@@ -805,6 +808,7 @@ export function emptyState(): AppState {
     coach: { checkIns: [], chat: [], mode: 'coach' },
     insights: { dismissed: [], lastPopup: null, enabled: true },
     notifications: { items: [], deviceAlerts: false },
+    push: null,
     reminders: { items: [] },
   };
 }
@@ -905,6 +909,7 @@ export function migrate(raw: unknown): AppState {
       deviceAlerts: s.notifications?.deviceAlerts ?? false,
     },
     reminders: { items: s.reminders?.items ?? [] },
+    push: s.push ?? null,
   };
 }
 

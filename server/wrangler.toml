@@ -1,0 +1,22 @@
+name = "plane-push"
+main = "worker.mjs"
+compatibility_date = "2026-01-01"
+
+# Every fifteen minutes. Reminders are set to the minute but nobody needs a
+# nudge to land on the exact one, and this keeps the free tier comfortable.
+[triggers]
+crons = ["*/15 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "plane-push"
+database_id = "PUT-YOUR-D1-ID-HERE"
+
+[vars]
+# Comma-separated. Leave empty in development to allow any origin.
+ALLOWED_ORIGINS = "https://brycetaxplanning-pixel.github.io"
+VAPID_SUBJECT = "mailto:brycetaxplanning@gmail.com"
+
+# VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY are secrets, not vars:
+#   npx wrangler secret put VAPID_PUBLIC_KEY
+#   npx wrangler secret put VAPID_PRIVATE_KEY
