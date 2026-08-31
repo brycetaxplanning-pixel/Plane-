@@ -120,7 +120,10 @@
 
 /* Sparkline. The marker sits just inside the right edge so it never bleeds
    out of the card. */
-.spark { position: relative; padding-right: 8px; }
+/* Clipped because the hover targets below are deliberately wider than the
+   marks they cover, so the first and last ones hang over the edges — enough to
+   make the whole page scroll sideways on a phone. */
+.spark { position: relative; padding-right: 8px; overflow: hidden; }
 .spark > svg { overflow: hidden; }
 .spark-dot {
   position: absolute;

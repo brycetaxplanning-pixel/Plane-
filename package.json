@@ -9,7 +9,9 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "icons": "node scripts/make-icons.mjs",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "test": "node tests/run.mjs",
+    "test:server": "node server/test-push.mjs && node server/test-worker.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",
@@ -22,6 +24,7 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
     "oxlint": "^1.79.0",
+    "playwright": "^1.56.1",
     "typescript": "~6.0.2",
     "vite": "^8.2.2"
   },

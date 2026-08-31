@@ -276,6 +276,9 @@ npm run dev        # http://localhost:5173
 Other scripts:
 
 ```bash
+npm test           # every end-to-end suite, against a production build
+npm test health    # just the suites whose names match
+npm run test:server  # the Worker and the push encryption, no browser needed
 npm run build      # typecheck + production build into dist/
 npm run preview    # serve the production build
 npm run typecheck  # tsc only

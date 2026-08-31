@@ -7,6 +7,9 @@
 #
 # The build is a plain static bundle. No secrets are used and none are needed:
 # the Anthropic key lives in your browser's local storage, never in the repo.
+#
+# Nothing deploys unless the lint, the typecheck, the server tests and every
+# end-to-end suite pass first.
 name: Deploy to GitHub Pages
 
 on:
@@ -29,8 +32,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  # Nothing reaches the live site without going through this first. The suites
+  # drive the real UI in a real browser, so they are slower than unit tests and
+  # worth every second: they are what stops a refactor quietly breaking an
+  # import, a migration, or the storage-failure path.
+  test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -44,8 +52,33 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # `npm run build` typechecks first, so a type error fails the deploy
-      # rather than shipping a broken bundle.
+      # `npm run build` typechecks first, so a type error fails here rather
+      # than shipping a broken bundle.
+      - name: Build
+        run: npm run build
+
+      - name: Server tests
+        run: npm run test:server
+
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end suites
+        run: npm test
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
       - name: Build
         run: npm run build
 
