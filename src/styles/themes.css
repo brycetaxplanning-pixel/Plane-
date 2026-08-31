@@ -1,0 +1,191 @@
+/* ------------------------------------------------------------------
+   Skins.
+
+   A skin restyles the chrome — surfaces, ink, accent, corner radius,
+   glow — and carries its own six module identity colours. Every one of
+   those six-colour sets was run through the palette validator against
+   that skin's own surface: all pass the lightness band, chroma floor,
+   CVD separation and normal-vision floors. Where a pair lands in the
+   6–8 CVD warn band the module tiles still carry visible names, so
+   identity is never colour alone.
+
+   Skins are dark-leaning by design and do not follow the light/dark
+   toggle; "Classic" is the one that does.
+------------------------------------------------------------------ */
+
+[data-skin] {
+  --tile-glow: none;
+  --skin-accent-ink: #ffffff;
+  --font-display: var(--font-ui);
+  --tile-radius: var(--r-lg);
+  --skin-texture: none;
+}
+
+/* ---------------- Neon Miami ---------------- */
+[data-skin="miami"] {
+  color-scheme: dark;
+  --plane:          #120d1c;
+  --surface-1:      #1a1226;
+  --surface-2:      #241833;
+  --surface-sunken: #0d0915;
+  --text-primary:   #fdf4ff;
+  --text-secondary: #c9b6d9;
+  --text-muted:     #9280a3;
+  --gridline:       #2e2140;
+  --baseline:       #43305c;
+  --border:         rgba(240, 120, 200, 0.16);
+  --border-strong:  rgba(240, 120, 200, 0.34);
+  --shadow-1:       0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-2:       0 10px 34px rgba(217, 67, 130, 0.24), 0 2px 8px rgba(0, 0, 0, 0.6);
+  --overlay:        rgba(12, 7, 20, 0.7);
+
+  --series-1: #d94382; --series-2: #1795a5; --series-3: #d4711c;
+  --series-4: #4d7ff0; --series-5: #2f9a58; --series-6: #9a6ef0;
+  --series-7: #d94382; --series-8: #d4404a;
+
+  --seq-100: #3b1f4d; --seq-250: #6a2f6e; --seq-400: #a83f83; --seq-550: #d94382; --seq-700: #f37eb0;
+
+  --skin-accent: #d94382;
+  --tile-glow: 0 0 0 1px rgba(240, 120, 200, 0.22), 0 8px 26px rgba(217, 67, 130, 0.20);
+  --skin-texture: radial-gradient(120% 80% at 50% 0%, rgba(23, 149, 165, 0.16), transparent 60%),
+                  radial-gradient(90% 60% at 100% 100%, rgba(217, 67, 130, 0.16), transparent 62%);
+}
+
+/* ---------------- Arcade Brawler ---------------- */
+[data-skin="arcade"] {
+  color-scheme: light;
+  --plane:          #fff8e8;
+  --surface-1:      #fffdf7;
+  --surface-2:      #fdf0d4;
+  --surface-sunken: #f6e6c6;
+  --text-primary:   #1b1206;
+  --text-secondary: #5c4a2e;
+  --text-muted:     #8e7a58;
+  --gridline:       #ecdcb8;
+  --baseline:       #c9b48a;
+  --border:         rgba(27, 18, 6, 0.16);
+  --border-strong:  rgba(27, 18, 6, 0.34);
+  --shadow-1:       0 2px 0 rgba(27, 18, 6, 0.16);
+  --shadow-2:       0 6px 0 rgba(27, 18, 6, 0.20), 0 12px 24px rgba(27, 18, 6, 0.12);
+  --overlay:        rgba(27, 18, 6, 0.45);
+
+  --series-1: #e0353a; --series-2: #2f6fd0; --series-3: #e5a400;
+  --series-4: #17a05f; --series-5: #8b46c9; --series-6: #e2662a;
+  --series-7: #2f6fd0; --series-8: #e0353a;
+
+  --seq-100: #ffe9b8; --seq-250: #ffd070; --seq-400: #e5a400; --seq-550: #b47a00; --seq-700: #7d5300;
+
+  --skin-accent: #e0353a;
+  --tile-radius: 20px;
+  --tile-glow: 0 5px 0 rgba(27, 18, 6, 0.22);
+  --skin-texture: none;
+}
+
+/* ---------------- Shinobi ---------------- */
+[data-skin="shinobi"] {
+  color-scheme: dark;
+  --plane:          #0e0d12;
+  --surface-1:      #15141a;
+  --surface-2:      #1f1d27;
+  --surface-sunken: #0a090d;
+  --text-primary:   #f7f4ef;
+  --text-secondary: #c0b8ae;
+  --text-muted:     #8b8379;
+  --gridline:       #262330;
+  --baseline:       #38333f;
+  --border:         rgba(212, 99, 15, 0.18);
+  --border-strong:  rgba(212, 99, 15, 0.38);
+  --shadow-1:       0 1px 2px rgba(0, 0, 0, 0.6);
+  --shadow-2:       0 10px 30px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(212, 99, 15, 0.12);
+  --overlay:        rgba(6, 5, 8, 0.72);
+
+  --series-1: #d4630f; --series-2: #4a8fe0; --series-3: #d4404a;
+  --series-4: #2fa87a; --series-5: #b05ce0; --series-6: #a8891c;
+  --series-7: #4a8fe0; --series-8: #d4404a;
+
+  --seq-100: #3a2109; --seq-250: #6b3a0c; --seq-400: #a34e0d; --seq-550: #d4630f; --seq-700: #f09246;
+
+  --skin-accent: #d4630f;
+  --tile-glow: 0 0 0 1px rgba(212, 99, 15, 0.20), 0 8px 22px rgba(0, 0, 0, 0.5);
+  --skin-texture: radial-gradient(110% 70% at 0% 0%, rgba(212, 99, 15, 0.13), transparent 58%);
+}
+
+/* ---------------- Deployment ---------------- */
+[data-skin="deployment"] {
+  color-scheme: dark;
+  --plane:          #12140e;
+  --surface-1:      #1a1c14;
+  --surface-2:      #23261b;
+  --surface-sunken: #0d0f09;
+  --text-primary:   #f2f3e9;
+  --text-secondary: #b9bda6;
+  --text-muted:     #868a74;
+  --gridline:       #292d1f;
+  --baseline:       #3a3f2c;
+  --border:         rgba(201, 147, 44, 0.18);
+  --border-strong:  rgba(201, 147, 44, 0.36);
+  --shadow-1:       0 1px 2px rgba(0, 0, 0, 0.6);
+  --shadow-2:       0 10px 28px rgba(0, 0, 0, 0.62);
+  --overlay:        rgba(8, 9, 6, 0.72);
+
+  --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70;
+  --series-4: #c98500; --series-5: #d55181; --series-6: #008300;
+  --series-7: #9085e9; --series-8: #e66767;
+
+  --seq-100: #2b3018; --seq-250: #4d5426; --seq-400: #7f8a3a; --seq-550: #a8912c; --seq-700: #c9932c;
+
+  --skin-accent: #a8912c;
+  --tile-radius: 8px;
+  --tile-glow: 0 0 0 1px rgba(201, 147, 44, 0.16);
+  --skin-texture: linear-gradient(180deg, rgba(201, 147, 44, 0.07), transparent 45%);
+}
+
+/* ---------------- Ringworld ---------------- */
+[data-skin="ringworld"] {
+  color-scheme: dark;
+  --plane:          #060d16;
+  --surface-1:      #0b1420;
+  --surface-2:      #121e2e;
+  --surface-sunken: #040910;
+  --text-primary:   #eaf6ff;
+  --text-secondary: #a8c0d4;
+  --text-muted:     #7189a0;
+  --gridline:       #17263a;
+  --baseline:       #23364e;
+  --border:         rgba(32, 165, 181, 0.20);
+  --border-strong:  rgba(32, 165, 181, 0.40);
+  --shadow-1:       0 1px 2px rgba(0, 0, 0, 0.6);
+  --shadow-2:       0 10px 32px rgba(32, 165, 181, 0.16), 0 2px 8px rgba(0, 0, 0, 0.6);
+  --overlay:        rgba(3, 7, 13, 0.74);
+
+  --series-1: #20a5b5; --series-2: #d55181; --series-3: #c98500;
+  --series-4: #4d8fe8; --series-5: #199e70; --series-6: #a874e0;
+  --series-7: #4d8fe8; --series-8: #d55181;
+
+  --seq-100: #0f3340; --seq-250: #14596b; --seq-400: #20a5b5; --seq-550: #4cc6d4; --seq-700: #8fe2ec;
+
+  --skin-accent: #20a5b5;
+  --tile-glow: 0 0 0 1px rgba(32, 165, 181, 0.24), 0 8px 24px rgba(32, 165, 181, 0.16);
+  --skin-texture: radial-gradient(120% 70% at 50% 0%, rgba(32, 165, 181, 0.14), transparent 62%);
+}
+
+/* Module identity always tracks the active skin's first six slots. */
+[data-skin] {
+  --mod-work:     var(--series-1);
+  --mod-planning: var(--series-2);
+  --mod-spanish:  var(--series-3);
+  --mod-fitness:  var(--series-4);
+  --mod-finance:  var(--series-5);
+  --mod-coach:    var(--series-6);
+}
+
+/* A skin's accent drives primary actions and the level bar. */
+[data-skin] .btn-primary {
+  background: var(--skin-accent);
+  border-color: var(--skin-accent);
+  color: var(--skin-accent-ink);
+}
+[data-skin] .btn-primary:hover { background: color-mix(in srgb, var(--skin-accent) 84%, #000); }
+[data-skin] .xpbar > i { background: var(--skin-accent); }
+[data-skin] .nav-item[aria-current="page"] { --mod: var(--skin-accent); }
+[data-skin] body, [data-skin] .app-shell { background-image: var(--skin-texture); background-attachment: fixed; }

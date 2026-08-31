@@ -1,0 +1,314 @@
+/* ------------------------------------------------------------------
+   Task-completion effects.
+
+   One block per effect, keyed off [data-fx]. The wrapper supplies four
+   reusable pieces — a body, a sweep bar, a flash, and a strip of bits —
+   so a new effect is CSS only.
+------------------------------------------------------------------ */
+
+.fx-wrap { position: relative; }
+.fx-wrap[data-playing] { pointer-events: none; z-index: 2; }
+.fx-body { transform-origin: center; will-change: transform, opacity, filter; }
+
+.fx-layer { position: absolute; inset: 0; pointer-events: none; opacity: 0; border-radius: var(--r-md); }
+.fx-sweep { overflow: hidden; }
+.fx-flash { mix-blend-mode: screen; }
+
+.fx-bits { position: absolute; inset: 0; pointer-events: none; }
+.fx-bits > i {
+  position: absolute;
+  top: 50%; left: calc(6% + var(--i) * 6.6%);
+  width: 7px; height: 7px;
+  border-radius: 2px;
+  background: var(--status-warning);
+  opacity: 0;
+}
+
+.fx-word {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.6);
+  font-size: clamp(15px, 4.4vw, 21px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+  text-shadow: 0 2px 0 var(--surface-1), 0 0 18px color-mix(in srgb, var(--status-warning) 60%, transparent);
+  opacity: 0;
+  white-space: nowrap;
+  animation: fx-shout 700ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+@keyframes fx-shout {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotate(-7deg); }
+  22%  { opacity: 1; transform: translate(-50%, -50%) scale(1.14) rotate(2deg); }
+  62%  { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-50%, -80%) scale(0.96); }
+}
+
+/* ---------- 1. disintegrate ---------- */
+[data-fx="disintegrate"] .fx-body { animation: fx-dust 900ms ease-in both; }
+[data-fx="disintegrate"] .fx-bits > i { animation: fx-dust-bit 900ms ease-out both; animation-delay: calc(var(--i) * 22ms); }
+@keyframes fx-dust {
+  0%   { opacity: 1; filter: blur(0); }
+  40%  { opacity: 0.8; filter: blur(1px); transform: translateX(4px); }
+  100% { opacity: 0; filter: blur(7px); transform: translateX(26px) scale(1.02); }
+}
+@keyframes fx-dust-bit {
+  0%   { opacity: 0.9; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(calc(30px + var(--r) * 0.5px), calc(-24px + var(--r) * 0.3px)) scale(0.2); }
+}
+
+/* ---------- 2. freeze ---------- */
+[data-fx="freeze"] .fx-body { animation: fx-ice 1000ms cubic-bezier(0.3, 0, 0.2, 1) both; }
+[data-fx="freeze"] .fx-sweep {
+  opacity: 1;
+  background: linear-gradient(100deg, rgba(150, 220, 255, 0.85), rgba(210, 245, 255, 0.55) 45%, transparent 70%);
+  animation: fx-ice-sweep 1000ms ease-out both;
+}
+@keyframes fx-ice {
+  0%   { filter: none; }
+  45%  { filter: saturate(0.2) brightness(1.25); transform: none; }
+  70%  { transform: translateX(-2px) rotate(-0.6deg); }
+  78%  { transform: translateX(3px) rotate(0.8deg); }
+  100% { opacity: 0; filter: saturate(0.1) brightness(1.4); transform: translateY(12px) scale(0.94) rotate(-1.5deg); }
+}
+@keyframes fx-ice-sweep {
+  0%   { clip-path: inset(0 100% 0 0); }
+  45%  { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 0 0 0); opacity: 0; }
+}
+
+/* ---------- 3. laser ---------- */
+[data-fx="laser"] .fx-body { animation: fx-laser-body 850ms steps(1, end) both; }
+[data-fx="laser"] .fx-sweep {
+  opacity: 1;
+  background: linear-gradient(90deg, transparent 0 6%, #fff 6% 8%, var(--status-critical) 8% 11%, transparent 11%);
+  filter: drop-shadow(0 0 10px var(--status-critical));
+  animation: fx-laser-beam 850ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+@keyframes fx-laser-beam { from { transform: translateX(-8%); } to { transform: translateX(100%); opacity: 0; } }
+@keyframes fx-laser-body {
+  0%   { clip-path: inset(0 0 0 0); }
+  25%  { clip-path: inset(0 0 0 22%); }
+  50%  { clip-path: inset(0 0 0 52%); }
+  75%  { clip-path: inset(0 0 0 82%); }
+  100% { clip-path: inset(0 0 0 100%); }
+}
+
+/* ---------- 4. beam ---------- */
+[data-fx="beam"] .fx-body { animation: fx-beam-body 950ms ease-in both; }
+[data-fx="beam"] .fx-flash {
+  opacity: 1;
+  background: radial-gradient(60% 120% at 0% 50%, #fff, color-mix(in srgb, var(--series-1) 80%, #fff) 30%, transparent 62%);
+  animation: fx-beam-charge 950ms cubic-bezier(0.5, 0, 0.3, 1) both;
+}
+@keyframes fx-beam-charge {
+  0%   { transform: scaleX(0.02); opacity: 0.5; }
+  30%  { transform: scaleX(0.12); opacity: 1; }
+  62%  { transform: scaleX(1.15); opacity: 1; }
+  100% { transform: scaleX(1.3); opacity: 0; }
+}
+@keyframes fx-beam-body {
+  0%, 28% { transform: none; opacity: 1; }
+  40%  { transform: translateX(6px); }
+  100% { transform: translateX(46px) scaleY(0.6); opacity: 0; filter: brightness(3); }
+}
+
+/* ---------- 5. stamp ---------- */
+[data-fx="stamp"] .fx-body { animation: fx-stamp-body 800ms cubic-bezier(0.3, 1.4, 0.4, 1) both; }
+[data-fx="stamp"] .fx-word { color: var(--status-good); animation: fx-stamp-word 800ms cubic-bezier(0.2, 2, 0.4, 1) both; }
+@keyframes fx-stamp-body {
+  0%, 18% { transform: none; }
+  26%  { transform: scale(0.94, 0.86); }
+  40%  { transform: scale(1.01, 1.02); }
+  100% { transform: scale(0.97); opacity: 0; }
+}
+@keyframes fx-stamp-word {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(2.6) rotate(-14deg); }
+  22%  { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-9deg); }
+  70%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05) rotate(-9deg); }
+}
+
+/* ---------- 6. erase ---------- */
+[data-fx="erase"] .fx-body { animation: fx-erase-body 900ms steps(6, end) both; }
+[data-fx="erase"] .fx-sweep {
+  opacity: 1;
+  background: linear-gradient(90deg, transparent 0 4%, color-mix(in srgb, var(--text-muted) 55%, transparent) 4% 12%, transparent 12%);
+  animation: fx-erase-hand 900ms ease-in-out both;
+}
+@keyframes fx-erase-hand {
+  0%   { transform: translateX(-6%) translateY(-3px); }
+  25%  { transform: translateX(22%) translateY(3px); }
+  50%  { transform: translateX(48%) translateY(-3px); }
+  75%  { transform: translateX(74%) translateY(3px); }
+  100% { transform: translateX(102%); opacity: 0; }
+}
+@keyframes fx-erase-body {
+  0%   { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 0 0 100%); }
+}
+
+/* ---------- 7. shrink ---------- */
+[data-fx="shrink"] .fx-body { animation: fx-shrink 700ms cubic-bezier(0.5, -0.4, 0.4, 1) both; }
+@keyframes fx-shrink {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.06); }
+  100% { transform: scale(0) rotate(12deg); opacity: 0; }
+}
+
+/* ---------- 8. glitch ---------- */
+[data-fx="glitch"] .fx-body { animation: fx-glitch 800ms steps(2, end) both; }
+@keyframes fx-glitch {
+  0%   { transform: none; filter: none; }
+  15%  { transform: translateX(-7px); filter: drop-shadow(4px 0 0 #f0f) drop-shadow(-4px 0 0 #0ff); }
+  30%  { transform: translateX(8px); filter: drop-shadow(-6px 0 0 #f0f) drop-shadow(6px 0 0 #0ff); }
+  45%  { transform: translateX(-4px) skewX(6deg); opacity: 0.7; }
+  60%  { transform: translateX(5px) skewX(-8deg); opacity: 0.4; }
+  100% { transform: scaleY(0.02); opacity: 0; filter: brightness(2.4); }
+}
+
+/* ---------- 9. fill ---------- */
+[data-fx="fill"] .fx-body { animation: fx-fill-body 950ms ease-in both; }
+[data-fx="fill"] .fx-sweep {
+  opacity: 1;
+  background: color-mix(in srgb, var(--status-good) 78%, transparent);
+  animation: fx-fill-bar 950ms cubic-bezier(0.5, 0, 0.2, 1) both;
+}
+@keyframes fx-fill-bar {
+  0%   { clip-path: inset(0 100% 0 0); }
+  55%  { clip-path: inset(0 0 0 0); }
+  75%  { clip-path: inset(0 0 0 0); opacity: 1; }
+  100% { clip-path: inset(0 0 0 0); opacity: 0; }
+}
+@keyframes fx-fill-body {
+  0%, 60% { transform: none; opacity: 1; }
+  100% { transform: scaleY(0.1); opacity: 0; }
+}
+
+/* ---------- 10. confetti ---------- */
+[data-fx="confetti"] .fx-body { animation: fx-confetti-body 1000ms ease-out both; }
+[data-fx="confetti"] .fx-bits > i {
+  background: var(--series-1);
+  animation: fx-confetti-bit 1000ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  animation-delay: calc(var(--i) * 16ms);
+}
+[data-fx="confetti"] .fx-bits > i:nth-child(3n) { background: var(--series-2); }
+[data-fx="confetti"] .fx-bits > i:nth-child(3n + 1) { background: var(--series-4); }
+[data-fx="confetti"] .fx-bits > i:nth-child(4n) { background: var(--series-3); border-radius: 50%; }
+@keyframes fx-confetti-bit {
+  0%   { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translate(calc(-40px + var(--r) * 0.8px), calc(-70px + var(--r) * 0.4px)) rotate(540deg) scale(0.5); }
+}
+@keyframes fx-confetti-body {
+  0%   { transform: none; }
+  20%  { transform: scale(1.04); }
+  100% { transform: scale(0.98); opacity: 0; }
+}
+
+/* ---------- 11. slam ---------- */
+[data-fx="slam"] .fx-body { animation: fx-slam 750ms cubic-bezier(0.4, 1.6, 0.5, 1) both; transform-origin: center bottom; }
+@keyframes fx-slam {
+  0%   { transform: translateY(-14px) scaleY(1.08); }
+  22%  { transform: translateY(0) scaleY(0.42) scaleX(1.1); }
+  40%  { transform: scaleY(0.9) scaleX(1.02); }
+  100% { transform: scaleY(0) scaleX(1.18); opacity: 0; }
+}
+
+/* ---------- 12. vacuum ---------- */
+[data-fx="vacuum"] .fx-body { animation: fx-vacuum 850ms cubic-bezier(0.7, 0, 0.9, 0.4) both; transform-origin: right center; }
+@keyframes fx-vacuum {
+  0%   { transform: none; }
+  100% { transform: translateX(30%) scaleX(0.02) scaleY(0.3); opacity: 0; }
+}
+
+/* ---------- 13. crumple ---------- */
+[data-fx="crumple"] .fx-body { animation: fx-crumple 900ms cubic-bezier(0.4, 0, 0.3, 1) both; }
+@keyframes fx-crumple {
+  0%   { transform: none; filter: none; }
+  35%  { transform: scale(0.82) rotate(-5deg) skewX(6deg); filter: contrast(1.3); }
+  55%  { transform: scale(0.5) rotate(9deg) skewX(-10deg); }
+  100% { transform: scale(0.24) rotate(26deg) translateY(70px); opacity: 0; }
+}
+
+/* ---------- 14. pixelate ---------- */
+[data-fx="pixelate"] .fx-body { animation: fx-pixel 850ms steps(5, end) both; }
+@keyframes fx-pixel {
+  0%   { filter: none; opacity: 1; }
+  40%  { filter: blur(2px) contrast(1.8); opacity: 0.85; }
+  70%  { filter: blur(5px) contrast(2.6); opacity: 0.5; }
+  100% { filter: blur(11px) contrast(3.4); opacity: 0; transform: scale(1.05); }
+}
+
+/* ---------- 15. slice ---------- */
+[data-fx="slice"] .fx-body { animation: fx-slice-top 900ms cubic-bezier(0.4, 0, 0.3, 1) both; }
+[data-fx="slice"] .fx-sweep {
+  opacity: 1;
+  background: linear-gradient(90deg, transparent, #fff, transparent);
+  height: 2px; top: 50%; bottom: auto;
+  filter: drop-shadow(0 0 6px #fff);
+  animation: fx-slice-blade 900ms cubic-bezier(0.3, 0, 0.2, 1) both;
+}
+@keyframes fx-slice-blade {
+  0%   { transform: translateX(-100%) scaleX(0.5); opacity: 1; }
+  40%  { transform: translateX(0) scaleX(1); opacity: 1; }
+  100% { transform: translateX(100%) scaleX(0.5); opacity: 0; }
+}
+@keyframes fx-slice-top {
+  0%, 38% { transform: none; opacity: 1; }
+  100% { transform: translateY(-16px) rotate(-3deg); opacity: 0; clip-path: inset(0 0 52% 0); }
+}
+
+/* ---------- 16. rocket ---------- */
+[data-fx="rocket"] .fx-body { animation: fx-rocket 900ms cubic-bezier(0.6, -0.3, 0.7, 0) both; }
+[data-fx="rocket"] .fx-bits > i {
+  background: var(--status-warning);
+  border-radius: 50%;
+  animation: fx-rocket-trail 900ms ease-out both;
+  animation-delay: calc(var(--i) * 18ms);
+}
+@keyframes fx-rocket {
+  0%   { transform: none; }
+  18%  { transform: translateY(7px) scaleY(0.92); }
+  100% { transform: translateY(-260px) scale(0.5); opacity: 0; }
+}
+@keyframes fx-rocket-trail {
+  0%   { opacity: 0.9; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(34px) scale(0.2); }
+}
+
+/* ---------- 17. blackhole ---------- */
+[data-fx="blackhole"] .fx-body { animation: fx-blackhole 950ms cubic-bezier(0.6, 0, 0.9, 0.3) both; }
+@keyframes fx-blackhole {
+  0%   { transform: none; filter: none; }
+  55%  { transform: rotate(180deg) scale(0.55); filter: brightness(0.7); }
+  100% { transform: rotate(720deg) scale(0); opacity: 0; filter: brightness(0.2); }
+}
+
+/* ---------- 18. speedlines ---------- */
+[data-fx="speedlines"] .fx-body { animation: fx-speed-body 750ms cubic-bezier(0.6, 0, 0.8, 0.2) both; }
+[data-fx="speedlines"] .fx-sweep {
+  opacity: 1;
+  background: repeating-linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--text-primary) 45%, transparent) 0 2px,
+    transparent 2px 11px
+  );
+  animation: fx-speed-lines 750ms ease-out both;
+}
+@keyframes fx-speed-lines {
+  0%   { transform: translateX(-30%); opacity: 0; }
+  35%  { opacity: 0.9; }
+  100% { transform: translateX(60%); opacity: 0; }
+}
+@keyframes fx-speed-body {
+  0%   { transform: none; }
+  25%  { transform: translateX(-8px); }
+  100% { transform: translateX(340px) skewX(-14deg); opacity: 0; }
+}
+
+/* Reduced motion gets the outcome without the show. */
+@media (prefers-reduced-motion: reduce) {
+  .fx-wrap[data-playing] .fx-body { animation: fx-quiet 120ms linear both; }
+  .fx-layer, .fx-bits, .fx-word { display: none; }
+  @keyframes fx-quiet { to { opacity: 0; } }
+}

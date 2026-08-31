@@ -121,6 +121,11 @@ export function sampleState(): AppState {
     };
   });
 
+  s.finance.accounts = [
+    { id: uid('acct'), name: 'Stock Account', type: 'Brokerage', balance: 80000, monthly: 1000, updatedAt: today },
+    { id: uid('acct'), name: 'Roth IRA', type: 'Roth IRA', balance: 24500, monthly: 583, updatedAt: today },
+  ];
+
   s.coach.goals = [
     { id: uid('goal'), title: 'Finish the half marathon under 1:55', module: 'fitness', target: 'Race day finish time', due: addDays(today, 63), done: false, createdAt: addDays(today, -30) },
     { id: uid('goal'), title: 'Sign 20 S-corp planning clients', module: 'planning', target: '20 signed engagements', done: false, createdAt: addDays(today, -60) },

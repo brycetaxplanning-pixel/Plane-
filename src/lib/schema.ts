@@ -1,4 +1,5 @@
 import type { DateKey } from './date';
+import type { SkinId } from './themes';
 
 export const SCHEMA_VERSION = 1;
 
@@ -84,6 +85,19 @@ export interface StudyLink {
   id: string;
   label: string;
   url: string;
+}
+
+export type TutorLevel = 'Beginner' | 'Intermediate' | 'Advanced';
+
+export interface TutorConfig {
+  level: TutorLevel;
+  topic: string;
+  /** Playback speed of the tutor's voice; slower helps at lower levels. */
+  speechRate: number;
+  /** Keep listening after the tutor finishes speaking — the hands-free loop. */
+  autoContinue: boolean;
+  /** Mix English into corrections. Off means immersion. */
+  translate: boolean;
 }
 
 export interface StudySession {
@@ -176,6 +190,35 @@ export interface Transaction {
   source: 'manual' | 'import';
 }
 
+export const ACCOUNT_TYPES = ['Brokerage', '401(k)', 'Roth IRA', 'Traditional IRA', 'HSA', 'Crypto', 'Savings'] as const;
+export type AccountType = (typeof ACCOUNT_TYPES)[number];
+
+export interface InvestmentAccount {
+  id: string;
+  name: string;
+  type: AccountType;
+  balance: number;
+  /** What you add to this account every month. */
+  monthly: number;
+  note?: string;
+  /** Set once a real connection replaces the manual figure. */
+  linked?: boolean;
+  updatedAt: DateKey;
+}
+
+/** The knobs behind the projection chart. Stored so the sliders come back
+ *  where you left them. */
+export interface Projection {
+  years: number;
+  returnPct: number;
+  inflationPct: number;
+  /** Show tomorrow's money in today's purchasing power. */
+  real: boolean;
+  /** What you add each month. `null` means "use the sum of the accounts",
+   *  so editing an account keeps the projection honest by default. */
+  monthlyOverride: number | null;
+}
+
 /** Matched case-insensitively against the vendor string. */
 export interface VendorRule {
   id: string;
@@ -236,6 +279,12 @@ export interface Badge {
 export interface Settings {
   displayName: string;
   theme: 'system' | 'light' | 'dark';
+  /** Visual skin. Skins other than 'classic' carry their own fixed scheme. */
+  skin: SkinId;
+  /** Rotate through the skins once every 24 hours. */
+  skinRotation: boolean;
+  /** Play a random animation when a task is checked off. */
+  completionFx: boolean;
   anthropicApiKey: string;
   aiModel: string;
   currency: string;
@@ -249,7 +298,14 @@ export interface AppState {
   activeDays: DateKey[];
   work: { projects: WorkProject[] };
   planning: { weeklyTarget: number; outreach: Outreach[]; deals: Deal[] };
-  spanish: { dailyGoalMinutes: number; weeklyGoalMinutes: number; links: StudyLink[]; sessions: StudySession[] };
+  spanish: {
+    dailyGoalMinutes: number;
+    weeklyGoalMinutes: number;
+    links: StudyLink[];
+    sessions: StudySession[];
+    tutor: TutorConfig;
+    tutorChat: ChatMessage[];
+  };
   fitness: {
     targets: FitnessTargets;
     race: RaceGoal;
@@ -262,6 +318,8 @@ export interface AppState {
     transactions: Transaction[];
     rules: VendorRule[];
     chat: ChatMessage[];
+    accounts: InvestmentAccount[];
+    projection: Projection;
   };
   coach: { goals: Goal[]; checkIns: CheckIn[]; chat: ChatMessage[] };
 }
@@ -274,6 +332,9 @@ export function emptyState(): AppState {
     settings: {
       displayName: '',
       theme: 'system',
+      skin: 'classic',
+      skinRotation: false,
+      completionFx: true,
       anthropicApiKey: '',
       aiModel: 'claude-opus-5',
       currency: 'USD',
@@ -291,6 +352,14 @@ export function emptyState(): AppState {
         { id: 'babbel', label: 'Babbel', url: 'https://www.babbel.com' },
       ],
       sessions: [],
+      tutor: {
+        level: 'Intermediate',
+        topic: 'Everyday conversation',
+        speechRate: 0.95,
+        autoContinue: true,
+        translate: true,
+      },
+      tutorChat: [],
     },
     fitness: {
       targets: { mma: 3, strength: 4, total: 12 },
@@ -304,6 +373,8 @@ export function emptyState(): AppState {
       transactions: [],
       rules: [],
       chat: [],
+      accounts: [],
+      projection: { years: 20, returnPct: 8, inflationPct: 3, real: false, monthlyOverride: null },
     },
     coach: { goals: [], checkIns: [], chat: [] },
   };
@@ -331,6 +402,8 @@ export function migrate(raw: unknown): AppState {
       ...(s.spanish ?? {}),
       links: s.spanish?.links?.length ? s.spanish.links : base.spanish.links,
       sessions: s.spanish?.sessions ?? [],
+      tutor: { ...base.spanish.tutor, ...(s.spanish?.tutor ?? {}) },
+      tutorChat: s.spanish?.tutorChat ?? [],
     },
     fitness: {
       ...base.fitness,
@@ -348,6 +421,8 @@ export function migrate(raw: unknown): AppState {
       transactions: s.finance?.transactions ?? [],
       rules: s.finance?.rules ?? [],
       chat: s.finance?.chat ?? [],
+      accounts: s.finance?.accounts ?? [],
+      projection: { ...base.finance.projection, ...(s.finance?.projection ?? {}) },
     },
     coach: {
       ...base.coach,

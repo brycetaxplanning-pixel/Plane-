@@ -12,6 +12,7 @@ import { useApp } from '../state/context';
 import { financeStats } from '../state/selectors';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
+import { Invest } from './finance/Invest';
 import { BudgetBars, type BudgetRow } from '../components/charts/BudgetBars';
 import { BarChart } from '../components/charts/BarChart';
 import { StatTile } from '../components/charts/StatTile';
@@ -21,7 +22,7 @@ const ACCENT = 'var(--mod-finance)';
 export function Finance() {
   const { state, update, toast } = useApp();
   const [month, setMonth] = useState(monthKey());
-  const [tab, setTab] = useState<'overview' | 'review' | 'transactions' | 'rules'>('overview');
+  const [tab, setTab] = useState<'overview' | 'invest' | 'review' | 'transactions' | 'rules'>('overview');
   const stats = financeStats(state, month);
   const cur = state.settings.currency;
 
@@ -57,6 +58,7 @@ export function Finance() {
 
       <div className="tabs" role="tablist">
         <button className="tab" role="tab" aria-selected={tab === 'overview'} onClick={() => setTab('overview')}>Overview</button>
+        <button className="tab" role="tab" aria-selected={tab === 'invest'} onClick={() => setTab('invest')}>Invest</button>
         <button className="tab" role="tab" aria-selected={tab === 'review'} onClick={() => setTab('review')}>
           Review{stats.reviewCount ? ` (${stats.reviewCount})` : ''}
         </button>
@@ -65,6 +67,7 @@ export function Finance() {
       </div>
 
       {tab === 'overview' && <Overview month={month} trend={trend} />}
+      {tab === 'invest' && <Invest />}
       {tab === 'review' && <ReviewQueue />}
       {tab === 'transactions' && <TransactionsPanel month={month} />}
       {tab === 'rules' && <RulesPanel />}

@@ -167,9 +167,22 @@
   .app-shell { padding-bottom: 0; padding-left: 232px; }
 }
 
+.nav-desktop { display: none; }
 .nav-brand { display: none; }
 @media (min-width: 900px) {
-  .nav-brand { display: flex; align-items: center; gap: var(--sp-2); padding: 4px 12px var(--sp-4); }
+  .nav-desktop { display: flex; }
+  .nav-brand {
+    display: flex; align-items: center; gap: var(--sp-2);
+    padding: 4px 12px var(--sp-4);
+    color: inherit; text-decoration: none;
+  }
+  .nav-brand:hover { text-decoration: none; }
+  .nav-item[data-desktop-only] { display: flex; }
+}
+/* With only three destinations the phone bar can breathe. */
+@media (max-width: 899px) {
+  .nav-item { font-size: 11px; gap: 4px; }
+  .nav-item svg { width: 23px; height: 23px; }
 }
 
 /* ---------- app header ---------- */
@@ -294,7 +307,7 @@
 .tab[aria-selected="true"] { background: var(--surface-1); color: var(--text-primary); box-shadow: var(--shadow-1); }
 /* Four tabs have to fit a 390px phone without a hidden horizontal scroll. */
 @media (max-width: 520px) {
-  .tab { padding: 7px 6px; font-size: 12px; min-width: 0; }
+  .tab { padding: 7px 5px; font-size: 11.5px; min-width: 0; letter-spacing: -0.01em; }
 }
 
 /* ---------- table ---------- */
@@ -310,7 +323,29 @@
 .link-btn { background: none; border: none; padding: 0; color: var(--series-1); font-size: 13px; font-weight: 600; cursor: pointer; }
 .link-btn:hover { text-decoration: underline; }
 
-/* Settings lives in the header on mobile and at the foot of the rail on desktop. */
-@media (min-width: 900px) {
-  .nav-item[data-desktop-only] { display: flex !important; }
+
+/* Rows wrapped for completion effects still need their own spacing. */
+.fx-wrap + .fx-wrap { margin-top: var(--sp-2); }
+
+/* Skin picker */
+.skin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: var(--sp-3); }
+.skin {
+  display: flex; flex-direction: column; gap: 7px;
+  padding: 9px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 140ms ease, transform 120ms ease;
 }
+.skin:hover { transform: translateY(-2px); }
+.skin.is-on { border-color: var(--skin-accent, var(--series-1)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--skin-accent, var(--series-1)) 30%, transparent); }
+.skin-swatch {
+  display: flex; align-items: center; gap: 4px;
+  height: 42px; padding: 0 9px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+}
+.skin-swatch > i { width: 13px; height: 13px; border-radius: 4px; }
+.skin-name { font-size: 12px; font-weight: 620; }

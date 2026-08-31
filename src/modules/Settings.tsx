@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
 import { AI_MODELS, isAIConfigured } from '../lib/ai';
+import { SKINS, skinById, skinForDay } from '../lib/themes';
+import { EFFECTS } from '../lib/completionFx';
 import { DEFAULT_CATEGORIES, emptyState } from '../lib/schema';
 import { BADGES, earnedBadges, levelFor, streakOf, totalXp } from '../lib/gamification';
 import { downloadFile, exportJSON, importJSON } from '../lib/storage';
@@ -24,17 +26,70 @@ export function Settings() {
   return (
     <div className="stack">
       <section className="card">
+        <SectionHead
+          title="Look"
+          sub={state.settings.skinRotation
+            ? `Rotating daily — today is ${skinById(skinForDay()).name}`
+            : skinById(state.settings.skin).blurb}
+        />
+
+        <div className="skin-grid">
+          {SKINS.map((sk) => {
+            const active = !state.settings.skinRotation && state.settings.skin === sk.id;
+            return (
+              <button
+                key={sk.id}
+                className={`skin${active ? ' is-on' : ''}`}
+                aria-pressed={active}
+                onClick={() => update((st) => ({ ...st, settings: { ...st.settings, skin: sk.id, skinRotation: false } }))}
+              >
+                <span className="skin-swatch" style={{ background: sk.surface }}>
+                  {sk.swatch.map((c) => <i key={c} style={{ background: c }} />)}
+                </span>
+                <span className="skin-name">{sk.name}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <label className="row-2" style={{ cursor: 'pointer', marginTop: 'var(--sp-4)' }}>
+          <input
+            className="checkbox"
+            type="checkbox"
+            checked={state.settings.skinRotation}
+            onChange={(e) => update((st) => ({ ...st, settings: { ...st.settings, skinRotation: e.target.checked } }))}
+          />
+          <span className="t-sm">Change the theme every 24 hours</span>
+        </label>
+
+        <label className="row-2" style={{ cursor: 'pointer', marginTop: 'var(--sp-3)' }}>
+          <input
+            className="checkbox"
+            type="checkbox"
+            checked={state.settings.completionFx}
+            onChange={(e) => update((st) => ({ ...st, settings: { ...st.settings, completionFx: e.target.checked } }))}
+          />
+          <span className="t-sm">Play a random animation when a task is checked off ({EFFECTS.length} of them)</span>
+        </label>
+
+        {state.settings.skin === 'classic' && !state.settings.skinRotation && (
+          <div style={{ marginTop: 'var(--sp-4)', maxWidth: 220 }}>
+            <Field label="Light or dark">
+              <select className="select" value={state.settings.theme} onChange={(e) => setSetting('theme', e.target.value as 'system' | 'light' | 'dark')}>
+                <option value="system">Match device</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </Field>
+          </div>
+        )}
+      </section>
+
+      <section className="card">
         <SectionHead title="You" />
         <div className="grid grid-2" style={{ gap: 'var(--sp-3)' }}>
           <Field label="Name">
             <input className="input" value={state.settings.displayName} placeholder="Your name" onChange={(e) => setSetting('displayName', e.target.value)} />
-          </Field>
-          <Field label="Theme">
-            <select className="select" value={state.settings.theme} onChange={(e) => setSetting('theme', e.target.value as 'system' | 'light' | 'dark')}>
-              <option value="system">Match device</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
           </Field>
           <Field label="Currency">
             <input className="input" value={state.settings.currency} onChange={(e) => setSetting('currency', e.target.value.toUpperCase().slice(0, 3))} />

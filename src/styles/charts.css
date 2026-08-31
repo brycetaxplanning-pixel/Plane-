@@ -131,3 +131,53 @@
   pointer-events: none;
 }
 .spark-hit { position: absolute; top: 0; bottom: 0; transform: translateX(-50%); }
+
+/* Projection chart */
+.proj { position: relative; }
+.proj-overlay { position: absolute; inset: 0; pointer-events: none; }
+.proj-ytick { position: absolute; right: 2px; background: color-mix(in srgb, var(--surface-1) 88%, transparent); padding: 0 3px; border-radius: 3px; }
+.proj-xtick { position: absolute; transform: translateX(-50%); }
+.proj-dot {
+  position: absolute;
+  width: 9px; height: 9px;
+  margin-left: -4.5px; margin-top: -4.5px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--surface-1);
+}
+.proj-endlabel { position: absolute; right: 0; }
+.proj-hit { position: absolute; top: 0; bottom: 0; transform: translateX(-50%); cursor: crosshair; }
+
+/* Range controls */
+.slider { display: flex; flex-direction: column; gap: 4px; }
+.slider-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); }
+.slider-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.slider-value { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.slider input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 26px; margin: 0;
+  background: transparent; cursor: pointer;
+}
+.slider input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px; border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--mod, var(--series-1)) var(--pct, 50%), var(--surface-sunken) var(--pct, 50%));
+}
+.slider input[type="range"]::-moz-range-track {
+  height: 6px; border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--mod, var(--series-1)) var(--pct, 50%), var(--surface-sunken) var(--pct, 50%));
+}
+.slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 22px; height: 22px; margin-top: -8px;
+  border-radius: 50%;
+  background: var(--surface-1);
+  border: 3px solid var(--mod, var(--series-1));
+  box-shadow: var(--shadow-1);
+  transition: transform 120ms ease;
+}
+.slider input[type="range"]::-moz-range-thumb {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--surface-1);
+  border: 3px solid var(--mod, var(--series-1));
+  box-shadow: var(--shadow-1);
+}
+.slider input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.15); }

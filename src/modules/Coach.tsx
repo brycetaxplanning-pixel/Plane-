@@ -7,6 +7,7 @@ import { fmtMoney } from '../lib/finance';
 import { useApp } from '../state/context';
 import { coachStats, financeStats, fitnessStats, planningStats, spanishStats, workStats } from '../state/selectors';
 import { streakOf } from '../lib/gamification';
+import { CompletionFx, useCompletionFx } from '../components/CompletionFx';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { Sparkline } from '../components/charts/Sparkline';
@@ -74,29 +75,20 @@ export function Coach() {
         ) : (
           <div className="stack-2">
             {[...state.coach.goals].sort((a, b) => Number(a.done) - Number(b.done)).map((g) => (
-              <div key={g.id} className={`rowitem${g.done ? ' rowitem-done' : ''}`}>
-                <input
-                  className="checkbox"
-                  type="checkbox"
-                  checked={g.done}
-                  onChange={() => {
-                    const apply = (s: typeof state) => ({
-                      ...s,
-                      coach: { ...s.coach, goals: s.coach.goals.map((x) => (x.id === g.id ? { ...x, done: !x.done } : x)) },
-                    });
-                    if (!g.done) reward('coach', XP.goalDone, `Goal reached: ${g.title}`, apply);
-                    else update(apply);
-                  }}
-                />
-                <button className="grow" style={{ background: 'none', border: 0, textAlign: 'left', cursor: 'pointer', minWidth: 0 }} onClick={() => setGoalOpen(g)}>
-                  <span className="rowitem-title t-sm t-bold truncate" style={{ display: 'block' }}>{g.title}</span>
-                  <span className="t-xs t-muted">
-                    {g.module ? `${MODULES.find((m) => m.id === g.module)?.name} · ` : ''}
-                    {g.target ?? 'no target'}
-                    {g.due ? ` · due ${relativeDay(g.due)}` : ''}
-                  </span>
-                </button>
-              </div>
+              <GoalRow
+                key={g.id}
+                goal={g}
+                fxEnabled={state.settings.completionFx}
+                onOpen={() => setGoalOpen(g)}
+                onToggle={() => {
+                  const apply = (s: typeof state) => ({
+                    ...s,
+                    coach: { ...s.coach, goals: s.coach.goals.map((x) => (x.id === g.id ? { ...x, done: !x.done } : x)) },
+                  });
+                  if (!g.done) reward('coach', XP.goalDone, `Goal reached: ${g.title}`, apply);
+                  else update(apply);
+                }}
+              />
             ))}
           </div>
         )}
@@ -170,6 +162,38 @@ export function Coach() {
         />
       )}
     </div>
+  );
+}
+
+function GoalRow({
+  goal, fxEnabled, onToggle, onOpen,
+}: {
+  goal: Goal;
+  fxEnabled: boolean;
+  onToggle: () => void;
+  onOpen: () => void;
+}) {
+  const { effect, play } = useCompletionFx(fxEnabled, onToggle);
+
+  return (
+    <CompletionFx effect={effect}>
+      <div className={`rowitem${goal.done ? ' rowitem-done' : ''}`}>
+        <input
+          className="checkbox"
+          type="checkbox"
+          checked={goal.done}
+          onChange={() => (goal.done ? onToggle() : play())}
+        />
+        <button className="grow" style={{ background: 'none', border: 0, textAlign: 'left', cursor: 'pointer', minWidth: 0 }} onClick={onOpen}>
+          <span className="rowitem-title t-sm t-bold truncate" style={{ display: 'block' }}>{goal.title}</span>
+          <span className="t-xs t-muted">
+            {goal.module ? `${MODULES.find((m) => m.id === goal.module)?.name} · ` : ''}
+            {goal.target ?? 'no target'}
+            {goal.due ? ` · due ${relativeDay(goal.due)}` : ''}
+          </span>
+        </button>
+      </div>
+    </CompletionFx>
   );
 }
 

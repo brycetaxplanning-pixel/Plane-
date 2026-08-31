@@ -20,5 +20,7 @@ export const Icons = {
   compass: () => wrap(<><circle cx="12" cy="12" r="8.5" /><path d="m15 9-1.8 4.2L9 15l1.8-4.2Z" /></>),
   gear: () => wrap(<><path d="M4 7h6M14 7h6M4 12h11M19 12h1M4 17h3M11 17h9" /><circle cx="12" cy="7" r="2" /><circle cx="17" cy="12" r="2" /><circle cx="9" cy="17" r="2" /></>),
   flame: () => wrap(<><path d="M12 3s4.5 3.6 4.5 8a4.5 4.5 0 0 1-9 0c0-1.4.6-2.6 1.3-3.5.2 1.4 1 2.2 1.9 2.2 1 0 1.5-.9 1.3-2.3-.2-1.7-.5-3-.5-4.4Z" /><path d="M7 13.5A5 5 0 0 0 12 21a5 5 0 0 0 5-5" /></>),
+  grid: () => wrap(<><rect x="3.5" y="3.5" width="7" height="7" rx="2" /><rect x="13.5" y="3.5" width="7" height="7" rx="2" /><rect x="3.5" y="13.5" width="7" height="7" rx="2" /><rect x="13.5" y="13.5" width="7" height="7" rx="2" /></>),
+  back: () => wrap(<><path d="M15 5.5 8.5 12l6.5 6.5" /></>),
   plus: () => wrap(<><path d="M12 5.5v13M5.5 12h13" /></>),
 };

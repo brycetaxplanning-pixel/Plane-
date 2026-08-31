@@ -187,7 +187,7 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
       id: 'planning',
       progress: plan.target ? plan.count / plan.target : 0,
       headline: `${plan.count}/${plan.target}`,
-      caption: 'outreach this week',
+      caption: 'outreach',
       nudge: plan.remaining > 0 ? `${plan.perDayNeeded}/day to stay on pace` : 'weekly target hit',
     },
     spanish: {
@@ -203,7 +203,7 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
       id: 'fitness',
       progress: fit.targets.total ? fit.total / fit.targets.total : 0,
       headline: `${fit.total}/${fit.targets.total}`,
-      caption: 'sessions this week',
+      caption: 'sessions',
       nudge: fit.mma < fit.targets.mma
         ? `${fit.targets.mma - fit.mma} MMA left`
         : fit.strength < fit.targets.strength
@@ -214,14 +214,14 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
       id: 'finance',
       progress: Math.min(1, fin.pctOfBudget),
       headline: fin.budgetTotal ? `${Math.round(fin.pctOfBudget * 100)}%` : `${fin.inMonth.length}`,
-      caption: fin.budgetTotal ? 'of monthly budget' : 'transactions this month',
+      caption: fin.budgetTotal ? 'of budget' : 'transactions',
       nudge: fin.reviewCount ? `${fin.reviewCount} need a category` : undefined,
     },
     coach: {
       id: 'coach',
       progress: coach.weekCheckIns.length / 7,
       headline: `${coach.weekCheckIns.length}/7`,
-      caption: 'check-ins this week',
+      caption: 'check-ins',
       nudge: coach.checkedInToday
         ? `${coach.openGoals.length} open goal${coach.openGoals.length === 1 ? '' : 's'}`
         : 'no check-in yet today',

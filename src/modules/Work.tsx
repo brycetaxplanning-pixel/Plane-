@@ -8,6 +8,7 @@ import { fmtDate, relativeDay, todayKey } from '../lib/date';
 import { uid } from '../lib/id';
 import { useApp } from '../state/context';
 import { workStats } from '../state/selectors';
+import { CompletionFx, useCompletionFx } from '../components/CompletionFx';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState, Field } from '../components/ui/Field';
 import { StatTile } from '../components/charts/StatTile';
@@ -165,6 +166,32 @@ export function Work() {
   );
 }
 
+function TaskRow({
+  task, fxEnabled, onToggle,
+}: {
+  task: WorkProject['tasks'][number];
+  fxEnabled: boolean;
+  onToggle: () => void;
+}) {
+  // The effect plays first and the state change commits when it finishes, so
+  // the row is animated away rather than yanked out from under it.
+  const { effect, play } = useCompletionFx(fxEnabled, onToggle);
+
+  return (
+    <CompletionFx effect={effect}>
+      <label className={`rowitem${task.done ? ' rowitem-done' : ''}`} style={{ cursor: 'pointer' }}>
+        <input
+          className="checkbox"
+          type="checkbox"
+          checked={task.done}
+          onChange={() => (task.done ? onToggle() : play())}
+        />
+        <span className="rowitem-title grow t-sm">{task.title}</span>
+      </label>
+    </CompletionFx>
+  );
+}
+
 function ProjectCard({
   project, onStage, onToggleTask, onEdit, onDelete,
 }: {
@@ -174,6 +201,7 @@ function ProjectCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const { state } = useApp();
   const [open, setOpen] = useState(false);
   const done = project.tasks.filter((t) => t.done).length;
   const overdue = project.due && project.due < todayKey() && project.stage !== 'Filed';
@@ -211,10 +239,12 @@ function ProjectCard({
           {project.tasks.length > 0 ? (
             <div>
               {project.tasks.map((t) => (
-                <label key={t.id} className={`rowitem${t.done ? ' rowitem-done' : ''}`} style={{ cursor: 'pointer' }}>
-                  <input className="checkbox" type="checkbox" checked={t.done} onChange={() => onToggleTask(t.id)} />
-                  <span className="rowitem-title grow t-sm">{t.title}</span>
-                </label>
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  fxEnabled={state.settings.completionFx}
+                  onToggle={() => onToggleTask(t.id)}
+                />
               ))}
             </div>
           ) : (
