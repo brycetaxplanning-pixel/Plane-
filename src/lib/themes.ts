@@ -15,9 +15,10 @@ export interface Skin {
  *  scheme, and every skin's six module colours passed the palette validator
  *  against that skin's own surface. */
 export const SKINS: Skin[] = [
-  { id: 'classic',    name: 'Classic',        blurb: 'Clean and quiet. Follows your light/dark setting.', swatch: ['#2a78d6', '#eb6834', '#1baf7a'], surface: '#fcfcfb' },
+  // The id stays 'classic' so settings saved before the rename still resolve.
+  { id: 'classic',    name: 'Holo',           blurb: 'Holo black with a violet cast. The default.',       swatch: ['#3987e5', '#d95926', '#199e70'], surface: '#15141d' },
   { id: 'miami',      name: 'Neon Miami',     blurb: 'Sunset pink and teal on deep purple.',              swatch: ['#d94382', '#1795a5', '#d4711c'], surface: '#1a1226' },
-  { id: 'arcade',     name: 'Arcade Brawler', blurb: 'Chunky cartridge-era primaries on warm cream.',     swatch: ['#e0353a', '#2f6fd0', '#e5a400'], surface: '#fffdf7' },
+  { id: 'arcade',     name: 'Arcade Brawler', blurb: 'Cartridge-era primaries on a black cabinet.',       swatch: ['#ff5a5f', '#5b9cf0', '#f2b724'], surface: '#1c1810' },
   { id: 'shinobi',    name: 'Shinobi',        blurb: 'Ink black with a burnt-orange chakra glow.',        swatch: ['#d4630f', '#4a8fe0', '#d4404a'], surface: '#15141a' },
   { id: 'deployment', name: 'Deployment',     blurb: 'Olive drab, brass and hard corners.',               swatch: ['#a8912c', '#3987e5', '#d95926'], surface: '#1a1c14' },
   { id: 'ringworld',  name: 'Ringworld',      blurb: 'Cold cyan HUD over deep space navy.',               swatch: ['#20a5b5', '#d55181', '#c98500'], surface: '#0b1420' },
@@ -26,7 +27,7 @@ export const SKINS: Skin[] = [
 
 export const skinById = (id: string): Skin => SKINS.find((s) => s.id === id) ?? SKINS[0];
 
-/** Skins that take part in the daily rotation. Classic is excluded so the
+/** Skins that take part in the daily rotation. Holo is excluded so the
  *  rotation always actually looks like something. */
 const ROTATION: SkinId[] = ['miami', 'arcade', 'shinobi', 'deployment', 'ringworld', 'latenight'];
 

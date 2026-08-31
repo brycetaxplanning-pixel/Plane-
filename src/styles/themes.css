@@ -9,8 +9,8 @@
    6–8 CVD warn band the module tiles still carry visible names, so
    identity is never colour alone.
 
-   Skins are dark-leaning by design and do not follow the light/dark
-   toggle; "Classic" is the one that does.
+   Every skin is dark. There is no light/dark toggle any more — see
+   tokens.css — so a skin only has to clear its floors once.
 ------------------------------------------------------------------ */
 
 [data-skin] {
@@ -53,31 +53,36 @@
 
 /* ---------------- Arcade Brawler ---------------- */
 [data-skin="arcade"] {
-  color-scheme: light;
-  --plane:          #fff8e8;
-  --surface-1:      #fffdf7;
-  --surface-2:      #fdf0d4;
-  --surface-sunken: #f6e6c6;
-  --text-primary:   #1b1206;
-  --text-secondary: #5c4a2e;
-  --text-muted:     #766340;
-  --gridline:       #ecdcb8;
-  --baseline:       #c9b48a;
-  --border:         rgba(27, 18, 6, 0.16);
-  --border-strong:  rgba(27, 18, 6, 0.34);
-  --shadow-1:       0 2px 0 rgba(27, 18, 6, 0.16);
-  --shadow-2:       0 6px 0 rgba(27, 18, 6, 0.20), 0 12px 24px rgba(27, 18, 6, 0.12);
-  --overlay:        rgba(27, 18, 6, 0.45);
+  color-scheme: dark;
+  /* The cream ground went with light mode. An arcade cabinet was always a
+     black box with the primaries screen-printed on it, so this is closer to
+     the reference than the cream ever was. */
+  --plane:          #100d08;
+  --surface-1:      #1c1810;
+  --surface-2:      #26200f;
+  --surface-sunken: #080703;
+  --text-primary:   #fff8e8;
+  --text-secondary: #ddceac;
+  --text-muted:     #a89a78;
+  --gridline:       #322a18;
+  --baseline:       #44391f;
+  --border:         rgba(255, 248, 232, 0.13);
+  --border-strong:  rgba(255, 248, 232, 0.26);
+  /* Hard offsets, no blur — the cartridge-era look survives the ground change. */
+  --shadow-1:       0 2px 0 rgba(0, 0, 0, 0.6);
+  --shadow-2:       0 6px 0 rgba(0, 0, 0, 0.6), 0 12px 24px rgba(0, 0, 0, 0.5);
+  --overlay:        rgba(8, 7, 3, 0.7);
 
-  --series-1: #e0353a; --series-2: #2f6fd0; --series-3: #e5a400;
-  --series-4: #17a05f; --series-5: #8b46c9; --series-6: #c22f78;
-  --series-7: #e2662a; --series-8: #0080a8;
+  /* The same eight primaries, lifted for a dark ground. */
+  --series-1: #ff5a5f; --series-2: #5b9cf0; --series-3: #f2b724;
+  --series-4: #35c47f; --series-5: #b071e8; --series-6: #ec5f9d;
+  --series-7: #ff8a4c; --series-8: #2fb8dd;
 
-  --seq-100: #ffe9b8; --seq-250: #ffd070; --seq-400: #e5a400; --seq-550: #b47a00; --seq-700: #7d5300;
+  --seq-100: #6b4a00; --seq-250: #9a6c00; --seq-400: #c98d00; --seq-550: #eeb42a; --seq-700: #ffd978;
 
-  --skin-accent: #e0353a;
+  --skin-accent: #ff5a5f;
   --tile-radius: 20px;
-  --tile-glow: 0 5px 0 rgba(27, 18, 6, 0.22);
+  --tile-glow: 0 5px 0 rgba(0, 0, 0, 0.55);
   --skin-texture: none;
 }
 
@@ -200,10 +205,10 @@
 }
 
 /* Status colours are tuned to work as marks on a chart. As *text* they need a
-   version that survives the ground it sits on, and every skin below is dark —
-   without this they inherit the light-mode ink from :root and put dark green on
-   a dark card, which is exactly what the contrast audit found. Arcade Brawler is
-   light and keeps the defaults. */
+   version that survives the ground it sits on. These match what :root already
+   sets; they are repeated so a skin that later retunes a status hue as a mark
+   cannot silently take its text ink with it. */
+[data-skin="arcade"],
 [data-skin="miami"],
 [data-skin="shinobi"],
 [data-skin="deployment"],

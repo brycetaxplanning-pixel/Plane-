@@ -181,11 +181,11 @@ gives it a gold frame and a medallion. It is read off the same weekly progress
 the meter already draws, so the frame never claims anything the numbers do not.
 `prefers-reduced-motion` stops the sweep and keeps the rank.
 
-The cards carry their own dark stock on every skin, light ones included — a
-trading card does not take the colour of the table it is lying on, and that is
-what makes the module hue read as a colour rather than a tint. Because a card
+The cards carry their own stock rather than the page surface — every skin has a
+different surface, and the stock has to stay the stock. It is deliberately
+lighter than the page, so a card reads as an object lying on it. Because a card
 supplies its own ground it also supplies its own ink: nothing inside one takes
-`--text-primary`, or it would go dark-on-dark the moment the page is light.
+`--text-primary`.
 
 There are no emoji. An emoji is drawn by the platform, at the platform's weight,
 in the platform's palette, so eleven modules end up reading as eleven pictures
@@ -199,12 +199,24 @@ still yours and are left alone.
 
 ## Themes
 
-Seven skins: Classic (which follows your light/dark setting) plus Neon Miami,
-Arcade Brawler, Shinobi, Deployment, Ringworld and Late Night Set. They can
-rotate automatically every 24 hours. They are original colour schemes, not
-licensed artwork — each one's eight module colours were run through the palette
-validator against that skin's own surface, so charts stay readable whichever
-skin is up.
+There is one ground: holo black. Not `#000` — a flat black kills every shadow
+and the card edges vanish into it — but a deep near-black carrying the same
+violet cast as the card stock, so a card lifts off the page instead of merging
+with it. The page is the darkest thing on screen and every surface above it
+steps lighter.
+
+**There is no light mode.** It was the white page the launcher was rejected on,
+and keeping a second palette alive for a one-person app meant every colour had
+to clear its floor twice. The app no longer follows the device's light/dark
+setting, and a test asserts that no skin has a light ground on either setting.
+
+Seven skins: Holo (the default) plus Neon Miami, Arcade Brawler, Shinobi,
+Deployment, Ringworld and Late Night Set. They can rotate automatically every 24
+hours. They are original colour schemes, not licensed artwork — each one's eight
+module colours were run through the palette validator against that skin's own
+surface, so charts stay readable whichever skin is up. Arcade Brawler used to be
+the one light skin, on warm cream; it is a black cabinet with the primaries
+screen-printed on it now, which is closer to the reference anyway.
 
 Late Night Set puts a cat on the decks above the launcher: an SVG drawn in this
 repo, animated in CSS, with an optional four-on-the-floor loop synthesised in

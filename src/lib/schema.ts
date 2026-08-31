@@ -649,8 +649,10 @@ export interface Outing {
 
 export interface Settings {
   displayName: string;
+  /** Dead: the app has one ground now and no light mode. Kept so a state
+   *  saved before that still loads without a migration. Do not read it. */
   theme: 'system' | 'light' | 'dark';
-  /** Visual skin. Skins other than 'classic' carry their own fixed scheme. */
+  /** Visual skin. Every skin is dark; 'classic' is Holo, the one in :root. */
   skin: SkinId;
   /** Rotate through the skins once every 24 hours. */
   skinRotation: boolean;

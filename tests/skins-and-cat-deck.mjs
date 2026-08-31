@@ -112,7 +112,7 @@ console.log('\n5. Reduced motion stops the animation');
 console.log('\n6. Every skin still paints its own palette');
 {
   const { ctx, page } = await open(1100);
-  const names = ['Classic', 'Neon Miami', 'Arcade Brawler', 'Shinobi', 'Deployment', 'Ringworld', 'Late Night Set'];
+  const names = ['Holo', 'Neon Miami', 'Arcade Brawler', 'Shinobi', 'Deployment', 'Ringworld', 'Late Night Set'];
   const seen = new Set();
   for (const n of names) {
     const b = page.getByRole('button', { name: new RegExp(n) }).first();
@@ -124,6 +124,37 @@ console.log('\n6. Every skin still paints its own palette');
   }
   seen.size === names.length ? ok('all seven skins resolve to a palette') : bad('skins', [...seen].join(' | '));
   await ctx.close();
+}
+
+console.log('\n7. No skin has a light ground, whatever the device is set to');
+{
+  // The app used to follow the device's light/dark setting and open on a white
+  // page. There is one ground now — holo black — and this is the guard on it.
+  const names = ['Holo', 'Neon Miami', 'Arcade Brawler', 'Shinobi', 'Deployment', 'Ringworld', 'Late Night Set'];
+  const lum = ([r, g, b]) => {
+    const f = (c) => (c / 255 <= 0.03928 ? c / 255 / 12.92 : ((c / 255 + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  };
+
+  for (const scheme of ['light', 'dark']) {
+    const ctx = await browser.newContext({ viewport: { width: 430, height: 1100 }, colorScheme: scheme });
+    const page = await ctx.newPage();
+    await page.goto(BASE + '#/settings', { waitUntil: 'networkidle' });
+    const bright = [];
+    for (const n of names) {
+      const b = page.getByRole('button', { name: new RegExp(n) }).first();
+      await b.scrollIntoViewIfNeeded();
+      await b.click();
+      await page.waitForTimeout(220);
+      const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+      const rgb = bg.match(/[\d.]+/g).slice(0, 3).map(Number);
+      if (lum(rgb) > 0.06) bright.push(`${n} ${bg}`);
+    }
+    bright.length === 0
+      ? ok(`every skin stays dark with the device on ${scheme}`)
+      : bad(`ground on ${scheme}`, bright.join(' | '));
+    await ctx.close();
+  }
 }
 
 await browser.close();

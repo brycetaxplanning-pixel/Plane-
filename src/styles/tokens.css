@@ -1,56 +1,66 @@
 /* ------------------------------------------------------------------
    Design tokens.
-   Chart chrome + categorical series come from a validated palette
-   (adjacent-pair CVD deltaE 9.1 light / 8.4 dark, normal-vision 19.6 / 19.3).
-   Three light-mode series sit below 3:1 on the surface, so every mark that
-   uses them ships a visible text label (the relief rule).
+
+   One ground: holo black. Not #000 — a flat black kills every shadow and
+   makes the card edges vanish — but a deep near-black carrying the same
+   violet cast as the card stock the launcher prints on, so a card lifts off
+   the page instead of merging with it. The page is the darkest thing on
+   screen and every surface above it steps lighter.
+
+   There is no light mode. It was the white page the launcher was rejected
+   on, and keeping a second palette alive for a single-user app meant every
+   colour had to clear its floor twice.
+
+   Chart chrome and the categorical series come from the validated dark
+   palette (adjacent-pair CVD deltaE 8.4, normal-vision 19.3).
 ------------------------------------------------------------------ */
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* Surfaces & ink */
-  --plane:          #f9f9f7;
-  --surface-1:      #fcfcfb;
-  --surface-2:      #f2f1ed;
-  --surface-sunken: #eceae4;
-  --text-primary:   #0b0b0b;
-  --text-secondary: #52514e;
-  /* Light and dark used to share this. It clears 4.5:1 on a dark ground and
-     landed at 3.4:1 on a light one, so the two are separate values now. */
-  --text-muted:     #676560;
-  --gridline:       #e1e0d9;
-  --baseline:       #c3c2b7;
-  --border:         rgba(11, 11, 11, 0.10);
-  --border-strong:  rgba(11, 11, 11, 0.18);
-  --shadow-1:       0 1px 2px rgba(11, 11, 11, 0.06), 0 1px 1px rgba(11, 11, 11, 0.04);
-  --shadow-2:       0 6px 20px rgba(11, 11, 11, 0.10), 0 2px 6px rgba(11, 11, 11, 0.06);
-  --overlay:        rgba(11, 11, 11, 0.45);
+  /* Surfaces & ink. The violet cast is small on purpose — enough that the
+     black reads as chosen rather than absent, not enough to be a colour. */
+  --plane:          #0a0910;
+  --surface-1:      #15141d;
+  --surface-2:      #1e1c28;
+  --surface-sunken: #060509;
+  --text-primary:   #f4f3fa;
+  --text-secondary: #b6b3c8;  /* 9.1:1 on surface-1 */
+  --text-muted:     #8b8899;  /* 5.4:1 on surface-1 */
+  --gridline:       #262433;
+  --baseline:       #35323f;
+  --border:         rgba(255, 255, 255, 0.10);
+  --border-strong:  rgba(255, 255, 255, 0.20);
+  --shadow-1:       0 1px 2px rgba(0, 0, 0, 0.55);
+  --shadow-2:       0 8px 28px rgba(0, 0, 0, 0.66);
+  --overlay:        rgba(0, 0, 0, 0.68);
 
   /* Categorical series - fixed order, never cycled */
-  --series-1: #2a78d6;  /* blue    */
-  --series-2: #eb6834;  /* orange  */
-  --series-3: #1baf7a;  /* aqua    */
-  --series-4: #eda100;  /* yellow  */
-  --series-5: #e87ba4;  /* magenta */
-  --series-6: #4a3aa7;  /* violet  */
+  --series-1: #3987e5;  /* blue    */
+  --series-2: #d95926;  /* orange  */
+  --series-3: #199e70;  /* aqua    */
+  --series-4: #c98500;  /* yellow  */
+  --series-5: #d55181;  /* magenta */
+  --series-6: #9085e9;  /* violet  */
   --series-7: #008300;  /* green   */
-  --series-8: #e34948;  /* red     */
+  --series-8: #e66767;  /* red     */
 
   /* Sequential blue ramp */
-  --seq-100: #cde2fb;
-  --seq-250: #86b6ef;
-  --seq-400: #3987e5;
-  --seq-550: #1c5cab;
-  --seq-700: #0d366b;
+  --seq-100: #184f95;
+  --seq-250: #1c5cab;
+  --seq-400: #2a78d6;
+  --seq-550: #5598e7;
+  --seq-700: #9ec5f4;
 
   /* Status - reserved, never used as a series */
   --status-good:     #0ca30c;
   --status-warning:  #fab219;
   --status-serious:  #ec835a;
   --status-critical: #d03b3b;
-  --success-text:    #006300;
-  --crit-text:       #b32d2d;
+  /* The status hues are tuned as marks on a chart. As text on this ground
+     they need their own values, or "in range" is dark green on near-black. */
+  --success-text:    #5fd85f;
+  --crit-text:       #ff9494;
 
   /* Module identity - entity, not rank */
   --mod-work:      var(--series-1);
@@ -83,100 +93,21 @@
   --content-max: 1120px;
 }
 
-/* Dark values are selected for the dark surface, not an automatic flip.
-   Declared under both scopes so an explicit theme choice wins either way. */
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) {
-    color-scheme: dark;
-    --plane:          #0d0d0d;
-    --surface-1:      #1a1a19;
-    --surface-2:      #232322;
-    --surface-sunken: #111110;
-    --text-primary:   #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted:     #898781;
-    --gridline:       #2c2c2a;
-    --baseline:       #383835;
-    --border:         rgba(255, 255, 255, 0.10);
-    --border-strong:  rgba(255, 255, 255, 0.20);
-    --shadow-1:       0 1px 2px rgba(0, 0, 0, 0.5);
-    --shadow-2:       0 8px 28px rgba(0, 0, 0, 0.6);
-    --overlay:        rgba(0, 0, 0, 0.62);
-
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-    --series-4: #c98500;
-    --series-5: #d55181;
-    --series-6: #9085e9;
-    --series-7: #008300;
-    --series-8: #e66767;
-
-    --seq-100: #184f95;
-    --seq-250: #1c5cab;
-    --seq-400: #2a78d6;
-    --seq-550: #5598e7;
-    --seq-700: #9ec5f4;
-
-    --success-text: #5fd85f;
-    --crit-text:    #ff9494;
-  }
-}
-
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --plane:          #0d0d0d;
-  --surface-1:      #1a1a19;
-  --surface-2:      #232322;
-  --surface-sunken: #111110;
-  --text-primary:   #ffffff;
-  --text-secondary: #c3c2b7;
-  --text-muted:     #898781;
-  --gridline:       #2c2c2a;
-  --baseline:       #383835;
-  --border:         rgba(255, 255, 255, 0.10);
-  --border-strong:  rgba(255, 255, 255, 0.20);
-  --shadow-1:       0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-2:       0 8px 28px rgba(0, 0, 0, 0.6);
-  --overlay:        rgba(0, 0, 0, 0.62);
-
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --series-3: #199e70;
-  --series-4: #c98500;
-  --series-5: #d55181;
-  --series-6: #9085e9;
-  --series-7: #008300;
-  --series-8: #e66767;
-
-  --seq-100: #184f95;
-  --seq-250: #1c5cab;
-  --seq-400: #2a78d6;
-  --seq-550: #5598e7;
-  --seq-700: #9ec5f4;
-
-  --success-text: #5fd85f;
-  --crit-text:    #ff9494;
-}
-
 /* ------------------------------------------------------------------
    Card stock.
 
    A trading card is printed on its own stock — it does not take the colour
    of the table it is lying on. So the launcher's cards carry their own dark
-   ground and their own ink on every skin, light ones included, rather than
-   inheriting the page surface. That is what makes the module hue read as a
-   colour rather than a tint, and it is the only reason a white foil sweep
-   and a gold rank are visible at all.
+   ground and their own ink rather than inheriting the page surface. Every
+   skin has a different surface, and the stock has to stay the stock.
 
-   Because the card supplies its own ground it must also supply its own ink:
-   nothing inside a card may take --text-primary or --text-secondary, or it
-   goes dark-on-dark the moment the page is light.
+   The stock is deliberately *lighter* than the page — the page is the
+   darkest thing on screen — so a card reads as an object lying on it.
 ------------------------------------------------------------------ */
 
 :root {
-  --card-stock:    #14131c;
-  --card-stock-lo: #0c0b12;
+  --card-stock:    #1b1927;
+  --card-stock-lo: #121019;
   --card-ink:      #f4f3fa;
   --card-ink-dim:  #a8a5bd;  /* 6.6:1 on the stock */
   --card-rule:     rgba(255, 255, 255, 0.13);

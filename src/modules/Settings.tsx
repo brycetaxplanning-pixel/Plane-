@@ -87,18 +87,6 @@ export function Settings() {
           />
           <span className="t-sm">Play a random animation when a task is checked off ({EFFECTS.length} of them)</span>
         </label>
-
-        {state.settings.skin === 'classic' && !state.settings.skinRotation && (
-          <div style={{ marginTop: 'var(--sp-4)', maxWidth: 220 }}>
-            <Field label="Light or dark">
-              <select className="select" value={state.settings.theme} onChange={(e) => setSetting('theme', e.target.value as 'system' | 'light' | 'dark')}>
-                <option value="system">Match device</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
-            </Field>
-          </div>
-        )}
       </section>
 
       <section className="card">

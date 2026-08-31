@@ -57,15 +57,13 @@ function Shell() {
   const [route, navigate] = useRoute();
   const prevDepth = useRef(depthOf(route));
 
-  // Light/dark applies to Classic; a skin brings its own fixed scheme.
+  // Every skin is dark and brings its own fixed palette; Holo is the one in
+  // :root, so it is the absence of a data-skin attribute.
   useEffect(() => {
     const root = document.documentElement;
     const skin = resolveSkin(state.settings);
     if (skin === 'classic') root.removeAttribute('data-skin');
     else root.setAttribute('data-skin', skin);
-
-    if (state.settings.theme === 'system' || skin !== 'classic') root.removeAttribute('data-theme');
-    else root.setAttribute('data-theme', state.settings.theme);
   }, [state.settings]);
 
   const depth = depthOf(route);

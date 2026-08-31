@@ -17,7 +17,7 @@ const problems = [];
 const ok = (l) => console.log('  PASS ' + l);
 const bad = (l, d) => { problems.push(`${l}: ${d}`); console.log('  FAIL ' + l + ' — ' + d); };
 
-const SKINS = ['Classic', 'Neon Miami', 'Arcade Brawler', 'Shinobi', 'Deployment', 'Ringworld', 'Late Night Set'];
+const SKINS = ['Holo', 'Neon Miami', 'Arcade Brawler', 'Shinobi', 'Deployment', 'Ringworld', 'Late Night Set'];
 const ROUTES = ['#/', '#/habits', '#/finance', '#/coach?tab=analysis', '#/health', '#/goals', '#/settings'];
 
 const MEASURE = () => {
