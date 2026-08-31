@@ -5,7 +5,7 @@ export const SCHEMA_VERSION = 1;
 
 export type ModuleId =
   | 'work' | 'planning' | 'spanish' | 'fitness' | 'finance'
-  | 'habits' | 'goals' | 'notes' | 'coach';
+  | 'habits' | 'goals' | 'notes' | 'coach' | 'health';
 
 /* ------------------------------------------------------------------ */
 /* Module 1 — Abitos Tax Prep (day job)                               */
@@ -99,6 +99,9 @@ export interface BusinessIdea {
   nextStep?: string;
   /** Steps the assistant drafted, so a plan survives closing the app. */
   steps?: { id: string; text: string; done: boolean }[];
+  /** Set when the offer to help start it was waved away, so it comes back
+   *  later rather than every time the tab is opened. */
+  snoozedUntil?: DateKey;
   createdAt: DateKey;
 }
 
@@ -510,7 +513,7 @@ export interface AppNotification {
   id: string;
   /** Stable per condition, so the same thing is never raised twice. */
   key: string;
-  kind: 'insight' | 'habit' | 'due' | 'award' | 'finance' | 'deal' | 'system';
+  kind: 'insight' | 'habit' | 'due' | 'award' | 'finance' | 'deal' | 'health' | 'system';
   module?: ModuleId;
   title: string;
   body?: string;
@@ -544,6 +547,61 @@ export interface XpEvent {
 export interface Badge {
   id: string;
   earnedAt: DateKey;
+}
+
+/* ---------------- Module 10: Health ---------------- */
+
+/** The numbers a doctor asks about, as opposed to the training log. */
+export interface Vitals {
+  id: string;
+  date: DateKey;
+  /** In whatever unit `health.weightUnit` says. Stored as typed, never converted. */
+  weight?: number;
+  restingHr?: number;
+  systolic?: number;
+  diastolic?: number;
+  sleepHours?: number;
+  notes?: string;
+}
+
+export const MEAL_SLOTS = ['Breakfast', 'Lunch', 'Dinner', 'Snack'] as const;
+export type MealSlot = (typeof MEAL_SLOTS)[number];
+
+export interface Meal {
+  id: string;
+  date: DateKey;
+  slot: MealSlot;
+  name: string;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+}
+
+/** One line off a lab report. The range is the one printed on *your* report —
+ *  labs differ, so a built-in range is only ever a starting suggestion. */
+export interface BloodMarker {
+  id: string;
+  name: string;
+  value: number;
+  unit: string;
+  low?: number;
+  high?: number;
+}
+
+export interface BloodPanel {
+  id: string;
+  date: DateKey;
+  lab?: string;
+  notes?: string;
+  markers: BloodMarker[];
+}
+
+export interface HealthTargets {
+  weight?: number;
+  calories?: number;
+  protein?: number;
+  sleepHours?: number;
 }
 
 export interface Settings {
@@ -604,6 +662,13 @@ export interface AppState {
     /** Take-home a month. Zero means not set — every affordability check
      *  says so rather than inventing a number. */
     monthlyIncome: number;
+  };
+  health: {
+    targets: HealthTargets;
+    weightUnit: 'lb' | 'kg';
+    vitals: Vitals[];
+    meals: Meal[];
+    panels: BloodPanel[];
   };
   habits: { items: Habit[]; logs: HabitLog[]; tone: CoachTone };
   notes: { items: Note[] };
@@ -689,6 +754,13 @@ export function emptyState(): AppState {
       savingGoals: [],
       monthlyIncome: 0,
     },
+    health: {
+      targets: { protein: 180, sleepHours: 7 },
+      weightUnit: 'lb',
+      vitals: [],
+      meals: [],
+      panels: [],
+    },
     habits: { items: [], logs: [], tone: 'direct' },
     notes: { items: [] },
     awards: { enlightened: [], acknowledged: [] },
@@ -751,6 +823,15 @@ export function migrate(raw: unknown): AppState {
         contributions: g.contributions ?? [],
       })),
       monthlyIncome: s.finance?.monthlyIncome ?? 0,
+    },
+    health: {
+      ...base.health,
+      ...(s.health ?? {}),
+      targets: { ...base.health.targets, ...(s.health?.targets ?? {}) },
+      weightUnit: s.health?.weightUnit ?? base.health.weightUnit,
+      vitals: s.health?.vitals ?? [],
+      meals: s.health?.meals ?? [],
+      panels: (s.health?.panels ?? []).map((p) => ({ ...p, markers: p.markers ?? [] })),
     },
     habits: {
       ...base.habits,
@@ -844,4 +925,8 @@ export const MODULES: { id: ModuleId; num: number; name: string; blurb: string; 
   // the separation gate, so Notes is distinguished by texture and ink instead.
   { id: 'notes',    num: 8, name: 'Notes',           blurb: 'Journal, lists and everything else',      icon: '📝', color: 'var(--mod-notes)' },
   { id: 'coach',    num: 9, name: 'Life Coach',      blurb: 'Check-ins and a thinking partner',        icon: '🧭', color: 'var(--mod-coach)' },
+  // Health shares the Fitness hue on purpose: both are the body, the eight
+  // categorical slots are spent, and a tile is identified by its name and
+  // number, not by colour alone.
+  { id: 'health',   num: 10, name: 'Health',          blurb: 'Weight, food, sleep and bloodwork',       icon: '🩺', color: 'var(--mod-health)' },
 ];

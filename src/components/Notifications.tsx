@@ -8,7 +8,7 @@ import { Icons } from './layout/Icons';
 
 const KIND_ICON: Record<AppNotification['kind'], string> = {
   insight: '⚖️', habit: '🔁', due: '⏰', award: '🧘',
-  finance: '💵', deal: '🎯', system: 'ℹ️',
+  finance: '💵', deal: '🎯', health: '🩺', system: 'ℹ️',
 };
 
 export const linkFor = (n: AppNotification): string => {

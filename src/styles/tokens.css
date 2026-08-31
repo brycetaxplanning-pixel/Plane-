@@ -60,6 +60,9 @@
   /* Notes deliberately has no categorical hue - see MODULES in schema.ts. */
   --mod-notes:     var(--text-secondary);
   --mod-coach:     var(--series-8);
+  /* Shares the Fitness slot: both are the body, and the eight categorical
+     hues are spent. Tiles are told apart by name and number. */
+  --mod-health:    var(--series-4);
 
   /* Type */
   --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;

@@ -1,13 +1,13 @@
 # Plane
 
-A gamified habit tracker built around six modules. It runs in the browser on
+A gamified habit tracker built around ten modules. It runs in the browser on
 your phone and your laptop, installs to the home screen, works offline, and
 keeps every byte of data on the device it was entered on.
 
 You open it once a day, tap into a module, and log what you did. The dashboard
 tells you what is asking for attention.
 
-## The six modules
+## The ten modules
 
 | # | Module | What it tracks |
 |---|--------|----------------|
@@ -20,6 +20,7 @@ tells you what is asking for attention.
 | 7 | **Goals** | One visual card per goal: a picture, what it costs, and how you get there. Fields adapt to the kind of goal — a purchase asks for a price, a training goal asks for a window in weeks. |
 | 8 | **Notes** | Journal entries, to-do lists and everything you'd otherwise put in your phone's notes app. Talk a note in without typing. |
 | 9 | **Life Coach** | Three tabs. A daily mood/energy check-in; an **Analysis** tab that finds patterns in your own log and adds up whether the week fits in the hours that exist; and a conversation in one of three modes — Coach, Sounding board or Straight talk. |
+| 10 | **Health** | The logbook side of the body, kept apart from training: food and protein against a daily target, weight, sleep, resting heart rate and blood pressure over time, and blood panels typed in by hand. A marker is compared against the range printed on your own report and reported as inside or outside it — nothing here interprets a result, and nothing syncs from a watch or a lab yet. |
 
 Home is a grid of big module buttons — one press each. Logging anything earns
 XP, which drives a level, a daily streak and fourteen badges, and checking a

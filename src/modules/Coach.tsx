@@ -5,6 +5,7 @@ import { fmtDate, todayKey } from '../lib/date';
 import { uid } from '../lib/id';
 import { fmtMoney } from '../lib/finance';
 import { capacity, goalRows } from '../lib/budgetGoals';
+import { healthSummary } from '../lib/health';
 import { useApp } from '../state/context';
 import { budgetHeadroom, coachStats, financeStats, fitnessStats, habitStats, planningStats, spanishStats, workStats } from '../state/selectors';
 import { routeOf, useTabParam } from '../lib/router';
@@ -260,6 +261,20 @@ Category headroom: ${budgetHeadroom(state).slice(0, 8).map((h) => `${h.category}
 Take-home: ${cap.income > 0 ? `${fmtMoney(cap.income, cur)}/mo` : 'not given'}; average month of spending ${fmtMoney(cap.avgSpend, cur)}; ${cap.free === null ? 'free cash unknown' : `${fmtMoney(cap.free, cur)}/mo free after saving goals`}.
 Saving goals: ${savingRows.map((r) => `${r.goal.name} ${fmtMoney(r.balance, cur)} of ${fmtMoney(r.goal.target, cur)}, putting in ${fmtMoney(r.goal.monthly, cur)}/mo${r.requiredMonthly !== null ? ` (the date needs ${fmtMoney(r.requiredMonthly, cur)}/mo)` : ''} — ${r.status}${(r.goal.answers ?? []).length ? `; they decided: ${(r.goal.answers ?? []).map((a) => a.answer).join(' / ')}` : ''}`).join('\n') || 'none set'}
 Money spent on anything else comes out of those goals first — say which one slips and by how long.
+
+MODULE 10 — Health
+${(() => {
+  const h = healthSummary(state);
+  const unit = state.health.weightUnit;
+  return [
+    h.weight ? `Weight ${h.weight.value}${unit}${h.weightDelta !== null ? ` (${h.weightDelta > 0 ? '+' : ''}${h.weightDelta.toFixed(1)} over the last month)` : ''}` : 'Weight not recorded',
+    h.proteinTarget ? `${Math.round(h.today.protein)}g of ${h.proteinTarget}g protein today` : `${Math.round(h.today.protein)}g protein logged today`,
+    h.sleepLast !== null ? `${h.sleepLast}h sleep last recorded` : 'sleep not recorded',
+    h.flaggedCount ? `${h.flaggedCount} blood marker(s) outside the entered range on the last panel` : 'nothing flagged on the last panel',
+    h.monthsSincePanel !== null ? `${h.monthsSincePanel} months since bloodwork` : 'no bloodwork logged',
+  ].join('. ');
+})()}
+Do not interpret a lab result or give medical advice; point them at their doctor for anything clinical.
 
 MODULE 6 — Habits
 ${h.rows.map((r) => `- ${r.habit.title} (${r.habit.cadence}): ${r.statusLabel}${r.daysSince === null ? ', never done' : `, ${r.daysSince} day(s) since`}`).join('\n') || '- none set up'}

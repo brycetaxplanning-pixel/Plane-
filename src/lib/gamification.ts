@@ -21,6 +21,9 @@ export const XP = {
   goalDone: 120,
   savingDeposit: 10,
   savingGoalFunded: 150,
+  meal: 4,
+  vitals: 8,
+  bloodPanel: 40,
   weeklyTargetHit: 100,
 } as const;
 
@@ -156,5 +159,6 @@ export function earnedBadges(s: AppState): BadgeDef[] {
 export const MODULE_XP_LABEL: Record<ModuleId | 'general', string> = {
   work: 'Abitos', planning: 'Tax Planning', spanish: 'Spanish',
   fitness: 'Fitness', finance: 'Finances', habits: 'Habits',
-  goals: 'Goals', notes: 'Notes', coach: 'Life Coach', general: 'General',
+  goals: 'Goals', notes: 'Notes', coach: 'Life Coach', health: 'Health',
+  general: 'General',
 };

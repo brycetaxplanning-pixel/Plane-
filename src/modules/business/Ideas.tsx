@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IDEA_EFFORT, IDEA_STAGES, type BusinessIdea, type IdeaEffort, type IdeaStage } from '../../lib/schema';
 import { XP } from '../../lib/gamification';
 import { AIError, askJSON, isAIConfigured } from '../../lib/ai';
-import { fmtDate, todayKey } from '../../lib/date';
+import { addDays, diffDays, fmtDate, todayKey } from '../../lib/date';
 import { uid } from '../../lib/id';
 import { useApp } from '../../state/context';
 import { Modal } from '../../components/ui/Modal';
@@ -24,11 +24,49 @@ const stageClass = (s: IdeaStage) =>
   : s === 'Parked' ? 'status status-neutral'
   : 'status status-neutral';
 
+const daysAgo = (key: string): string => {
+  const n = diffDays(todayKey(), key);
+  if (n <= 1) return 'yesterday';
+  if (n < 14) return `${n} days ago`;
+  if (n < 60) return `${Math.round(n / 7)} weeks ago`;
+  return `${Math.round(n / 30)} months ago`;
+};
+
+/** The one idea worth pushing on: the oldest that has been written down and
+ *  then left alone. Nothing that already has a plan, nothing waved away
+ *  recently, and never more than one at a time. */
+function stalest(ideas: BusinessIdea[]): BusinessIdea | null {
+  const today = todayKey();
+  const candidates = ideas
+    // Only the ones genuinely sitting: something already at Building or Live
+    // is underway, and Parked was a decision.
+    .filter((i) => !i.steps?.length && (i.stage === 'Spark' || i.stage === 'Exploring'))
+    .filter((i) => !i.snoozedUntil || i.snoozedUntil <= today)
+    .filter((i) => diffDays(today, i.createdAt) >= 3)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  return candidates[0] ?? null;
+}
+
 export function Ideas() {
   const { state, update, reward, toast } = useApp();
   const ideas = state.planning.ideas;
   const [editing, setEditing] = useState<BusinessIdea | 'new' | null>(null);
   const [talking, setTalking] = useState(false);
+  /** Set when the offer is taken up, so the form drafts a plan on open
+   *  instead of waiting to be asked a second time. */
+  const [autoPlan, setAutoPlan] = useState(false);
+  const offer = stalest(ideas);
+
+  const snooze = (idea: BusinessIdea) => {
+    update((s) => ({
+      ...s,
+      planning: {
+        ...s.planning,
+        ideas: s.planning.ideas.map((i) => (i.id === idea.id ? { ...i, snoozedUntil: addDays(todayKey(), 14) } : i)),
+      },
+    }));
+    toast('Parked for a couple of weeks');
+  };
 
   const add = (idea: BusinessIdea) => {
     const isNew = !ideas.some((i) => i.id === idea.id);
@@ -78,6 +116,31 @@ export function Ideas() {
         )}
       </section>
 
+      {offer && (
+        <section className="card">
+          <div className="insight">
+            <span className="insight-icon" aria-hidden>🤝</span>
+            <div className="grow" style={{ minWidth: 0 }}>
+              <p className="insight-title">Let me help you out with "{offer.title}"</p>
+              <p className="t-sm t-sec" style={{ margin: '0 0 var(--sp-3)' }}>
+                Written down {daysAgo(offer.createdAt)} and nothing has happened since. I can break it into
+                first actions you can actually tick off{isAIConfigured(state.settings) ? '' : ' — add an API key in Settings and I will draft them for you'}.
+              </p>
+              <div className="row-2 wrap">
+                <button
+                  className="btn btn-accent"
+                  style={{ ['--mod' as string]: ACCENT }}
+                  onClick={() => { setAutoPlan(true); setEditing(offer); }}
+                >
+                  Yes, help me start it
+                </button>
+                <button className="btn" onClick={() => snooze(offer)}>Not now</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {ideas.length === 0 ? (
         <EmptyState icon="💡" title="No ideas logged" hint="The half-formed ones count. That is the point of writing them down." />
       ) : (
@@ -108,8 +171,9 @@ export function Ideas() {
 
       {editing && (
         <IdeaForm
+          autoPlan={autoPlan}
           idea={editing === 'new' ? null : editing}
-          onClose={() => setEditing(null)}
+          onClose={() => { setEditing(null); setAutoPlan(false); }}
           onDelete={editing === 'new' ? undefined : () => {
             const id = (editing as BusinessIdea).id;
             update((s) => ({ ...s, planning: { ...s.planning, ideas: s.planning.ideas.filter((x) => x.id !== id) } }));
@@ -131,9 +195,11 @@ interface StartPlan {
 }
 
 function IdeaForm({
-  idea, onClose, onSave, onDelete,
+  idea, autoPlan, onClose, onSave, onDelete,
 }: {
   idea: BusinessIdea | null;
+  /** Opened by taking up the offer, so the plan is drafted straight away. */
+  autoPlan?: boolean;
   onClose: () => void;
   onSave: (i: BusinessIdea) => void;
   onDelete?: () => void;
@@ -149,6 +215,12 @@ function IdeaForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [risks, setRisks] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (autoPlan && idea && isAIConfigured(state.settings)) void help();
+    // Once, on open. Re-running when the draft state changes would loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function help() {
     if (!title.trim()) return;

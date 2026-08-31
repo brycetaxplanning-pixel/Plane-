@@ -25,6 +25,7 @@ import { Notes } from './modules/Notes';
 import { NotificationsPage } from './components/Notifications';
 import { Tracker } from './modules/Tracker';
 import { Coach } from './modules/Coach';
+import { Health } from './modules/Health';
 import { Settings } from './modules/Settings';
 
 import './styles/tokens.css';
@@ -109,6 +110,7 @@ function Shell() {
         {route === 'tracker' && <Tracker />}
         {route === 'notifications' && <NotificationsPage />}
         {route === 'coach' && <Coach />}
+        {route === 'health' && <Health />}
         {route === 'settings' && <Settings />}
       </main>
 

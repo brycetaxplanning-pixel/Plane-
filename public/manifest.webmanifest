@@ -1,7 +1,7 @@
 {
   "name": "Plane — habit tracker",
   "short_name": "Plane",
-  "description": "Six modules, one daily check-in: client work, S-corp outreach, Spanish, training, money and goals.",
+  "description": "Ten modules, one daily check-in: client work, outreach, Spanish, training, money, habits and health.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -4,6 +4,7 @@ import { allRows } from './habits';
 import { findInsights } from './insights';
 import { needsReview } from './finance';
 import { goalRows } from './budgetGoals';
+import { flagged, latestPanel, monthsSincePanel } from './health';
 import { lastCompletedWeek } from './awards';
 import { dueLabel, dueList } from './reminders';
 import { uid } from './id';
@@ -177,6 +178,39 @@ export function candidates(state: AppState): Candidate[] {
     });
   }
 
+  /* Bloodwork. Raised once a month, and only ever as a fact about the range
+     you entered yourself — nothing here interprets what a result means. */
+  const lastPanel = latestPanel(state.health.panels);
+  const healthMonth = todayKey().slice(0, 7);
+  if (lastPanel) {
+    const abnormal = flagged(lastPanel);
+    if (abnormal.length > 0) {
+      const names = abnormal.map((m) => m.name).sort().join(', ');
+      out.push({
+        key: `blood:${lastPanel.id}:${healthMonth}`,
+        kind: 'health',
+        module: 'health',
+        title: `${abnormal.length} marker${abnormal.length === 1 ? '' : 's'} outside range on your last panel`,
+        body: `${names}. From the panel dated ${lastPanel.date} — worth raising with your doctor.`,
+        to: 'health',
+        tab: 'blood',
+      });
+    }
+  }
+
+  /* A year without bloodwork, once a month. */
+  const sincePanel = monthsSincePanel(state.health.panels);
+  if (sincePanel !== null && sincePanel >= 12) {
+    out.push({
+      key: `bloodgap:${healthMonth}`,
+      kind: 'health',
+      module: 'health',
+      title: `${sincePanel} months since your last blood panel`,
+      body: 'Everything on the Bloodwork tab is from that one.',
+      to: 'health',
+      tab: 'blood',
+    });
+  }
   /* Reminders that have arrived or gone past. */
   for (const d of dueList(state)) {
     const late = -d.daysAway;

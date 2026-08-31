@@ -1,4 +1,4 @@
-import { emptyState, type AppState } from './schema';
+import { MEAL_SLOTS, emptyState, type AppState } from './schema';
 import { addDays, diffDays, todayKey, weekStart } from './date';
 import { uid } from './id';
 import { SEED_RULES, autoCategorize } from './finance';
@@ -258,6 +258,80 @@ export function sampleState(): AppState {
         { id: uid('dep'), date: addDays(today, -60), amount: 6500, note: 'Already saved' },
         { id: uid('dep'), date: addDays(today, -30), amount: 400 },
       ],
+    },
+  ];
+
+  // Health: a fortnight of food and weigh-ins, and two panels a year apart so
+  // a marker can be read as a direction rather than a single number.
+  s.health.targets = { protein: 180, calories: 2600, sleepHours: 7, weight: 178 };
+  s.health.weightUnit = 'lb';
+
+  const MEALS: [string, string, number, number][] = [
+    ['Breakfast', 'Eggs, oats and berries', 620, 42],
+    ['Lunch', 'Chicken, rice and broccoli', 780, 62],
+    ['Dinner', 'Steak and potatoes', 910, 68],
+    ['Snack', 'Protein shake', 240, 30],
+  ];
+  s.health.meals = [];
+  for (let d = 0; d < 14; d += 1) {
+    const date = addDays(today, -d);
+    // Weekends get logged less carefully, which is what actually happens.
+    const dow = new Date(`${date}T00:00:00`).getDay();
+    const skipLast = dow === 0 || dow === 6 ? 2 : d % 5 === 0 ? 1 : 0;
+    for (const [slot, name, kcal, protein] of MEALS.slice(0, MEALS.length - skipLast)) {
+      const drift = 0.9 + ((d * 7) % 5) / 20;
+      s.health.meals.push({
+        id: uid('meal'), date, slot: slot as (typeof MEAL_SLOTS)[number], name,
+        calories: Math.round(kcal * drift), protein: Math.round(protein * drift),
+      });
+    }
+  }
+
+  s.health.vitals = [];
+  for (let d = 28; d >= 0; d -= 2) {
+    const date = addDays(today, -d);
+    s.health.vitals.push({
+      id: uid('vit'), date,
+      weight: Math.round((184 - (28 - d) * 0.12) * 10) / 10,
+      restingHr: 54 + (d % 3),
+      sleepHours: Math.round((6.4 + ((d * 3) % 7) / 5) * 10) / 10,
+      ...(d % 8 === 0 ? { systolic: 118 + (d % 5), diastolic: 74 + (d % 3) } : {}),
+    });
+  }
+
+  const panelMarkers = (
+    rows: [string, number, string, number | undefined, number | undefined][],
+  ) => rows.map(([name, value, unit, low, high]) => ({ id: uid('mk'), name, value, unit, low, high }));
+
+  s.health.panels = [
+    {
+      id: uid('panel'), date: addDays(today, -400), lab: 'Quest',
+      notes: 'Baseline before the training block.',
+      markers: panelMarkers([
+        ['Glucose (fasting)', 96, 'mg/dL', 70, 99],
+        ['HbA1c', 5.4, '%', undefined, 5.7],
+        ['Total cholesterol', 208, 'mg/dL', undefined, 200],
+        ['LDL', 128, 'mg/dL', undefined, 100],
+        ['HDL', 48, 'mg/dL', 40, undefined],
+        ['Triglycerides', 142, 'mg/dL', undefined, 150],
+        ['Vitamin D (25-OH)', 22, 'ng/mL', 30, 100],
+        ['TSH', 2.1, 'µIU/mL', 0.45, 4.5],
+      ]),
+    },
+    {
+      id: uid('panel'), date: addDays(today, -35), lab: 'Quest',
+      notes: 'Recheck. Started vitamin D in the spring.',
+      markers: panelMarkers([
+        ['Glucose (fasting)', 91, 'mg/dL', 70, 99],
+        ['HbA1c', 5.2, '%', undefined, 5.7],
+        ['Total cholesterol', 191, 'mg/dL', undefined, 200],
+        ['LDL', 112, 'mg/dL', undefined, 100],
+        ['HDL', 55, 'mg/dL', 40, undefined],
+        ['Triglycerides', 118, 'mg/dL', undefined, 150],
+        ['Vitamin D (25-OH)', 34, 'ng/mL', 30, 100],
+        ['TSH', 1.8, 'µIU/mL', 0.45, 4.5],
+        ['Ferritin', 96, 'ng/mL', 30, 400],
+      ]),
     },
   ];
 

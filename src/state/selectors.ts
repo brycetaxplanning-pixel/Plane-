@@ -4,6 +4,7 @@ import { needsReview, spendByCategory } from '../lib/finance';
 import { allRows, attention, dailyCompletion, type HabitRow } from '../lib/habits';
 import { startingTotal } from '../lib/invest';
 import { goalRows } from '../lib/budgetGoals';
+import { healthSummary } from '../lib/health';
 import { weekPlan } from '../lib/fitplan';
 
 export interface ModuleSummary {
@@ -250,6 +251,7 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
   const hab = habitStats(s);
   const goal = goalStats(s);
   const coach = coachStats(s);
+  const hl = healthSummary(s);
 
   return {
     work: {
@@ -328,6 +330,21 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
       caption: s.notes.items.length === 1 ? 'note' : 'notes',
       nudge: s.notes.items.find((n) => n.pinned)?.title
         ?? (s.notes.items.length ? 'tap to write or talk' : 'nothing written yet'),
+    },
+    health: {
+      id: 'health',
+      // Today's protein against its target when there is one; otherwise how
+      // much of the month has any food logged at all.
+      progress: hl.proteinPct ?? Math.min(1, hl.loggedDaysThisMonth / 28),
+      headline: hl.proteinTarget ? `${Math.round(hl.today.protein)}g` : `${hl.today.meals}`,
+      caption: hl.proteinTarget ? `of ${hl.proteinTarget}g protein` : hl.today.meals === 1 ? 'meal today' : 'meals today',
+      nudge: hl.flaggedCount
+        ? `${hl.flaggedCount} marker${hl.flaggedCount === 1 ? '' : 's'} outside range`
+        : hl.monthsSincePanel !== null && hl.monthsSincePanel >= 12
+          ? `${hl.monthsSincePanel} months since bloodwork`
+          : hl.weightDelta !== null && Math.abs(hl.weightDelta) >= 0.1
+            ? `${hl.weightDelta > 0 ? '+' : ''}${hl.weightDelta.toFixed(1)} over the last month`
+            : hl.today.meals === 0 ? 'nothing logged today' : undefined,
     },
     coach: {
       id: 'coach',

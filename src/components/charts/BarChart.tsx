@@ -30,6 +30,8 @@ export function BarChart({
 }: BarChartProps) {
   const [hover, setHover] = useState<number | null>(null);
 
+  const tickStep = Math.max(1, Math.ceil(data.length / 8));
+
   // 12% headroom above the tallest mark so the direct label has somewhere to
   // sit without colliding with whatever is above the chart.
   const peakValue = Math.max(...data.map((d) => d.value), target ?? 0);
@@ -72,8 +74,14 @@ export function BarChart({
       </div>
 
       <div className="bars-axis">
-        {data.map((d) => (
-          <span key={d.key} className="viz-tick">{d.label ?? ''}</span>
+        {/* Past about eight bars the labels collide at phone width, so only
+            every nth is drawn — the last one always, since that is the end of
+            the range you are reading toward. Every bar keeps its label in the
+            hover readout below. */}
+        {data.map((d, i) => (
+          <span key={d.key} className="viz-tick">
+            {i % tickStep === 0 || i === data.length - 1 ? d.label ?? '' : ''}
+          </span>
         ))}
       </div>
 

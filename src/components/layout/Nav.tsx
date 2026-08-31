@@ -16,6 +16,7 @@ const MODULE_ICONS: Record<string, () => React.ReactNode> = {
   work: Icons.folder, planning: Icons.target, spanish: Icons.chat,
   fitness: Icons.run, finance: Icons.wallet, habits: Icons.repeat,
   goals: Icons.flag, notes: Icons.note, coach: Icons.compass,
+  health: Icons.pulse,
 };
 
 const ENTRIES: NavEntry[] = [

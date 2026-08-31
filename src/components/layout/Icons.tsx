@@ -28,4 +28,5 @@ export const Icons = {
   grid: () => wrap(<><rect x="3.5" y="3.5" width="7" height="7" rx="2" /><rect x="13.5" y="3.5" width="7" height="7" rx="2" /><rect x="3.5" y="13.5" width="7" height="7" rx="2" /><rect x="13.5" y="13.5" width="7" height="7" rx="2" /></>),
   back: () => wrap(<><path d="M15 5.5 8.5 12l6.5 6.5" /></>),
   plus: () => wrap(<><path d="M12 5.5v13M5.5 12h13" /></>),
+  pulse: () => wrap(<><path d="M3 12.5h4l2-5 3 10 2.5-6 1.5 3h5" /></>),
 };

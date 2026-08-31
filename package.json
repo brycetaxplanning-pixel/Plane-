@@ -25,5 +25,5 @@
     "typescript": "~6.0.2",
     "vite": "^8.2.2"
   },
-  "description": "A local-first, gamified habit tracker with six modules."
+  "description": "A local-first, gamified habit tracker with ten modules."
 }
