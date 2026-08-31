@@ -71,6 +71,28 @@ Support is uneven and the app is explicit about it: Chrome and Safari have it,
 Firefox does not, and some in-app browsers refuse. Where it's missing the
 microphone simply isn't offered and typing works as normal.
 
+## Tracker
+
+A cross-module view, so it has no data of its own and sits with Progress and
+Settings rather than in the numbered modules.
+
+**Timeline** puts everything with a date on it — client projects, deal next
+steps, goal dates, the race, reminders — on one week or five-week view, empty
+days included so the shape of the week is visible. Anything already past gets
+its own section at the top.
+
+**Reminders** come in two shapes, because they answer different questions. A
+dated one fires on a date. An interval one fires a number of days after you
+last did the thing — "27 days since the last haircut, due every 21" — so it
+drifts with reality instead of nagging on a calendar you already fell off.
+Marking one done resets its clock rather than deleting it.
+
+Say a reminder out loud and it is parsed into structure: title, date, time and
+repeat, with today's date supplied so "Thursday" resolves. Export produces a
+`.ics` file with proper repeat rules, which is the only way to put something
+into Apple Calendar — Apple has no calendar API for third-party apps. Each
+reminder also has a one-click Google Calendar link.
+
 ## Notifications
 
 The app raises things on its own: a habit two days into a slip, a client

@@ -27,6 +27,7 @@ const ENTRIES: NavEntry[] = [
     icon: MODULE_ICONS[m.id],
     color: m.color,
   })),
+  { route: 'tracker', label: 'Tracker', icon: Icons.calendar },
   { route: 'settings', label: 'Settings', icon: Icons.gear, primary: true },
 ];
 

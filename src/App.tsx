@@ -23,6 +23,7 @@ import { Habits } from './modules/Habits';
 import { Goals } from './modules/Goals';
 import { Notes } from './modules/Notes';
 import { NotificationsPage } from './components/Notifications';
+import { Tracker } from './modules/Tracker';
 import { Coach } from './modules/Coach';
 import { Settings } from './modules/Settings';
 
@@ -80,6 +81,7 @@ function Shell() {
   const title = route === 'home' ? 'Progress'
     : route === 'settings' ? 'Settings'
     : route === 'notifications' ? 'Notifications'
+    : route === 'tracker' ? 'Tracker'
     : module?.name ?? 'Plane';
   const sub = module ? `Module ${module.num} · ${module.blurb}` : undefined;
 
@@ -104,6 +106,7 @@ function Shell() {
         {route === 'habits' && <Habits />}
         {route === 'goals' && <Goals />}
         {route === 'notes' && <Notes />}
+        {route === 'tracker' && <Tracker />}
         {route === 'notifications' && <NotificationsPage />}
         {route === 'coach' && <Coach />}
         {route === 'settings' && <Settings />}

@@ -292,6 +292,13 @@ export function sampleState(): AppState {
     });
   });
 
+  s.reminders.items = [
+    { id: uid('rem'), title: 'Get a haircut', repeat: 'Every N days', everyDays: 21, lastDone: addDays(today, -27), done: false, createdAt: addDays(today, -90) },
+    { id: uid('rem'), title: 'Client call with Halvorsen', repeat: 'Once', date: addDays(today, 2), time: '18:30', module: 'work', done: false, createdAt: today },
+    { id: uid('rem'), title: 'Back up the app data', repeat: 'Monthly', date: addDays(today, 9), done: false, createdAt: addDays(today, -40) },
+    { id: uid('rem'), title: 'Change the car oil', repeat: 'Every N days', everyDays: 120, lastDone: addDays(today, -80), done: false, createdAt: addDays(today, -200) },
+  ];
+
   s.planning.ideas = [
     {
       id: uid('idea'), title: 'Clips channel for finance YouTubers', stage: 'Spark', effort: 'Easy start',

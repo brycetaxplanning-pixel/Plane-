@@ -23,6 +23,7 @@ export const Icons = {
   repeat: () => wrap(<><path d="M4 9.5A3.5 3.5 0 0 1 7.5 6H18" /><path d="m15.5 3.5 3 2.5-3 2.5" /><path d="M20 14.5a3.5 3.5 0 0 1-3.5 3.5H6" /><path d="m8.5 20.5-3-2.5 3-2.5" /></>),
   flag: () => wrap(<><path d="M6 21V4" /><path d="M6 5h11l-2 3.5L17 12H6" /></>),
   note: () => wrap(<><path d="M6 3.5h9l3.5 3.5v13.5H6Z" /><path d="M14.5 3.5V7.5H18.5" /><path d="M9 12h6M9 15.5h4" /></>),
+  calendar: () => wrap(<><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" /><path d="M3.5 10h17" /><path d="M8 3.5v3M16 3.5v3" /></>),
   bell: () => wrap(<><path d="M6 9.5a6 6 0 0 1 12 0c0 3 .7 4.6 1.6 5.6.4.5.1 1.4-.6 1.4H5c-.7 0-1-.9-.6-1.4C5.3 14.1 6 12.5 6 9.5Z" /><path d="M10 19.5a2.2 2.2 0 0 0 4 0" /></>),
   grid: () => wrap(<><rect x="3.5" y="3.5" width="7" height="7" rx="2" /><rect x="13.5" y="3.5" width="7" height="7" rx="2" /><rect x="3.5" y="13.5" width="7" height="7" rx="2" /><rect x="13.5" y="13.5" width="7" height="7" rx="2" /></>),
   back: () => wrap(<><path d="M15 5.5 8.5 12l6.5 6.5" /></>),

@@ -7,6 +7,7 @@ import { Icons } from '../components/layout/Icons';
 import { EnlightenedBadge } from '../components/Enlightenment';
 import { isEnlightened } from '../lib/awards';
 import { unreadByModule } from '../lib/notifications';
+import { daysFromToday, timelineItems } from '../lib/timeline';
 import { NotificationBell } from '../components/Notifications';
 
 /** The hub. Every module is one big button; nothing else competes with them. */
@@ -19,6 +20,10 @@ export function Launcher() {
   const name = state.settings.displayName;
 
   const unread = unreadByModule(state);
+  const dueSoon = timelineItems(state).filter((i) => {
+    const away = daysFromToday(i.date);
+    return away >= 0 && away < 7;
+  }).length;
 
   const nudges = MODULES
     .map((m) => ({ module: m, nudge: summaries[m.id as ModuleId].nudge }))
@@ -80,7 +85,15 @@ export function Launcher() {
           );
         })}
 
-        <a className="mtile mtile-alt" href={routeOf('home')} style={{ animationDelay: `${MODULES.length * 45}ms` }}>
+        <a className="mtile mtile-alt" href={routeOf('tracker')} style={{ animationDelay: `${MODULES.length * 45}ms` }}>
+          <span className="mtile-sheen" aria-hidden />
+          <span className="mtile-glyph" aria-hidden>🗓</span>
+          <span className="mtile-name">Tracker</span>
+          <span className="mtile-stat"><b>{dueSoon}</b> due this week</span>
+          <span className="mtile-nudge">Everything with a date, and your reminders</span>
+        </a>
+
+        <a className="mtile mtile-alt" href={routeOf('home')} style={{ animationDelay: `${(MODULES.length + 1) * 45}ms` }}>
           <span className="mtile-sheen" aria-hidden />
           <span className="mtile-glyph" aria-hidden>📊</span>
           <span className="mtile-name">Progress</span>
@@ -88,7 +101,7 @@ export function Launcher() {
           <span className="mtile-nudge">Streak, badges and what's on deck</span>
         </a>
 
-        <a className="mtile mtile-alt" href={routeOf('settings')} style={{ animationDelay: `${(MODULES.length + 1) * 45}ms` }}>
+        <a className="mtile mtile-alt" href={routeOf('settings')} style={{ animationDelay: `${(MODULES.length + 2) * 45}ms` }}>
           <span className="mtile-sheen" aria-hidden />
           <span className="mtile-glyph" aria-hidden>🎛️</span>
           <span className="mtile-name">Settings</span>

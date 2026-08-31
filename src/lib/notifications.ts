@@ -4,12 +4,31 @@ import { allRows } from './habits';
 import { findInsights } from './insights';
 import { needsReview } from './finance';
 import { lastCompletedWeek } from './awards';
+import { dueLabel, dueList } from './reminders';
 import { uid } from './id';
 
 /** Kept bounded: a year of daily use would otherwise grow without limit. */
 const MAX_STORED = 300;
 
 type Candidate = Omit<AppNotification, 'id' | 'createdAt' | 'read'>;
+
+/**
+ * Escalation thresholds are crossings, not exact matches.
+ *
+ * Matching an exact day count only works if the app is opened every single
+ * day: something that goes overdue on a Saturday you never opened would sail
+ * past the "1 day late" rung and never be raised at all. These return the
+ * rung actually reached, so a gap in usage still surfaces the right one.
+ */
+const passedRung = (daysPast: number, rungs: number[]): number | null => {
+  const reached = rungs.filter((r) => daysPast >= r);
+  return reached.length ? Math.max(...reached) : null;
+};
+
+const approachRung = (daysUntil: number, rungs: number[]): number | null => {
+  const reached = rungs.filter((r) => daysUntil <= r);
+  return reached.length ? Math.min(...reached) : null;
+};
 
 /**
  * Every condition worth raising, with a stable key.
@@ -45,9 +64,10 @@ export function candidates(state: AppState): Candidate[] {
   for (const p of state.work.projects) {
     if (p.stage === 'Filed' || !p.due || p.due >= today) continue;
     const over = diffDays(today, p.due);
-    if (![1, 3, 7, 14].includes(over)) continue;
+    const rung = passedRung(over, [1, 3, 7, 14, 30]);
+    if (rung === null) continue;
     out.push({
-      key: `work:${p.id}:${over}`,
+      key: `work:${p.id}:${rung}`,
       kind: 'due',
       module: 'work',
       title: `${p.client} is ${over} day${over === 1 ? '' : 's'} past due`,
@@ -90,9 +110,11 @@ export function candidates(state: AppState): Candidate[] {
   for (const g of state.goals.items) {
     if (g.done || !g.due) continue;
     const away = diffDays(g.due, today);
-    if (![30, 14, 7, 1, 0].includes(away)) continue;
+    if (away < 0) continue;
+    const rung = approachRung(away, [0, 1, 7, 14, 30]);
+    if (rung === null) continue;
     out.push({
-      key: `goal:${g.id}:${away}`,
+      key: `goal:${g.id}:${rung}`,
       kind: 'due',
       module: 'goals',
       title: away === 0 ? `${g.title} — that's today` : `${g.title} is ${away} day${away === 1 ? '' : 's'} away`,
@@ -105,9 +127,10 @@ export function candidates(state: AppState): Candidate[] {
   const race = state.fitness.race;
   if (race.date) {
     const away = diffDays(race.date, today);
-    if ([60, 30, 14, 7, 1].includes(away)) {
+    const rung = away >= 0 ? approachRung(away, [1, 7, 14, 30, 60]) : null;
+    if (rung !== null) {
       out.push({
-        key: `race:${race.date}:${away}`,
+        key: `race:${race.date}:${rung}`,
         kind: 'due',
         module: 'fitness',
         title: `${race.name} is ${away} day${away === 1 ? '' : 's'} out`,
@@ -129,6 +152,25 @@ export function candidates(state: AppState): Candidate[] {
       body: 'Until they are sorted, the budget totals are wrong.',
       to: 'finance',
       tab: 'review',
+    });
+  }
+
+  /* Reminders that have arrived or gone past. */
+  for (const d of dueList(state)) {
+    const late = -d.daysAway;
+    // Rung 0 is "it has arrived"; the rest escalate as it is left undone.
+    const rung = passedRung(late, [0, 3, 7, 14, 30]);
+    if (rung === null) continue;
+    out.push({
+      key: `reminder:${d.reminder.id}:${d.due}:${rung}`,
+      kind: 'due',
+      module: d.reminder.module,
+      title: d.daysAway === 0
+        ? `${d.reminder.title} — today`
+        : `${d.reminder.title} — ${late} day${late === 1 ? '' : 's'} past`,
+      body: dueLabel(d),
+      to: 'tracker',
+      tab: 'reminders',
     });
   }
 

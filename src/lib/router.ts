@@ -3,12 +3,12 @@ import { useEffect, useState } from 'react';
 export type Route =
   | 'launcher' | 'home' | 'work' | 'planning' | 'spanish'
   | 'fitness' | 'finance' | 'habits' | 'goals' | 'notes' | 'coach'
-  | 'notifications' | 'settings';
+  | 'tracker' | 'notifications' | 'settings';
 
 const ROUTES: Route[] = [
   'launcher', 'home', 'work', 'planning', 'spanish',
   'fitness', 'finance', 'habits', 'goals', 'notes', 'coach',
-  'notifications', 'settings',
+  'tracker', 'notifications', 'settings',
 ];
 
 /** How deep a route sits, so the shell can animate a drill-in versus a

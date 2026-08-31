@@ -422,6 +422,36 @@ export interface CheckIn {
 /* Shared                                                             */
 /* ------------------------------------------------------------------ */
 
+export const REPEATS = ['Once', 'Daily', 'Weekly', 'Monthly', 'Every N days'] as const;
+export type Repeat = (typeof REPEATS)[number];
+
+/**
+ * Something to be reminded about.
+ *
+ * Two shapes, because they answer different questions. A dated reminder fires
+ * on a date — "meeting at 6:30 on Thursday". An interval reminder fires a
+ * number of days after you last did the thing — "it has been three weeks
+ * since a haircut" — so it drifts with reality instead of nagging on a fixed
+ * calendar you have already fallen off.
+ */
+export interface Reminder {
+  id: string;
+  title: string;
+  notes?: string;
+  /** Dated reminders: when it is due. */
+  date?: DateKey;
+  /** 24h clock, optional — an all-day reminder has none. */
+  time?: string;
+  repeat: Repeat;
+  /** For "Every N days", and for interval reminders. */
+  everyDays?: number;
+  /** Interval reminders count from here rather than from a fixed date. */
+  lastDone?: DateKey;
+  module?: ModuleId;
+  done: boolean;
+  createdAt: DateKey;
+}
+
 /** Anything the app wants to tell you about, whether or not you were looking.
  *  Sources are the modules themselves — a habit going red, a project past due,
  *  a finding in the log. External sources (a saved search for a car, say) will
@@ -525,6 +555,7 @@ export interface AppState {
    *  raising the same one. */
   insights: { dismissed: string[]; lastPopup: DateKey | null; enabled: boolean };
   notifications: { items: AppNotification[]; deviceAlerts: boolean };
+  reminders: { items: Reminder[] };
 }
 
 /* ------------------------------------------------------------------ */
@@ -590,6 +621,7 @@ export function emptyState(): AppState {
     coach: { checkIns: [], chat: [], mode: 'coach' },
     insights: { dismissed: [], lastPopup: null, enabled: true },
     notifications: { items: [], deviceAlerts: false },
+    reminders: { items: [] },
   };
 }
 
@@ -676,6 +708,7 @@ export function migrate(raw: unknown): AppState {
       items: s.notifications?.items ?? [],
       deviceAlerts: s.notifications?.deviceAlerts ?? false,
     },
+    reminders: { items: s.reminders?.items ?? [] },
   };
 }
 
