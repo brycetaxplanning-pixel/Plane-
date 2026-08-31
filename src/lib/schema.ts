@@ -57,8 +57,23 @@ export type Channel = (typeof CHANNELS)[number];
 export const OUTCOMES = ['No answer', 'Conversation', 'Meeting booked', 'Not a fit', 'Closed'] as const;
 export type Outcome = (typeof OUTCOMES)[number];
 
+/** A business you run. Outreach and deals belong to one, so two ventures do
+ *  not share a single pipeline or a single weekly target. */
+export interface Business {
+  id: string;
+  name: string;
+  emoji: string;
+  /** Contacts a week for this business. Zero means it is not an outreach
+   *  business at all — a product line, say — and the counter is hidden. */
+  weeklyTarget: number;
+  notes?: string;
+  archived?: boolean;
+  createdAt: DateKey;
+}
+
 export interface Outreach {
   id: string;
+  businessId?: string;
   date: DateKey;
   name: string;
   channel: Channel;
@@ -92,6 +107,7 @@ export type DealStage = (typeof DEAL_STAGES)[number];
 
 export interface Deal {
   id: string;
+  businessId?: string;
   name: string;
   stage: DealStage;
   value: number;
@@ -517,7 +533,14 @@ export interface AppState {
   badges: Badge[];
   activeDays: DateKey[];
   work: { projects: WorkProject[] };
-  planning: { weeklyTarget: number; outreach: Outreach[]; deals: Deal[]; ideas: BusinessIdea[] };
+  planning: {
+    /** Kept as the fallback target for a business that has none of its own. */
+    weeklyTarget: number;
+    businesses: Business[];
+    outreach: Outreach[];
+    deals: Deal[];
+    ideas: BusinessIdea[];
+  };
   spanish: {
     dailyGoalMinutes: number;
     weeklyGoalMinutes: number;
@@ -560,6 +583,18 @@ export interface AppState {
 
 /* ------------------------------------------------------------------ */
 
+/** Every install starts with one business so the module is usable on day one;
+ *  it is renameable, and more can be added beside it. */
+function primaryBusiness(): Business {
+  return {
+    id: 'biz_primary',
+    name: 'Bryce Tax Planning',
+    emoji: '🎯',
+    weeklyTarget: 50,
+    createdAt: '2026-01-01',
+  };
+}
+
 export function emptyState(): AppState {
   return {
     version: SCHEMA_VERSION,
@@ -577,7 +612,7 @@ export function emptyState(): AppState {
     badges: [],
     activeDays: [],
     work: { projects: [] },
-    planning: { weeklyTarget: 50, outreach: [], deals: [], ideas: [] },
+    planning: { weeklyTarget: 50, businesses: [primaryBusiness()], outreach: [], deals: [], ideas: [] },
     spanish: {
       dailyGoalMinutes: 20,
       weeklyGoalMinutes: 140,
@@ -641,13 +676,7 @@ export function migrate(raw: unknown): AppState {
     badges: s.badges ?? [],
     activeDays: s.activeDays ?? [],
     work: { ...base.work, ...(s.work ?? {}), projects: s.work?.projects ?? [] },
-    planning: {
-      ...base.planning,
-      ...(s.planning ?? {}),
-      outreach: s.planning?.outreach ?? [],
-      deals: s.planning?.deals ?? [],
-      ideas: s.planning?.ideas ?? [],
-    },
+    planning: migratePlanning(s.planning, base.planning),
     spanish: {
       ...base.spanish,
       ...(s.spanish ?? {}),
@@ -709,6 +738,32 @@ export function migrate(raw: unknown): AppState {
       deviceAlerts: s.notifications?.deviceAlerts ?? false,
     },
     reminders: { items: s.reminders?.items ?? [] },
+  };
+}
+
+/**
+ * Outreach and deals used to sit directly under `planning` with one shared
+ * target. Anything saved that way is given a first business to belong to, so
+ * nothing is stranded outside the new structure.
+ */
+function migratePlanning(saved: AppState['planning'] | undefined, base: AppState['planning']): AppState['planning'] {
+  const outreach = saved?.outreach ?? [];
+  const deals = saved?.deals ?? [];
+  const businesses = saved?.businesses ?? [];
+
+  if (businesses.length > 0) {
+    return { ...base, ...(saved ?? {}), businesses, outreach, deals, ideas: saved?.ideas ?? [] };
+  }
+
+  const first: Business = { ...primaryBusiness(), weeklyTarget: saved?.weeklyTarget ?? base.weeklyTarget };
+
+  return {
+    ...base,
+    ...(saved ?? {}),
+    businesses: [first],
+    outreach: outreach.map((o) => ({ ...o, businessId: o.businessId ?? first.id })),
+    deals: deals.map((d) => ({ ...d, businessId: d.businessId ?? first.id })),
+    ideas: saved?.ideas ?? [],
   };
 }
 

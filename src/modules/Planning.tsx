@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useTabParam } from '../lib/router';
-import { CHANNELS, DEAL_STAGES, OUTCOMES, type Channel, type Deal, type DealStage, type Outcome } from '../lib/schema';
+import { CHANNELS, DEAL_STAGES, OUTCOMES, type Business, type Channel, type Deal, type DealStage, type Outcome } from '../lib/schema';
 import { XP } from '../lib/gamification';
 import { dowLabel, fmtDate, fmtRange, todayKey, weekEnd, weekStart } from '../lib/date';
 import { uid } from '../lib/id';
 import { fmtMoney } from '../lib/finance';
 import { useApp } from '../state/context';
 import { planningStats } from '../state/selectors';
+import { DictateInput } from '../components/ui/Dictation';
 import { Ideas } from './business/Ideas';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
@@ -18,15 +19,54 @@ const ACCENT = 'var(--mod-planning)';
 
 export function Planning() {
   const { state, update, reward, toast } = useApp();
-  const stats = planningStats(state);
+  const businesses = state.planning.businesses.filter((b) => !b.archived);
+  const [tab, setTab] = useTabParam(['planning', 'ideas'] as const, 'planning');
+  const [activeId, setActiveId] = useState(() => businesses[0]?.id ?? '');
+  const [editingBiz, setEditingBiz] = useState<Business | 'new' | null>(null);
   const [logging, setLogging] = useState(false);
   const [dealOpen, setDealOpen] = useState<Deal | 'new' | null>(null);
   const [showAll, setShowAll] = useState(false);
-  const [tab, setTab] = useTabParam(['planning', 'ideas'] as const, 'planning');
 
-  const thisWeek = state.planning.outreach
+  const active = businesses.find((b) => b.id === activeId) ?? businesses[0];
+  const stats = planningStats(state, active?.id);
+
+  /** A business with no target and no history has nothing to chart. */
+  const showCharts = stats.target > 0 || stats.outreach.length > 0;
+
+  const thisWeek = stats.outreach
     .filter((o) => weekStart(o.date) === weekStart())
     .sort((a, b) => b.date.localeCompare(a.date));
+
+  const saveBusiness = (b: Business) => {
+    update((s) => ({
+      ...s,
+      planning: {
+        ...s.planning,
+        businesses: s.planning.businesses.some((x) => x.id === b.id)
+          ? s.planning.businesses.map((x) => (x.id === b.id ? b : x))
+          : [...s.planning.businesses, b],
+      },
+    }));
+    setActiveId(b.id);
+    setEditingBiz(null);
+    toast('Business saved');
+  };
+
+  if (businesses.length === 0) {
+    return (
+      <div className="stack">
+        <EmptyState
+          icon="🏢"
+          title="No businesses set up"
+          hint="Each one keeps its own outreach target and its own pipeline."
+        />
+        <button className="btn btn-accent btn-lg" style={{ ['--mod' as string]: ACCENT }} onClick={() => setEditingBiz('new')}>
+          + Add a business
+        </button>
+        {editingBiz && <BusinessForm business={null} onClose={() => setEditingBiz(null)} onSave={saveBusiness} />}
+      </div>
+    );
+  }
 
   const logOutreach = (name: string, channel: Channel, outcome: Outcome, notes: string) => {
     const hitTarget = stats.count + 1 === stats.target;
@@ -41,7 +81,7 @@ export function Planning() {
           ...s.planning,
           outreach: [
             ...s.planning.outreach,
-            { id: uid('out'), date: todayKey(), name: name.trim(), channel, outcome, notes: notes.trim() || undefined },
+            { id: uid('out'), businessId: active?.id, date: todayKey(), name: name.trim(), channel, outcome, notes: notes.trim() || undefined },
           ],
         },
       }),
@@ -52,7 +92,17 @@ export function Planning() {
   return (
     <div className="stack">
       <div className="tabs" role="tablist">
-        <button className="tab" role="tab" aria-selected={tab === 'planning'} onClick={() => setTab('planning')}>Tax planning</button>
+        {businesses.map((b) => (
+          <button
+            key={b.id}
+            className="tab"
+            role="tab"
+            aria-selected={tab === 'planning' && active?.id === b.id}
+            onClick={() => { setTab('planning'); setActiveId(b.id); }}
+          >
+            {b.emoji} {b.name}
+          </button>
+        ))}
         <button className="tab" role="tab" aria-selected={tab === 'ideas'} onClick={() => setTab('ideas')}>
           Ideas{state.planning.ideas.length ? ` (${state.planning.ideas.length})` : ''}
         </button>
@@ -62,9 +112,10 @@ export function Planning() {
 
       {tab === 'planning' && (
       <>
+      {stats.target > 0 ? (
       <section className="card" style={{ ['--mod' as string]: ACCENT }}>
         <SectionHead
-          title="This week's S-corp outreach"
+          title={`${active?.name ?? 'This week'} — outreach`}
           sub={fmtRange(weekStart(), weekEnd())}
         />
         <div className="hero-split">
@@ -96,7 +147,21 @@ export function Planning() {
           </div>
         </div>
       </section>
+      ) : (
+        <section className="card" style={{ ['--mod' as string]: ACCENT }}>
+          <SectionHead
+            title={active?.name ?? 'This business'}
+            sub="No outreach target set — the counter is hidden"
+          />
+          {active?.notes && <p className="t-sm t-sec">{active.notes}</p>}
+          <button className="btn btn-accent" style={{ ['--mod' as string]: ACCENT, marginTop: 'var(--sp-3)' }} onClick={() => setLogging(true)}>
+            + Log a contact anyway
+          </button>
+        </section>
+      )}
 
+      {showCharts && (
+      <>
       <section className="card">
         <SectionHead title="Outreach by day" sub={`${stats.meetings} meeting${stats.meetings === 1 ? '' : 's'} booked this week`} />
         <BarChart
@@ -120,6 +185,8 @@ export function Planning() {
           ariaLabel="Outreach per week over the last eight weeks against the weekly target"
         />
       </section>
+      </>
+      )}
 
       <section className="card">
         <SectionHead
@@ -127,11 +194,11 @@ export function Planning() {
           sub={`${stats.openDeals.length} open · ${fmtMoney(stats.pipelineValue, state.settings.currency)} in play`}
           action={<button className="btn btn-sm" onClick={() => setDealOpen('new')}>+ Deal</button>}
         />
-        {state.planning.deals.length === 0 ? (
+        {stats.deals.length === 0 ? (
           <EmptyState icon="🎯" title="No deals tracked yet" hint="Add a prospect once a conversation turns into something real." />
         ) : (
           <div className="stack-2">
-            {[...state.planning.deals]
+            {[...stats.deals]
               .sort((a, b) => DEAL_STAGES.indexOf(a.stage) - DEAL_STAGES.indexOf(b.stage))
               .map((d) => (
                 <button key={d.id} className="rowitem" style={{ textAlign: 'left', cursor: 'pointer' }} onClick={() => setDealOpen(d)}>
@@ -155,7 +222,11 @@ export function Planning() {
           action={thisWeek.length > 6 ? <button className="link-btn" onClick={() => setShowAll((v) => !v)}>{showAll ? 'Show less' : 'Show all'}</button> : undefined}
         />
         {thisWeek.length === 0 ? (
-          <EmptyState icon="📞" title="Nothing logged yet this week" hint="Every call, email and DM counts toward the 50." />
+          <EmptyState
+            icon="📞"
+            title="Nothing logged yet this week"
+            hint={stats.target > 0 ? `Every call, email and DM counts toward the ${stats.target}.` : 'Log a contact here if this business ever needs one.'}
+          />
         ) : (
           <div className="table-scroll">
             <table className="table">
@@ -195,21 +266,64 @@ export function Planning() {
       </section>
 
       <section className="card">
-        <Field label="Weekly outreach target" hint="Fifty a week is the default; change it if the goal moves.">
-          <input
-            className="input"
-            type="number"
-            min={1}
-            value={state.planning.weeklyTarget}
-            onChange={(e) => update((s) => ({
-              ...s,
-              planning: { ...s.planning, weeklyTarget: Math.max(1, Number(e.target.value) || 1) },
-            }))}
-          />
-        </Field>
+        <SectionHead
+          title={active?.name ?? 'This business'}
+          sub="Each business keeps its own target and its own pipeline"
+          action={<button className="btn btn-sm" onClick={() => setEditingBiz(active ?? 'new')}>Edit</button>}
+        />
+        <div className="row-2 wrap">
+          <Field label="Weekly outreach target" hint="Set it to zero for a business that does not do outreach.">
+            <input
+              className="input"
+              style={{ maxWidth: 120 }}
+              type="number"
+              min={0}
+              value={active?.weeklyTarget ?? 0}
+              onChange={(e) => {
+                if (!active) return;
+                const weeklyTarget = Math.max(0, Number(e.target.value) || 0);
+                update((s) => ({
+                  ...s,
+                  planning: {
+                    ...s.planning,
+                    businesses: s.planning.businesses.map((b) => (b.id === active.id ? { ...b, weeklyTarget } : b)),
+                  },
+                }));
+              }}
+            />
+          </Field>
+        </div>
+        <button className="btn btn-sm" style={{ marginTop: 'var(--sp-3)' }} onClick={() => setEditingBiz('new')}>
+          + Add another business
+        </button>
       </section>
 
       </>
+      )}
+
+      {editingBiz && (
+        <BusinessForm
+          business={editingBiz === 'new' ? null : editingBiz}
+          onClose={() => setEditingBiz(null)}
+          onDelete={editingBiz === 'new' || businesses.length < 2 ? undefined : () => {
+            const id = (editingBiz as Business).id;
+            update((s) => ({
+              ...s,
+              planning: {
+                ...s.planning,
+                businesses: s.planning.businesses.filter((b) => b.id !== id),
+                // Its outreach and deals stay, unassigned, rather than being
+                // deleted along with it.
+                outreach: s.planning.outreach.map((o) => (o.businessId === id ? { ...o, businessId: undefined } : o)),
+                deals: s.planning.deals.map((d) => (d.businessId === id ? { ...d, businessId: undefined } : d)),
+              },
+            }));
+            setActiveId(businesses.find((b) => b.id !== id)?.id ?? '');
+            setEditingBiz(null);
+            toast('Business removed — its history was kept');
+          }}
+          onSave={saveBusiness}
+        />
       )}
 
       {logging && <OutreachForm onClose={() => setLogging(false)} onSave={logOutreach} />}
@@ -217,6 +331,7 @@ export function Planning() {
       {dealOpen && (
         <DealForm
           deal={dealOpen === 'new' ? null : dealOpen}
+          businessId={active?.id}
           onClose={() => setDealOpen(null)}
           onDelete={dealOpen === 'new' ? undefined : () => {
             const id = (dealOpen as Deal).id;
@@ -298,9 +413,10 @@ function OutreachForm({
 }
 
 function DealForm({
-  deal, onClose, onSave, onDelete,
+  deal, businessId, onClose, onSave, onDelete,
 }: {
   deal: Deal | null;
+  businessId?: string;
   onClose: () => void;
   onSave: (d: Deal) => void;
   onDelete?: () => void;
@@ -331,6 +447,7 @@ function DealForm({
               nextStep: nextStep.trim() || undefined,
               nextStepDate: nextStepDate || undefined,
               createdAt: deal?.createdAt ?? todayKey(),
+              businessId: deal?.businessId ?? businessId,
             })}
           >
             Save
@@ -358,6 +475,63 @@ function DealForm({
         <Field label="Next step date">
           <input className="input" type="date" value={nextStepDate} onChange={(e) => setNextStepDate(e.target.value)} />
         </Field>
+      </div>
+    </Modal>
+  );
+}
+
+function BusinessForm({
+  business, onClose, onSave, onDelete,
+}: {
+  business: Business | null;
+  onClose: () => void;
+  onSave: (b: Business) => void;
+  onDelete?: () => void;
+}) {
+  const [name, setName] = useState(business?.name ?? '');
+  const [emoji, setEmoji] = useState(business?.emoji ?? '🏢');
+  const [weeklyTarget, setWeeklyTarget] = useState(String(business?.weeklyTarget ?? 50));
+  const [notes, setNotes] = useState(business?.notes ?? '');
+
+  return (
+    <Modal
+      title={business ? 'Edit business' : 'New business'}
+      onClose={onClose}
+      footer={
+        <>
+          {onDelete && <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={onDelete}>Delete</button>}
+          <button className="btn" onClick={onClose}>Cancel</button>
+          <button
+            className="btn btn-accent"
+            style={{ ['--mod' as string]: ACCENT }}
+            disabled={!name.trim()}
+            onClick={() => onSave({
+              id: business?.id ?? uid('biz'),
+              name: name.trim(),
+              emoji: emoji.trim() || '🏢',
+              weeklyTarget: Math.max(0, Number(weeklyTarget) || 0),
+              notes: notes.trim() || undefined,
+              createdAt: business?.createdAt ?? todayKey(),
+            })}
+          >
+            Save
+          </button>
+        </>
+      }
+    >
+      <div className="stack-3">
+        <div className="row-2" style={{ alignItems: 'flex-end' }}>
+          <Field label="Icon">
+            <input className="input" style={{ width: 64, textAlign: 'center' }} value={emoji} maxLength={2} onChange={(e) => setEmoji(e.target.value)} />
+          </Field>
+          <div className="grow">
+            <DictateInput label="Name" value={name} onChange={setName} placeholder="Flaxseed gel" autoFocus />
+          </div>
+        </div>
+        <Field label="Weekly outreach target" hint="Zero for a business that does not run outreach.">
+          <input className="input" style={{ maxWidth: 120 }} type="number" min={0} value={weeklyTarget} onChange={(e) => setWeeklyTarget(e.target.value)} />
+        </Field>
+        <DictateInput label="Notes" value={notes} onChange={setNotes} textarea rows={3} placeholder="What it is, who it is for" />
       </div>
     </Modal>
   );

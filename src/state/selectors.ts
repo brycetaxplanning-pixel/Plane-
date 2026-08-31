@@ -42,16 +42,26 @@ export function workStats(s: AppState) {
 
 /* ---------------- Module 2: Bryce Tax Planning ---------------- */
 
-export function planningStats(s: AppState) {
-  const target = s.planning.weeklyTarget;
-  const thisWeek = s.planning.outreach.filter((o) => inWeek(o.date));
+/** Scoped to one business when an id is given, or to everything when not. */
+export function planningStats(s: AppState, businessId?: string) {
+  const business = businessId ? s.planning.businesses.find((b) => b.id === businessId) : undefined;
+  const target = business?.weeklyTarget ?? s.planning.weeklyTarget;
+
+  const mine = businessId
+    ? s.planning.outreach.filter((o) => o.businessId === businessId)
+    : s.planning.outreach;
+  const myDeals = businessId
+    ? s.planning.deals.filter((d) => d.businessId === businessId)
+    : s.planning.deals;
+
+  const thisWeek = mine.filter((o) => inWeek(o.date));
   const byDay = weekDays().map((d) => ({
     key: d,
-    value: s.planning.outreach.filter((o) => o.date === d).length,
+    value: mine.filter((o) => o.date === d).length,
   }));
   const history = lastWeeks(8).map((ws) => ({
     key: ws,
-    value: s.planning.outreach.filter((o) => weekStart(o.date) === ws).length,
+    value: mine.filter((o) => weekStart(o.date) === ws).length,
   }));
   const meetings = thisWeek.filter((o) => o.outcome === 'Meeting booked').length;
   const daysLeft = Math.max(0, 7 - byDay.filter((d) => d.key <= todayKey()).length + 1);
@@ -66,11 +76,21 @@ export function planningStats(s: AppState) {
     /** How many a day is needed to still finish the week on target. */
     perDayNeeded: daysLeft > 0 ? Math.ceil(remaining / daysLeft) : remaining,
     daysLeft,
-    openDeals: s.planning.deals.filter((d) => d.stage !== 'Won' && d.stage !== 'Lost'),
-    pipelineValue: s.planning.deals
+    business,
+    outreach: mine,
+    openDeals: myDeals.filter((d) => d.stage !== 'Won' && d.stage !== 'Lost'),
+    deals: myDeals,
+    pipelineValue: myDeals
       .filter((d) => d.stage !== 'Lost')
       .reduce((sum, d) => sum + d.value, 0),
   };
+}
+
+/** Every business with its own week, for the module's tab row. */
+export function businessRows(s: AppState) {
+  return s.planning.businesses
+    .filter((b) => !b.archived)
+    .map((b) => ({ business: b, stats: planningStats(s, b.id) }));
 }
 
 /* ---------------- Module 3: Spanish ---------------- */

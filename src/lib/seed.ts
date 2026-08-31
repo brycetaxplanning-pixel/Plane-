@@ -60,15 +60,21 @@ export function sampleState(): AppState {
     Array.from({ length: i < 9 ? 2 : 1 }, (_, k) => ({
       id: uid('out'),
       date: addDays(ws, elapsedThisWeek === 0 ? 0 : (i + k) % (elapsedThisWeek + 1)),
+      businessId: 'biz_primary',
       name: k === 0 ? name : `${name.split(' ')[0]}'s referral`,
       channel: channels[(i + k) % channels.length],
       outcome: outcomes[(i * 2 + k) % outcomes.length],
     })));
 
+  s.planning.businesses = [
+    { id: 'biz_primary', name: 'Bryce Tax Planning', emoji: '🎯', weeklyTarget: 50, notes: 'S-corp elections and planning retainers.', createdAt: addDays(today, -200) },
+    { id: 'biz_flax', name: 'Flaxseed gel', emoji: '🧴', weeklyTarget: 0, notes: 'Product line — no outreach target, tracked for the pipeline and ideas.', createdAt: addDays(today, -60) },
+  ];
+
   s.planning.deals = [
-    { id: uid('deal'), name: 'Dana Whitfield — S-corp election', stage: 'Proposal', value: 3200, nextStep: 'Send engagement letter', nextStepDate: today, createdAt: addDays(today, -9) },
-    { id: uid('deal'), name: 'Riverbend Logistics — planning retainer', stage: 'Meeting set', value: 6000, nextStep: 'Discovery call', nextStepDate: addDays(today, 5), createdAt: addDays(today, -4) },
-    { id: uid('deal'), name: 'Kestrel Design — entity restructure', stage: 'Won', value: 4500, createdAt: addDays(today, -25) },
+    { id: uid('deal'), businessId: 'biz_primary', name: 'Dana Whitfield — S-corp election', stage: 'Proposal', value: 3200, nextStep: 'Send engagement letter', nextStepDate: today, createdAt: addDays(today, -9) },
+    { id: uid('deal'), businessId: 'biz_primary', name: 'Riverbend Logistics — planning retainer', stage: 'Meeting set', value: 6000, nextStep: 'Discovery call', nextStepDate: addDays(today, 5), createdAt: addDays(today, -4) },
+    { id: uid('deal'), businessId: 'biz_flax', name: 'Wholesale trial — two salons', stage: 'Won', value: 4500, createdAt: addDays(today, -25) },
   ];
 
   /* Ten weeks of history, with some weeks deliberately heavier than others.
@@ -128,6 +134,7 @@ export function sampleState(): AppState {
           id: uid('out'),
           date: addDays(start, n % 6),
           name: `${names[n % names.length]}`,
+          businessId: 'biz_primary',
           channel: channels[n % channels.length],
           outcome: n % 9 === 0 ? 'Meeting booked' : outcomes[n % outcomes.length],
         });
