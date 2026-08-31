@@ -16,7 +16,9 @@
   --surface-sunken: #eceae4;
   --text-primary:   #0b0b0b;
   --text-secondary: #52514e;
-  --text-muted:     #898781;
+  /* Light and dark used to share this. It clears 4.5:1 on a dark ground and
+     landed at 3.4:1 on a light one, so the two are separate values now. */
+  --text-muted:     #676560;
   --gridline:       #e1e0d9;
   --baseline:       #c3c2b7;
   --border:         rgba(11, 11, 11, 0.10);
@@ -48,6 +50,7 @@
   --status-serious:  #ec835a;
   --status-critical: #d03b3b;
   --success-text:    #006300;
+  --crit-text:       #b32d2d;
 
   /* Module identity - entity, not rank */
   --mod-work:      var(--series-1);
@@ -112,7 +115,8 @@
     --seq-550: #5598e7;
     --seq-700: #9ec5f4;
 
-    --success-text: #0ca30c;
+    --success-text: #5fd85f;
+    --crit-text:    #ff9494;
   }
 }
 
@@ -148,5 +152,6 @@
   --seq-550: #5598e7;
   --seq-700: #9ec5f4;
 
-  --success-text: #0ca30c;
+  --success-text: #5fd85f;
+  --crit-text:    #ff9494;
 }

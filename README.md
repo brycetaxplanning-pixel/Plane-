@@ -124,6 +124,26 @@ and the next time you open the app it says so. You wear 🧘 beside your name fo
 the following week and lose it if you don't repeat. It's the only award of its
 kind on purpose — a row of five badges means nothing.
 
+## Colour, measured
+
+`tests/contrast.mjs` walks the real DOM on every screen in every skin, resolves
+each element's actual background through whatever translucent layers sit over
+it, and computes the WCAG ratio. All seven skins failed it the first time.
+
+What it found, in short: filled buttons put white on colours that are tuned to
+work as chart marks, which is too light behind white; every dark skin inherited
+the light-mode ink for status text, so "in range" was dark green on a dark card;
+unearned badges were dimmed with opacity to the point where you could see that a
+word was there but not read it; the habit status glyph sat on an 18% tint of its
+own colour; and light and dark shared one muted ink, which clears the floor on
+one and not the other.
+
+The audit also had three bugs of its own, all of which made it report confident
+nonsense: it could not parse what `color-mix()` computes to, so dark buttons read
+as white-on-white; it ignored `opacity`, so a watermark read as solid; and it
+measured the launcher mid-animation. Emoji and disabled controls are now skipped,
+since neither is something WCAG asks you to meet.
+
 ## Keyboard and screen readers
 
 Audited rather than assumed, and four things were broken.

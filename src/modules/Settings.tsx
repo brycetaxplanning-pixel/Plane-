@@ -197,9 +197,8 @@ export function Settings() {
           {BADGES.map((b) => (
             <span
               key={b.id}
-              className="chip chip-static"
+              className={`chip chip-static${earned.has(b.id) ? '' : ' chip-locked'}`}
               title={b.description}
-              style={earned.has(b.id) ? undefined : { opacity: 0.45 }}
             >
               <span aria-hidden>{b.icon}</span>{b.name}
             </span>

@@ -78,7 +78,9 @@ export function Launcher() {
                   {Icons.bell()}{unread[m.id]}
                 </span>
               ) : null}
-              <span className="mtile-num">{m.num}</span>
+              {/* A watermark. The number is stated properly in the module's
+                  own header, so this is not something to read. */}
+              <span className="mtile-num" aria-hidden>{m.num}</span>
               <span className="mtile-glyph" aria-hidden>{m.icon}</span>
               <span className="mtile-name">{m.name}</span>
               <span className="mtile-stat">

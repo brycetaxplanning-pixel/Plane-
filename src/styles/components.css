@@ -50,13 +50,28 @@
 .btn:hover { background: var(--surface-2); }
 .btn:active { transform: scale(0.98); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-primary { background: var(--series-1); border-color: var(--series-1); color: #fff; }
-.btn-primary:hover { background: color-mix(in srgb, var(--series-1) 86%, #000); }
-.btn-accent { background: var(--mod, var(--series-1)); border-color: var(--mod, var(--series-1)); color: #fff; }
-.btn-accent:hover { background: color-mix(in srgb, var(--mod, var(--series-1)) 86%, #000); }
+/* The module and series colours sit in a mid-lightness band so they work as
+   chart marks. White text on them lands around 3:1, which is not enough for a
+   button label, so the ground is darkened for the filled variants. The hue is
+   the identity; the lightness is negotiable. */
+.btn-primary {
+  background: color-mix(in srgb, var(--series-1) 66%, #000);
+  border-color: color-mix(in srgb, var(--series-1) 66%, #000);
+  color: #fff;
+}
+.btn-primary:hover { background: color-mix(in srgb, var(--series-1) 62%, #000); }
+.btn-accent {
+  background: color-mix(in srgb, var(--mod, var(--series-1)) 66%, #000);
+  border-color: color-mix(in srgb, var(--mod, var(--series-1)) 66%, #000);
+  color: #fff;
+}
+.btn-accent:hover { background: color-mix(in srgb, var(--mod, var(--series-1)) 62%, #000); }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--text-secondary); }
 .btn-ghost:hover { background: var(--surface-2); color: var(--text-primary); }
-.btn-danger { color: var(--status-critical); border-color: color-mix(in srgb, var(--status-critical) 40%, transparent); background: transparent; }
+/* Stays an outline button — a destructive action should not shout — but takes
+   the text-weight red rather than the mark-weight one, which was landing under
+   4:1 on every dark skin. */
+.btn-danger { color: var(--crit-text); border-color: color-mix(in srgb, var(--crit-text) 40%, transparent); background: transparent; }
 .btn-danger:hover { background: color-mix(in srgb, var(--status-critical) 12%, transparent); }
 .btn-sm { padding: 5px 10px; min-height: 30px; font-size: 13px; }
 .btn-lg { padding: 12px 20px; min-height: 46px; font-size: 15px; }
@@ -111,6 +126,16 @@
   color: var(--text-primary);
 }
 .chip-static { cursor: default; }
+/* Not-yet-earned. This used to be opacity: 0.45, which took the label down to
+   about 2:1 — you could see that something was there and not read what. The
+   state is carried by the outline and the ink instead, both of which leave the
+   words legible. */
+.chip-locked {
+  border-style: dashed;
+  border-color: var(--border-strong);
+  background: transparent;
+  color: var(--text-secondary);
+}
 .chip-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--dot, var(--text-muted)); }
 
 /* ---------- status pill ---------- */
@@ -142,14 +167,18 @@
   flex: 1 1 0; min-width: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   background: none; border: none; cursor: pointer;
-  color: var(--text-muted);
+  /* Navigation, not a caption: it takes the secondary ink rather than the
+     faintest one, which was landing at 4.3:1 against the bar's own ground. */
+  color: var(--text-secondary);
   font-size: 10px; font-weight: 600;
   padding: 6px 2px;
   transition: color 120ms ease;
 }
 .nav-item svg { width: 21px; height: 21px; }
 .nav-item:hover { color: var(--text-secondary); }
-.nav-item[aria-current="page"] { color: var(--mod, var(--series-1)); }
+/* The current item is coloured by the module, pulled toward the text ink for
+   the same reason links are: the raw series colour is a mark, not a label. */
+.nav-item[aria-current="page"] { color: color-mix(in srgb, var(--mod, var(--series-1)) 82%, var(--text-primary)); }
 .nav-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 @media (min-width: 900px) {
@@ -373,7 +402,9 @@
   flex: none; width: 26px; height: 26px;
   border-radius: 50%;
   background: color-mix(in srgb, var(--stat, var(--text-muted)) 18%, var(--surface-1));
-  color: var(--stat, var(--text-muted));
+  /* Pulled most of the way to the text colour: the tint behind it carries the
+     status, and the glyph has to be legible on top of it. */
+  color: color-mix(in srgb, var(--stat, var(--text-muted)) 30%, var(--text-primary));
   font-size: 13px; font-weight: 800; line-height: 1;
 }
 .habit-main {

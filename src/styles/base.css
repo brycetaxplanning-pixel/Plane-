@@ -20,7 +20,9 @@ h2 { font-size: 18px; }
 h3 { font-size: 15px; }
 p  { margin: 0; }
 
-a { color: var(--series-1); text-decoration: none; }
+/* The series colours are tuned as chart marks, which sits a little light for
+   body-sized link text; darkened on light grounds, lightened on dark ones. */
+a { color: color-mix(in srgb, var(--series-1) 84%, var(--text-primary)); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 button, input, select, textarea { font: inherit; color: inherit; }
@@ -81,7 +83,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .t-bold  { font-weight: 650; }
 .t-up    { text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; font-weight: 650; }
 .t-good  { color: var(--success-text); }
-.t-crit  { color: var(--status-critical); }
+.t-crit  { color: var(--crit-text); }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .sr-only {
