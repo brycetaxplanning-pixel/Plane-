@@ -1,5 +1,5 @@
 import { backupFilename, spaceByPart } from '../lib/backup';
-import { downloadFile, exportJSON } from '../lib/storage';
+import { downloadFile, exportBundle } from '../lib/storage';
 import { todayKey } from '../lib/date';
 import { useApp } from '../state/context';
 
@@ -35,10 +35,13 @@ export function SaveError() {
         <div className="row-2 wrap" style={{ marginTop: 'var(--sp-2)' }}>
           <button
             className="btn btn-sm"
-            onClick={() => {
+            onClick={async () => {
               // Straight off state, not through storage — storage is the thing
-              // that is broken.
-              downloadFile(backupFilename(), exportJSON({ ...state, settings: { ...state.settings, lastExport: todayKey() } }));
+              // that is broken. The photos come from IndexedDB, which is not.
+              downloadFile(
+                backupFilename(),
+                await exportBundle({ ...state, settings: { ...state.settings, lastExport: todayKey() } }),
+              );
               toast('Backup downloaded');
             }}
           >

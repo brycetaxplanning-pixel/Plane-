@@ -115,9 +115,9 @@ export const backupFilename = (): string => `plane-backup-${todayKey()}.json`;
 /**
  * What is actually taking up the space, biggest first.
  *
- * Worth knowing because the answer is usually one thing. Photos on goal cards
- * are stored inline as data URLs, so a handful of them can be most of the
- * budget while a year of transactions is a rounding error.
+ * Worth knowing because the answer is usually one thing. Goal photos used to
+ * be that thing — stored inline, a handful of them was most of the budget —
+ * which is why they now live in IndexedDB and are not counted here.
  */
 export function spaceByPart(s: AppState): { label: string; bytes: number }[] {
   const size = (v: unknown): number => {
@@ -129,7 +129,8 @@ export function spaceByPart(s: AppState): { label: string; bytes: number }[] {
   };
 
   return [
-    { label: 'Goal photos', bytes: s.goals.items.reduce((n, g) => n + size(g.image), 0) },
+    // Photos are in IndexedDB, not in this blob — they are reported by the
+    // Backups card separately, because they do not compete for this space.
     { label: 'Transactions', bytes: size(s.finance.transactions) },
     { label: 'Notes', bytes: size(s.notes.items) },
     { label: 'Health log', bytes: size(s.health.meals) + size(s.health.vitals) + size(s.health.panels) },

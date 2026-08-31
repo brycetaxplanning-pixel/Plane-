@@ -6,7 +6,7 @@ import { routeOf } from '../lib/router';
 import { EFFECTS } from '../lib/completionFx';
 import { DEFAULT_CATEGORIES, emptyState } from '../lib/schema';
 import { BADGES, earnedBadges, levelFor, streakOf, totalXp } from '../lib/gamification';
-import { downloadFile, exportJSON, importJSON } from '../lib/storage';
+import { downloadFile, exportBundle, importBundle } from '../lib/storage';
 import { sampleState } from '../lib/seed';
 import { InstallPrompt } from '../components/InstallPrompt';
 import { PushSetup } from '../components/PushSetup';
@@ -262,8 +262,10 @@ export function Settings() {
         <div className="row-2 wrap">
           <button
             className="btn"
-            onClick={() => {
-              downloadFile(`plane-backup-${todayKey()}.json`, exportJSON(state));
+            onClick={async () => {
+              // Async because the photos have to be read back out of the image
+              // store and inlined, so the file stays self-contained.
+              downloadFile(`plane-backup-${todayKey()}.json`, await exportBundle(state));
               // Stamped here too, so the reminder above cannot disagree with
               // what actually happened.
               update((st) => ({ ...st, settings: { ...st.settings, lastExport: todayKey() } }));
@@ -284,9 +286,11 @@ export function Settings() {
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (!file) return;
-            void file.text().then((text) => {
+            void file.text().then(async (text) => {
               try {
-                replaceAll(importJSON(text));
+                // Any photos in the file are moved into the image store before
+                // the state replaces what is loaded.
+                replaceAll(await importBundle(text));
                 toast('Data imported');
               } catch {
                 toast('That file could not be read');

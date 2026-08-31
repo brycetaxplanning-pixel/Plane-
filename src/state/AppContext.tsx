@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { emptyState, type AppState, type ModuleId } from '../lib/schema';
-import { createAdapter } from '../lib/storage';
+import { absorbImages, createAdapter } from '../lib/storage';
 import { reconcileAwards } from '../lib/awards';
 import { mergeNotifications, raiseDeviceAlerts } from '../lib/notifications';
 import { todayKey } from '../lib/date';
@@ -18,12 +18,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    adapter.load().then((loaded) => {
+    adapter.load().then(async (loaded) => {
       if (cancelled) return;
       if (loaded) {
+        // An older save keeps its goal photos inline. Lift them into the image
+        // store on the way in, so the state blob stops carrying them.
+        const lifted = await absorbImages(loaded);
+
         // Conditions are evaluated once per load: opening the app three times
         // in a day must not raise the same thing three times.
-        const withAwards = reconcileAwards(loaded);
+        const withAwards = reconcileAwards(lifted);
         const withNotifications = mergeNotifications(withAwards);
         const fresh = withNotifications.notifications.items.filter(
           (n) => !withAwards.notifications.items.some((old) => old.key === n.key),
@@ -31,7 +35,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setState(withNotifications);
         if (withNotifications.notifications.deviceAlerts) raiseDeviceAlerts(fresh);
       }
-      setReady(true);
+      if (!cancelled) setReady(true);
     });
     return () => { cancelled = true; };
   }, [adapter]);

@@ -417,6 +417,11 @@ export interface Goal {
   kind: GoalKind;
   /** The picture. An emoji always; a photo when one has been added. */
   emoji: string;
+  /** A photo, held in IndexedDB rather than inline — see lib/images.ts. */
+  imageId?: string;
+  /** Legacy, and the transport form. Older saves stored the data URL here, and
+   *  a backup file still carries it this way so it stays self-contained; both
+   *  are moved into the image store on load. */
   image?: string;
   /** One-off price (Purchase), e.g. a used car. */
   cost?: number;

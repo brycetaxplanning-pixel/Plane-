@@ -173,6 +173,14 @@ offline with no account, and it is also the whole risk: clearing your browsing
 data wipes it, losing the phone takes it, and Safari evicts storage for sites
 you have not opened in about a week.
 
+Goal photos are the one thing that used to threaten that budget on its own — a
+data URL is a hundred kilobytes or so, and a handful of them was most of the
+five megabytes. They now live in IndexedDB, which has orders of magnitude more
+room, and the state keeps only an id. A backup is still one self-contained file:
+the photos are inlined on the way out and put back on the way in, so the file's
+shape has not changed and an older backup still imports. An older save with its
+photos still inline is lifted into the store the first time it loads.
+
 There is one more failure mode underneath those: the storage can simply fill
 up. When a write fails, a banner comes down and stays until a write succeeds —
 because what is on screen is then ahead of what is stored, and the previous

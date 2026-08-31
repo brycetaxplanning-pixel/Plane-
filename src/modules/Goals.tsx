@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GOAL_KINDS, MODULES, type Goal, type GoalKind, type ModuleId } from '../lib/schema';
 import { XP } from '../lib/gamification';
 import { DEFAULT_UNIT, goalLines, goalProgress, goalProgressLabel, kindFields, resizeImage } from '../lib/goals';
 import { todayKey } from '../lib/date';
 import { uid } from '../lib/id';
+import { deleteImage, getImage, putImage } from '../lib/images';
 import { useApp } from '../state/context';
 import { goalStats } from '../state/selectors';
 import { Modal } from '../components/ui/Modal';
@@ -23,13 +24,29 @@ export function Goals() {
   const stats = goalStats(state);
   const [editing, setEditing] = useState<Goal | 'new' | null>(null);
 
-  const save = (goal: Goal) => {
+  const save = async (goal: Goal) => {
+    // The form hands back the photo inline; it is moved into the image store
+    // here, by the same path an import takes, so the state blob never carries
+    // a data URL.
+    let next = goal;
+    if (goal.image) {
+      try {
+        const id = await putImage(goal.image, goal.imageId);
+        next = { ...goal, imageId: id, image: undefined };
+      } catch {
+        // No IndexedDB: keep it inline rather than lose the picture.
+      }
+    }
+
+    const previous = state.goals.items.find((g) => g.id === goal.id);
+    if (previous?.imageId && previous.imageId !== next.imageId) await deleteImage(previous.imageId);
+
     update((s) => ({
       ...s,
       goals: {
-        items: s.goals.items.some((g) => g.id === goal.id)
-          ? s.goals.items.map((g) => (g.id === goal.id ? goal : g))
-          : [...s.goals.items, goal],
+        items: s.goals.items.some((g) => g.id === next.id)
+          ? s.goals.items.map((g) => (g.id === next.id ? next : g))
+          : [...s.goals.items, next],
       },
     }));
     setEditing(null);
@@ -54,7 +71,7 @@ export function Goals() {
         <button className="btn btn-accent btn-lg" style={{ ['--mod' as string]: ACCENT }} onClick={() => setEditing('new')}>
           + Add your first goal
         </button>
-        {editing && <GoalForm goal={null} onClose={() => setEditing(null)} onSave={save} />}
+        {editing && <GoalForm goal={null} onClose={() => setEditing(null)} onSave={(g) => void save(g)} />}
       </div>
     );
   }
@@ -96,16 +113,44 @@ export function Goals() {
           goal={editing === 'new' ? null : editing}
           onClose={() => setEditing(null)}
           onDelete={editing === 'new' ? undefined : () => {
-            const id = (editing as Goal).id;
-            update((s) => ({ ...s, goals: { items: s.goals.items.filter((g) => g.id !== id) } }));
+            const gone = editing as Goal;
+            // The photo goes with it; nothing else refers to it.
+            if (gone.imageId) void deleteImage(gone.imageId);
+            update((s) => ({ ...s, goals: { items: s.goals.items.filter((g) => g.id !== gone.id) } }));
             setEditing(null);
             toast('Goal removed');
           }}
-          onSave={save}
+          onSave={(g) => void save(g)}
         />
       )}
     </div>
   );
+}
+
+
+/** Resolves a goal's photo out of the image store, falling back to the emoji —
+ *  while it loads, and for good if it has gone missing. */
+function GoalPhoto({ goal }: { goal: Goal }) {
+  const src = useGoalImage(goal);
+  return src
+    ? <img src={src} alt="" />
+    : <span className="goal-emoji" aria-hidden>{goal.emoji}</span>;
+}
+
+/** `image` is checked first so a state that has not been lifted yet — an import
+ *  mid-flight, or a browser with no IndexedDB — still shows the picture. */
+function useGoalImage(goal: Goal): string | undefined {
+  const [src, setSrc] = useState<string | undefined>(goal.image);
+
+  useEffect(() => {
+    if (goal.image) { setSrc(goal.image); return; }
+    if (!goal.imageId) { setSrc(undefined); return; }
+    let live = true;
+    void getImage(goal.imageId).then((d) => { if (live) setSrc(d ?? undefined); });
+    return () => { live = false; };
+  }, [goal.image, goal.imageId]);
+
+  return src;
 }
 
 function GoalCard({ goal, onEdit, onFinish }: { goal: Goal; onEdit: () => void; onFinish: () => void }) {
@@ -119,9 +164,7 @@ function GoalCard({ goal, onEdit, onFinish }: { goal: Goal; onEdit: () => void; 
   return (
     <article className="goal" style={{ ['--mod' as string]: module?.color ?? ACCENT }}>
       <button className="goal-cover" onClick={onEdit} aria-label={`Edit ${goal.title}`}>
-        {goal.image
-          ? <img src={goal.image} alt="" />
-          : <span className="goal-emoji" aria-hidden>{goal.emoji}</span>}
+        <GoalPhoto goal={goal} />
       </button>
 
       <div className="goal-body">
@@ -167,13 +210,21 @@ function GoalForm({
 }: {
   goal: Goal | null;
   onClose: () => void;
-  onSave: (g: Goal) => void;
+  onSave: (g: Goal) => void | Promise<void>;
   onDelete?: () => void;
 }) {
   const [title, setTitle] = useState(goal?.title ?? '');
   const [kind, setKind] = useState<GoalKind>(goal?.kind ?? 'Purchase');
   const [emoji, setEmoji] = useState(goal?.emoji ?? '🏁');
+  // Seeded from the store when the goal already has a photo. It is handed back
+  // inline on save and moved out again by the caller.
   const [image, setImage] = useState(goal?.image);
+  useEffect(() => {
+    if (goal?.image || !goal?.imageId) return;
+    let live = true;
+    void getImage(goal.imageId).then((d) => { if (live && d) setImage(d); });
+    return () => { live = false; };
+  }, [goal?.image, goal?.imageId]);
   const [cost, setCost] = useState(String(goal?.cost ?? ''));
   const [monthly, setMonthly] = useState(String(goal?.monthly ?? ''));
   const [costNote, setCostNote] = useState(goal?.costNote ?? '');
@@ -212,6 +263,7 @@ function GoalForm({
               kind,
               emoji: emoji.trim() || '🏁',
               image,
+              imageId: image ? goal?.imageId : undefined,
               cost: fields.cost && cost ? Number(cost) : undefined,
               monthly: fields.monthly && monthly ? Number(monthly) : undefined,
               costNote: costNote.trim() || undefined,

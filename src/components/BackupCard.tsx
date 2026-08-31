@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { backupFilename, backupStatus, requestPersistence, storageHealth, type StorageHealth } from '../lib/backup';
-import { downloadFile, exportJSON } from '../lib/storage';
+import { imageBytes } from '../lib/images';
+import { downloadFile, exportBundle } from '../lib/storage';
 import { fmtDateFull, todayKey } from '../lib/date';
 import { useApp } from '../state/context';
 import { SectionHead } from './ui/Field';
@@ -13,13 +14,15 @@ export function BackupCard() {
   const status = backupStatus(state);
   const [health, setHealth] = useState<StorageHealth | null>(null);
   const [asking, setAsking] = useState(false);
+  const [photos, setPhotos] = useState<number | null>(null);
 
   useEffect(() => {
     void storageHealth().then(setHealth);
+    void imageBytes().then(setPhotos);
   }, []);
 
-  const backup = () => {
-    downloadFile(backupFilename(), exportJSON(state));
+  const backup = async () => {
+    downloadFile(backupFilename(), await exportBundle(state));
     update((s) => ({ ...s, settings: { ...s.settings, lastExport: todayKey() } }));
     toast('Backup downloaded');
   };
@@ -60,7 +63,7 @@ export function BackupCard() {
       </p>
 
       <div className="row-2 wrap" style={{ marginTop: 'var(--sp-3)' }}>
-        <button className="btn btn-primary" onClick={backup}>Download a backup</button>
+        <button className="btn btn-primary" onClick={() => void backup()}>Download a backup</button>
         {health?.canAsk && !health.persisted && (
           <button className="btn" disabled={asking} onClick={() => void ask()}>
             {asking ? 'Asking…' : 'Ask the browser to keep it'}
@@ -82,6 +85,7 @@ export function BackupCard() {
         {health?.usedBytes !== null && health?.usedBytes !== undefined
           ? `Using ${mb(health.usedBytes)}${health.quotaBytes ? ` of about ${mb(health.quotaBytes)}` : ''}.`
           : ''}
+        {photos ? ` Goal photos take ${mb(photos)} of that, held outside the main store so they cannot crowd it out.` : ''}
       </p>
     </section>
   );
