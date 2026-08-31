@@ -7,12 +7,21 @@ import {
   MARKER_CATALOGUE, MARKER_GROUPS, flagged, markerHistory, markerNames,
   markerStatus, monthsSincePanel, sortedPanels, type MarkerStatus,
 } from '../../lib/health';
+import { AIError, askJSON, isAIConfigured } from '../../lib/ai';
 import { useApp } from '../../state/context';
 import { Modal } from '../../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../../components/ui/Field';
 import { DictateInput } from '../../components/ui/Dictation';
 
 const ACCENT = 'var(--mod-health)';
+
+interface ParsedMarker {
+  name: string;
+  value: number;
+  unit: string;
+  low: number | null;
+  high: number | null;
+}
 
 const STATUS_LABEL: Record<MarkerStatus, string> = {
   low: 'Below range',
@@ -213,6 +222,52 @@ function PanelForm({
   const [notes, setNotes] = useState(panel?.notes ?? '');
   const [markers, setMarkers] = useState<BloodMarker[]>(panel?.markers ?? []);
   const [group, setGroup] = useState(MARKER_GROUPS[0]);
+  const [paste, setPaste] = useState('');
+  const [reading, setReading] = useState(false);
+  const [readError, setReadError] = useState('');
+  const { state } = useApp();
+
+  /** Turns the text off a lab report into rows. Claude reads it; you check it.
+   *  Nothing is saved until you press the button, and every field stays
+   *  editable, because a misread range would quietly mislabel a result. */
+  const readReport = async () => {
+    setReading(true);
+    setReadError('');
+    try {
+      const res = await askJSON<{ date?: string; lab?: string; markers?: ParsedMarker[] }>(
+        state.settings,
+        `You transcribe a blood test report into structured rows. You copy what is printed; you do not interpret results, add markers that are not there, or supply a reference range the report does not show.
+Return {"date": "YYYY-MM-DD" | null, "lab": string | null, "markers": [{"name": string, "value": number, "unit": string, "low": number | null, "high": number | null}]}.
+Use the marker names as printed. Where the report shows a range like "70-99", low is 70 and high is 99. Where it shows "<200", high is 200 and low is null. Where no range is printed, both are null.`,
+        paste.trim(),
+      );
+
+      const rows = (res.markers ?? [])
+        .filter((m) => m && typeof m.name === 'string' && m.name.trim() && Number.isFinite(Number(m.value)))
+        .map((m) => ({
+          id: uid('mk'),
+          name: m.name.trim(),
+          value: Number(m.value),
+          unit: typeof m.unit === 'string' ? m.unit.trim() : '',
+          low: m.low === null || m.low === undefined ? undefined : Number(m.low),
+          high: m.high === null || m.high === undefined ? undefined : Number(m.high),
+        }));
+
+      if (rows.length === 0) throw new AIError('No markers could be read out of that.');
+      setMarkers((ms) => [...ms, ...rows.filter((r) => !ms.some((m) => m.name === r.name))]);
+      if (res.date && /^\d{4}-\d{2}-\d{2}$/.test(res.date)) setDate(res.date);
+      if (res.lab && !lab.trim()) setLab(res.lab);
+      setPaste('');
+    } catch (err) {
+      setReadError(
+        err instanceof AIError
+          ? [err.message, err.hint].filter(Boolean).join(' ')
+          : 'That did not go through. Try again in a moment.',
+      );
+    } finally {
+      setReading(false);
+    }
+  };
 
   const addFromCatalogue = (name: string) => {
     const t = MARKER_CATALOGUE.find((m) => m.name === name);
@@ -256,6 +311,41 @@ function PanelForm({
       <div className="stack-2">
         <Field label="Date drawn"><input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
         <Field label="Lab or clinic"><input className="input" value={lab} onChange={(e) => setLab(e.target.value)} placeholder="Optional" /></Field>
+
+        <details className="details">
+          <summary className="t-sm">Paste the report instead of typing it</summary>
+          <div className="stack-2" style={{ marginTop: 'var(--sp-2)' }}>
+            <Field
+              label="Text from your lab report"
+              hint="Select the results table in the PDF or the lab's website and paste it here. It is sent to Claude with your own API key and comes back as rows you check before saving."
+            >
+              <textarea
+                className="textarea"
+                style={{ minHeight: 100, fontFamily: 'ui-monospace, monospace', fontSize: 12 }}
+                value={paste}
+                onChange={(e) => setPaste(e.target.value)}
+                placeholder={'Glucose 91 mg/dL 70-99\nLDL 112 mg/dL <100'}
+              />
+            </Field>
+            <div className="row-2 wrap">
+              <button
+                className="btn"
+                disabled={reading || !paste.trim() || !isAIConfigured(state.settings)}
+                onClick={() => void readReport()}
+              >
+                {reading ? 'Reading…' : 'Read it into rows'}
+              </button>
+              {!isAIConfigured(state.settings) && (
+                <span className="t-xs t-muted">Needs an API key in Settings. Without one, add the markers by hand below.</span>
+              )}
+            </div>
+            {readError && <p className="t-xs t-crit">{readError}</p>}
+            <p className="t-xs t-muted">
+              Transcription only — it copies what is printed and does not interpret anything. Check every row against
+              the report before saving; a misread range would mislabel a result.
+            </p>
+          </div>
+        </details>
 
         <Field label="Add a marker" hint="Units and ranges are prefilled as a starting point. Overwrite them with the ones printed on your report — labs differ.">
           <select className="select" value={group} onChange={(e) => setGroup(e.target.value)}>

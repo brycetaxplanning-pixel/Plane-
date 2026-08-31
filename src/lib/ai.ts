@@ -48,7 +48,15 @@ function describe(error: unknown): AIError {
     return new AIError('Could not reach the Anthropic API.', 'Check your connection and try again.');
   }
   if (error instanceof Anthropic.APIError) {
-    return new AIError(`API error ${error.status}: ${error.message}`);
+    // A 5xx body is the API's own JSON, which is no use to the person reading
+    // it. Say what happened and what to do; the detail is in the console.
+    if (error.status && error.status >= 500) {
+      return new AIError('The API is having trouble right now.', 'It was retried and still failed. Try again in a moment.');
+    }
+    if (error.status === 413) {
+      return new AIError('That was too much text to send at once.', 'Send a smaller piece of it.');
+    }
+    return new AIError(`The API returned ${error.status ?? 'an error'}.`, error.message.slice(0, 140));
   }
   return new AIError(error instanceof Error ? error.message : 'Something went wrong talking to Claude.');
 }

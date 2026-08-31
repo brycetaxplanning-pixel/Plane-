@@ -152,7 +152,14 @@ retyped:
   else is ignored. The file is streamed rather than read whole — a 99 MB export
   parses in about a second and never holds more than a chunk in memory.
 
-Two rules hold for both. Numbers are stored exactly as the file wrote them —
+Bloodwork takes a paste instead of typing: select the results table out of the
+lab's PDF or website, paste it in, and Claude transcribes it into rows — name,
+value, unit and the range as printed — which you check and correct before
+saving. It is asked to copy what is printed and not to interpret anything or
+invent a range the report does not show. Without an API key the button says so
+and the by-hand path is unchanged.
+
+Two rules hold for both file imports. Numbers are stored exactly as the file wrote them —
 nothing is converted between pounds and kilos, and the unit is whichever you set
 under Targets. And an import fills gaps rather than overwriting: anything you
 typed by hand survives unless you tick the box, and the number of clashes is
@@ -218,9 +225,10 @@ silently losing writes.
 
 ## The AI features
 
-Four things call Claude: the fitness coach, the life coach, turning
-"$40 snorkel gear, $70 running shoes" into two budget line items, and the
-sharper follow-up questions on a saving goal.
+Five things call Claude: the fitness coach, the life coach, turning
+"$40 snorkel gear, $70 running shoes" into two budget line items, the sharper
+follow-up questions on a saving goal, and transcribing a pasted lab report into
+blood markers.
 
 They need your own Anthropic API key, pasted into *Settings*. It is stored only
 in this browser's local storage and is sent only to `api.anthropic.com`. The
