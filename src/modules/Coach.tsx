@@ -5,7 +5,7 @@ import { fmtDate, todayKey } from '../lib/date';
 import { uid } from '../lib/id';
 import { fmtMoney } from '../lib/finance';
 import { useApp } from '../state/context';
-import { coachStats, financeStats, fitnessStats, habitStats, planningStats, spanishStats, workStats } from '../state/selectors';
+import { budgetHeadroom, coachStats, financeStats, fitnessStats, habitStats, planningStats, spanishStats, workStats } from '../state/selectors';
 import { routeOf } from '../lib/router';
 import { Modal } from '../components/ui/Modal';
 import { Field, SectionHead } from '../components/ui/Field';
@@ -73,7 +73,12 @@ export function Coach() {
           offlineReply={(input) => offlineCoachReply(input, state)}
           placeholder="What's on your mind…"
           emptyHint="I can see every module — work, outreach, Spanish, training, spending, habits and goals. Ask me what to prioritise, where you're slipping, or how to plan the week."
-          suggestions={['What should I focus on this week?', 'Where am I slipping?', 'Plan my week around 3 MMA classes']}
+          suggestions={[
+            'What should I focus on this week?',
+            'Where am I slipping?',
+            "I'm thinking about getting a massage",
+            'Plan my week around 3 MMA classes',
+          ]}
         />
         {state.coach.chat.length > 0 && (
           <button
@@ -197,14 +202,19 @@ ${f.total}/${f.targets.total} sessions this week. MMA ${f.mma}/${f.targets.mma},
 
 MODULE 5 — Finances
 ${fmtMoney(m.spent, cur)} spent this month${m.budgetTotal ? ` against a ${fmtMoney(m.budgetTotal, cur)} budget` : ' (no budget set)'}. ${m.reviewCount} transactions still need a category. Invested: ${fmtMoney(m.invested, cur)} across ${state.finance.accounts.length} accounts.
+Headroom left this month: ${m.budgetTotal ? fmtMoney(m.remaining, cur) : 'unknown — no budget set'}.
+Category headroom: ${budgetHeadroom(state).slice(0, 8).map((h) => `${h.category} ${fmtMoney(h.left, cur)} of ${fmtMoney(h.budget, cur)}`).join('; ') || 'no budgets set'}.
 
 MODULE 6 — Habits
 ${h.rows.map((r) => `- ${r.habit.title} (${r.habit.cadence}): ${r.statusLabel}${r.daysSince === null ? ', never done' : `, ${r.daysSince} day(s) since`}`).join('\n') || '- none set up'}
 
-MODULE 7 — Goals
-${state.goals.items.filter((g) => !g.done).map((g) => `- ${g.title} (${g.kind})${g.cost ? `, ${fmtMoney(g.cost, cur)}` : ''}${g.monthly ? `, ${fmtMoney(g.monthly, cur)}/mo` : ''}${g.plan ? ` — plan: ${g.plan}` : ''}`).join('\n') || '- none set'}
+MODULE 7 — Goals (what money competes with)
+${state.goals.items.filter((g) => !g.done).map((g) => `- ${g.title} (${g.kind})${g.cost ? `, ${fmtMoney(g.cost, cur)}` : ''}${g.monthly ? `, ${fmtMoney(g.monthly, cur)}/mo` : ''}${g.target ? `, ${g.current ?? 0} of ${g.target} ${g.unit ?? ''}` : ''}${g.plan ? ` — plan: ${g.plan}` : ''}`).join('\n') || '- none set'}
 
-MODULE 8 — Check-ins
+MODULE 8 — Notes and journal (recent, for context on what is on their mind)
+${state.notes.items.slice(0, 5).map((n) => `- ${n.title}${n.body ? `: ${n.body.slice(0, 140)}` : ''}`).join('\n') || '- nothing written'}
+
+MODULE 9 — Check-ins
 ${c.checkedInToday ? 'Checked in today.' : 'No check-in today.'} Last mood ${c.moodTrend.at(-1)?.value ?? '—'}/5, energy ${c.energyTrend.at(-1)?.value ?? '—'}/5.
 Active-day streak: ${streakOf(state.activeDays).current} days.`;
 }
@@ -222,7 +232,12 @@ ${TONE_LINE[state.habits.tone] ?? TONE_LINE.direct}
 
 Name the trade-off rather than telling them to do everything: they have a demanding tax job, a side practice they are trying to grow, a language habit, twelve training sessions a week, a household budget and a set of daily habits. When something is slipping, say which one and what it costs to fix. Prefer one concrete next action over a list. Keep replies under about 200 words unless they ask for a full plan.
 
-Do not invent numbers. If you need something that isn't below, ask for it.
+CROSS-REFERENCE BEFORE YOU AGREE
+When they raise spending money on something, price it against the budget headroom and the goals below before answering, and say the number. If it does not fit, say so and offer the cheapest thing that solves the same underlying problem. If it does fit, say that too — do not manufacture an objection.
+When they describe a symptom, look for the cause in the data rather than treating the symptom: poor sleep in the habit log, a missed strength week, a training block with no easy days. Say what the data shows before you suggest anything.
+If you push back and they tell you the reasoning was wrong, drop it and take their correction — do not argue the point twice.
+
+Do not invent numbers. If you need something that isn't below, ask for it. You are not a doctor, a financial adviser or a lawyer; when something needs one, say so plainly in a sentence and move on.
 
 ${buildSnapshot(state)}`;
 }

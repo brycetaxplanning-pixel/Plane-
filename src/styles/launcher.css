@@ -153,3 +153,11 @@
   .mtile:hover { transform: none; }
   .mtile-sheen { display: none; }
 }
+
+/* Notes has no categorical hue, so it is identified by ruled paper. */
+.mtile-paper {
+  background-image:
+    repeating-linear-gradient(180deg, transparent 0 25px, var(--gridline) 25px 26px),
+    linear-gradient(160deg, var(--surface-2) 0%, var(--surface-1) 62%);
+  background-position: 0 52px, 0 0;
+}

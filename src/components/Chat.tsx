@@ -3,6 +3,8 @@ import { AIError, isAIConfigured, streamChat } from '../lib/ai';
 import type { ChatMessage } from '../lib/schema';
 import { uid } from '../lib/id';
 import { useApp } from '../state/context';
+import { MicButton } from './ui/Dictation';
+import { appendPhrase } from '../lib/speech';
 
 interface ChatProps {
   /** Rebuilt on every send so the model always sees current numbers. */
@@ -130,6 +132,7 @@ export function Chat({
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send(draft); }
           }}
         />
+        <MicButton onPhrase={(p) => setDraft((d) => appendPhrase(d, p))} title="Dictate your message" />
         {busy ? (
           <button type="button" className="btn" onClick={() => abortRef.current?.abort()}>Stop</button>
         ) : (

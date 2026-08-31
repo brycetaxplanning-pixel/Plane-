@@ -4,6 +4,8 @@ import { AppProvider } from './state/AppContext';
 import { useApp } from './state/context';
 import { MODULES } from './lib/schema';
 import { resolveSkin } from './lib/themes';
+import { pendingAward } from './lib/awards';
+import { EnlightenmentModal } from './components/Enlightenment';
 import { Nav } from './components/layout/Nav';
 import { Header } from './components/layout/Header';
 import { Toasts } from './components/ui/Toasts';
@@ -16,6 +18,7 @@ import { Fitness } from './modules/Fitness';
 import { Finance } from './modules/Finance';
 import { Habits } from './modules/Habits';
 import { Goals } from './modules/Goals';
+import { Notes } from './modules/Notes';
 import { Coach } from './modules/Coach';
 import { Settings } from './modules/Settings';
 
@@ -36,7 +39,7 @@ export default function App() {
 }
 
 function Shell() {
-  const { state, ready } = useApp();
+  const { state, ready, update } = useApp();
   const [route, navigate] = useRoute();
   const prevDepth = useRef(depthOf(route));
 
@@ -65,6 +68,7 @@ function Shell() {
     );
   }
 
+  const award = pendingAward(state);
   const module = MODULES.find((m) => m.id === route);
   const title = route === 'home' ? 'Progress' : route === 'settings' ? 'Settings' : module?.name ?? 'Plane';
   const sub = module ? `Module ${module.num} · ${module.blurb}` : undefined;
@@ -89,11 +93,19 @@ function Shell() {
         {route === 'finance' && <Finance />}
         {route === 'habits' && <Habits />}
         {route === 'goals' && <Goals />}
+        {route === 'notes' && <Notes />}
         {route === 'coach' && <Coach />}
         {route === 'settings' && <Settings />}
       </main>
 
       <Toasts />
+
+      {award && (
+        <EnlightenmentModal
+          week={award}
+          onClose={() => update((s) => ({ ...s, awards: { ...s.awards, acknowledged: [...s.awards.acknowledged, award] } }))}
+        />
+      )}
     </div>
   );
 }

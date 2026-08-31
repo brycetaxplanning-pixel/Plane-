@@ -312,3 +312,63 @@
   .fx-layer, .fx-bits, .fx-word { display: none; }
   @keyframes fx-quiet { to { opacity: 0; } }
 }
+
+/* ------------------------------------------------------------------
+   Enlightenment: the one worn award.
+------------------------------------------------------------------ */
+
+.enl-backdrop { align-items: center; padding: var(--sp-4); }
+.enl { max-width: 400px; border-radius: var(--r-lg); overflow: hidden; }
+
+.enl-scene {
+  position: relative;
+  display: grid; place-items: center;
+  height: 190px;
+  background: linear-gradient(170deg, var(--seq-400), var(--seq-700));
+  color: #fff;
+  overflow: hidden;
+}
+.enl-figure { position: relative; z-index: 1; width: 132px; filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.28)); }
+
+/* The brainwave: rings that keep expanding out of the head. */
+.enl-wave {
+  position: absolute;
+  top: 58px; left: 50%;
+  width: 44px; height: 44px;
+  margin: -22px 0 0 -22px;
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+  opacity: 0;
+  animation: enl-pulse 2.8s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+.enl-wave:nth-child(2) { animation-delay: 0.9s; }
+.enl-wave:nth-child(3) { animation-delay: 1.8s; }
+@keyframes enl-pulse {
+  0%   { transform: scale(0.4); opacity: 0; }
+  18%  { opacity: 0.9; }
+  100% { transform: scale(5.4); opacity: 0; }
+}
+
+.enl-body { padding: var(--sp-5) var(--sp-4) var(--sp-4); }
+.enl-kicker {
+  font-size: 11px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--seq-400);
+}
+.enl-title { font-size: 22px; font-weight: 720; letter-spacing: -0.02em; margin: 2px 0 var(--sp-3); }
+
+.enl-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--seq-400) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--seq-400) 42%, transparent);
+  font-size: 11px; font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.enl-badge.is-compact { padding: 2px 6px; font-size: 13px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .enl-wave { animation: none; opacity: 0.5; transform: scale(2.4); }
+}

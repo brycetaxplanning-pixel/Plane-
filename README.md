@@ -12,17 +12,35 @@ tells you what is asking for attention.
 | # | Module | What it tracks |
 |---|--------|----------------|
 | 1 | **Abitos Tax Prep** | Client projects, their stage (not started → filed), due dates and per-project task lists. |
-| 2 | **Bryce Tax Planning** | The weekly target of 50 S-corp outreach contacts, with a running counter, the per-day pace needed to still hit it, an 8-week history, and a deal pipeline. |
+| 2 | **Business** | The weekly target of 50 S-corp outreach contacts, the per-day pace needed to still hit it, an 8-week history and a deal pipeline — plus a numbered **idea list**, where "Help me start it" turns an idea into first actions you can tick off. |
 | 3 | **Spanish** | One-tap links out to italki and Babbel, a session stopwatch, and minutes logged per day — daily goal, weekly goal, and total hours over time. |
 | 4 | **Fitness** | The weekly quotas — 3 MMA, 4 lifting/calisthenics, 12 sessions total (leaving 5 flexible for running or basketball) — plus half-marathon build tracking and an AI coach that can see the whole log. |
 | 5 | **Finances** | Monthly budget vs. actual by category, CSV import, vendor rules, a review queue that asks what a charge was actually for, and an **Invest** tab that projects your accounts forward with sliders for horizon, return and monthly contribution. |
 | 6 | **Habits** | Daily and weekly habits with green / yellow / red status. Green is done, yellow is one miss, red is two or more in a row — with a "days since" count and an escalating nudge whose bluntness you set. |
 | 7 | **Goals** | One visual card per goal: a picture, what it costs, and how you get there. Fields adapt to the kind of goal — a purchase asks for a price, a training goal asks for a window in weeks. |
-| 8 | **Life Coach** | A daily mood/energy check-in and a conversation that has every other module's numbers in front of it. |
+| 8 | **Notes** | Journal entries, to-do lists and everything you'd otherwise put in your phone's notes app. Talk a note in without typing. |
+| 9 | **Life Coach** | A daily mood/energy check-in and a conversation that has every other module's numbers in front of it — including budget headroom and goal costs, so it prices a proposed spend before agreeing to it. |
 
 Home is a grid of big module buttons — one press each. Logging anything earns
 XP, which drives a level, a daily streak and fourteen badges, and checking a
 task off plays one of eighteen animations.
+
+## Talking instead of typing
+
+Every long text field has a microphone, and Notes and Ideas have a
+press-and-talk panel that captures a whole thought hands-free. It uses the
+browser's own speech recognition — no key, no upload, nothing to configure.
+
+Support is uneven and the app is explicit about it: Chrome and Safari have it,
+Firefox does not, and some in-app browsers refuse. Where it's missing the
+microphone simply isn't offered and typing works as normal.
+
+## Enlightenment
+
+Meet every daily habit every day, and every weekly habit, Monday to Sunday,
+and the next time you open the app it says so. You wear 🧘 beside your name for
+the following week and lose it if you don't repeat. It's the only award of its
+kind on purpose — a row of five badges means nothing.
 
 ## Themes
 

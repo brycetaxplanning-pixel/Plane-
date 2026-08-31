@@ -4,6 +4,8 @@ import { moduleSummaries } from '../state/selectors';
 import { useApp } from '../state/context';
 import { routeOf, type Route } from '../lib/router';
 import { Icons } from '../components/layout/Icons';
+import { EnlightenedBadge } from '../components/Enlightenment';
+import { isEnlightened } from '../lib/awards';
 
 /** The hub. Every module is one big button; nothing else competes with them. */
 export function Launcher() {
@@ -28,7 +30,10 @@ export function Launcher() {
         </span>
         <span className="grow" style={{ minWidth: 0 }}>
           <span className="spread" style={{ marginBottom: 5 }}>
-            <span className="t-sm t-bold truncate">{name ? `${greeting()}, ${name}` : greeting()}</span>
+            <span className="row-2" style={{ gap: 6, minWidth: 0 }}>
+              <span className="t-sm t-bold truncate">{name ? `${greeting()}, ${name}` : greeting()}</span>
+              {isEnlightened(state) && <EnlightenedBadge />}
+            </span>
             <span className="t-xs t-muted t-num launch-xp-num">{into}/{span} XP</span>
           </span>
           <span className="xpbar"><i style={{ width: `${Math.round((into / span) * 100)}%` }} /></span>
@@ -46,7 +51,7 @@ export function Launcher() {
           return (
             <a
               key={m.id}
-              className="mtile"
+              className={`mtile${m.id === 'notes' ? ' mtile-paper' : ''}`}
               href={routeOf(m.id as Route)}
               style={{ ['--mod' as string]: m.color, animationDelay: `${i * 45}ms` }}
             >

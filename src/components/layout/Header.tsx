@@ -3,6 +3,8 @@ import { fmtDateLong, todayKey } from '../../lib/date';
 import { routeOf, type Route } from '../../lib/router';
 import { useApp } from '../../state/context';
 import { Icons } from './Icons';
+import { EnlightenedBadge } from '../Enlightenment';
+import { isEnlightened } from '../../lib/awards';
 
 interface HeaderProps {
   title: string;
@@ -35,6 +37,7 @@ export function Header({ title, sub, showBack, route }: HeaderProps) {
           </div>
 
           <div className="row-2" style={{ flex: 'none' }}>
+            {isEnlightened(state) && <EnlightenedBadge compact />}
             <span className="chip chip-static" title={`${streak.current}-day streak · longest ${streak.longest}`} style={{ gap: 4 }}>
               <span style={{ width: 15, height: 15, display: 'inline-flex', color: 'var(--status-warning)' }}>{Icons.flame()}</span>
               <span className="t-num">{streak.current}</span>

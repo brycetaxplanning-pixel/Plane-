@@ -6,6 +6,8 @@ import { meetsTarget, statusColor, statusIcon, weekCompletion, type HabitRow } f
 import { uid } from '../lib/id';
 import { useApp } from '../state/context';
 import { habitStats } from '../state/selectors';
+import { isEnlightened, thisWeekProgress } from '../lib/awards';
+import { EnlightenedBadge } from '../components/Enlightenment';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { BarChart } from '../components/charts/BarChart';
@@ -136,6 +138,26 @@ export function Habits() {
           </div>
         </section>
       )}
+
+      <section className="card">
+        <SectionHead
+          title="Enlightenment"
+          sub="Every daily habit every day, and every weekly habit, Monday to Sunday"
+          action={isEnlightened(state) ? <EnlightenedBadge /> : undefined}
+        />
+        {(() => {
+          const p = thisWeekProgress(state);
+          const pct = p.total ? Math.round((p.met / p.total) * 100) : 0;
+          return (
+            <>
+              <div className="xpbar"><i style={{ width: `${pct}%`, background: 'var(--seq-400)' }} /></div>
+              <p className="t-xs t-muted" style={{ marginTop: 6 }}>
+                {p.met} of {p.total} this week{p.met === p.total && p.total > 0 ? ' — perfect so far' : ''}
+              </p>
+            </>
+          );
+        })()}
+      </section>
 
       {stats.daily.length > 0 && (
         <section className="card">

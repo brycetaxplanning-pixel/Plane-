@@ -22,6 +22,7 @@ export const Icons = {
   flame: () => wrap(<><path d="M12 3s4.5 3.6 4.5 8a4.5 4.5 0 0 1-9 0c0-1.4.6-2.6 1.3-3.5.2 1.4 1 2.2 1.9 2.2 1 0 1.5-.9 1.3-2.3-.2-1.7-.5-3-.5-4.4Z" /><path d="M7 13.5A5 5 0 0 0 12 21a5 5 0 0 0 5-5" /></>),
   repeat: () => wrap(<><path d="M4 9.5A3.5 3.5 0 0 1 7.5 6H18" /><path d="m15.5 3.5 3 2.5-3 2.5" /><path d="M20 14.5a3.5 3.5 0 0 1-3.5 3.5H6" /><path d="m8.5 20.5-3-2.5 3-2.5" /></>),
   flag: () => wrap(<><path d="M6 21V4" /><path d="M6 5h11l-2 3.5L17 12H6" /></>),
+  note: () => wrap(<><path d="M6 3.5h9l3.5 3.5v13.5H6Z" /><path d="M14.5 3.5V7.5H18.5" /><path d="M9 12h6M9 15.5h4" /></>),
   grid: () => wrap(<><rect x="3.5" y="3.5" width="7" height="7" rx="2" /><rect x="13.5" y="3.5" width="7" height="7" rx="2" /><rect x="3.5" y="13.5" width="7" height="7" rx="2" /><rect x="13.5" y="13.5" width="7" height="7" rx="2" /></>),
   back: () => wrap(<><path d="M15 5.5 8.5 12l6.5 6.5" /></>),
   plus: () => wrap(<><path d="M12 5.5v13M5.5 12h13" /></>),

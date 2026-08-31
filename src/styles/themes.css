@@ -178,6 +178,7 @@
   --mod-finance:  var(--series-5);
   --mod-habits:   var(--series-6);
   --mod-goals:    var(--series-7);
+  --mod-notes:    var(--text-secondary);
   --mod-coach:    var(--series-8);
 }
 

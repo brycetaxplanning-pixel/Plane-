@@ -14,6 +14,8 @@ export const XP = {
   fitnessLongRun: 30,
   txReviewed: 4,
   checkIn: 20,
+  note: 5,
+  idea: 12,
   habitDone: 6,
   habitWeekly: 14,
   goalDone: 120,
@@ -152,5 +154,5 @@ export function earnedBadges(s: AppState): BadgeDef[] {
 export const MODULE_XP_LABEL: Record<ModuleId | 'general', string> = {
   work: 'Abitos', planning: 'Tax Planning', spanish: 'Spanish',
   fitness: 'Fitness', finance: 'Finances', habits: 'Habits',
-  goals: 'Goals', coach: 'Life Coach', general: 'General',
+  goals: 'Goals', notes: 'Notes', coach: 'Life Coach', general: 'General',
 };

@@ -15,7 +15,7 @@ interface NavEntry {
 const MODULE_ICONS: Record<string, () => React.ReactNode> = {
   work: Icons.folder, planning: Icons.target, spanish: Icons.chat,
   fitness: Icons.run, finance: Icons.wallet, habits: Icons.repeat,
-  goals: Icons.flag, coach: Icons.compass,
+  goals: Icons.flag, notes: Icons.note, coach: Icons.compass,
 };
 
 const ENTRIES: NavEntry[] = [
@@ -23,7 +23,7 @@ const ENTRIES: NavEntry[] = [
   { route: 'home', label: 'Progress', icon: Icons.home, primary: true },
   ...MODULES.map((m) => ({
     route: m.id as Route,
-    label: m.name.replace('Bryce Tax Planning', 'Planning').replace('Abitos Tax Prep', 'Abitos'),
+    label: m.name.replace('Abitos Tax Prep', 'Abitos'),
     icon: MODULE_ICONS[m.id],
     color: m.color,
   })),

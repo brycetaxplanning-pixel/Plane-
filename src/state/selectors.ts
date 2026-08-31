@@ -1,6 +1,6 @@
 import { bucketOf, type AppState, type ModuleId } from '../lib/schema';
 import { inWeek, lastDays, lastWeeks, monthKey, todayKey, weekDays, weekStart, type DateKey } from '../lib/date';
-import { needsReview } from '../lib/finance';
+import { needsReview, spendByCategory } from '../lib/finance';
 import { allRows, attention, dailyCompletion, type HabitRow } from '../lib/habits';
 import { startingTotal } from '../lib/invest';
 
@@ -147,6 +147,15 @@ export function financeStats(s: AppState, month = monthKey()) {
   };
 }
 
+/** What is left in each budget this month — the coach needs this to price a
+ *  proposed spend against what is actually available. */
+export function budgetHeadroom(s: AppState, month = monthKey()): { category: string; spent: number; budget: number; left: number }[] {
+  const spend = spendByCategory(s.finance.transactions, month);
+  return Object.entries(s.finance.budgets)
+    .map(([category, budget]) => ({ category, budget, spent: spend[category] ?? 0, left: budget - (spend[category] ?? 0) }))
+    .sort((a, b) => a.left - b.left);
+}
+
 /* ---------------- Module 6: Habits ---------------- */
 
 export interface HabitSummary {
@@ -278,6 +287,14 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
       headline: `${goal.open.length}`,
       caption: goal.open.length === 1 ? 'open goal' : 'open goals',
       nudge: goal.open[0]?.title,
+    },
+    notes: {
+      id: 'notes',
+      progress: 0,
+      headline: `${s.notes.items.length}`,
+      caption: s.notes.items.length === 1 ? 'note' : 'notes',
+      nudge: s.notes.items.find((n) => n.pinned)?.title
+        ?? (s.notes.items.length ? 'tap to write or talk' : 'nothing written yet'),
     },
     coach: {
       id: 'coach',

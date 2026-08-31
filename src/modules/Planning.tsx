@@ -6,6 +6,7 @@ import { uid } from '../lib/id';
 import { fmtMoney } from '../lib/finance';
 import { useApp } from '../state/context';
 import { planningStats } from '../state/selectors';
+import { Ideas } from './business/Ideas';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { BarChart } from '../components/charts/BarChart';
@@ -20,6 +21,7 @@ export function Planning() {
   const [logging, setLogging] = useState(false);
   const [dealOpen, setDealOpen] = useState<Deal | 'new' | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [tab, setTab] = useState<'planning' | 'ideas'>('planning');
 
   const thisWeek = state.planning.outreach
     .filter((o) => weekStart(o.date) === weekStart())
@@ -48,6 +50,17 @@ export function Planning() {
 
   return (
     <div className="stack">
+      <div className="tabs" role="tablist">
+        <button className="tab" role="tab" aria-selected={tab === 'planning'} onClick={() => setTab('planning')}>Tax planning</button>
+        <button className="tab" role="tab" aria-selected={tab === 'ideas'} onClick={() => setTab('ideas')}>
+          Ideas{state.planning.ideas.length ? ` (${state.planning.ideas.length})` : ''}
+        </button>
+      </div>
+
+      {tab === 'ideas' && <Ideas />}
+
+      {tab === 'planning' && (
+      <>
       <section className="card" style={{ ['--mod' as string]: ACCENT }}>
         <SectionHead
           title="This week's S-corp outreach"
@@ -194,6 +207,9 @@ export function Planning() {
           />
         </Field>
       </section>
+
+      </>
+      )}
 
       {logging && <OutreachForm onClose={() => setLogging(false)} onSave={logOutreach} />}
 

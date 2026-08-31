@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   title: string;
@@ -19,7 +20,10 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
     };
   }, [onClose]);
 
-  return (
+  // Rendered into <body>. The route-transition wrapper animates a transform,
+  // which makes it a containing block and a stacking context, so a dialog left
+  // inside it paints beneath the sticky header and cannot be clicked there.
+  return createPortal(
     <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal" role="dialog" aria-modal="true" aria-label={title}>
         <div className="modal-head">
@@ -29,6 +33,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
         <div className="modal-body">{children}</div>
         {footer && <div className="modal-foot">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

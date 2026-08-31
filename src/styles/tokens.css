@@ -57,6 +57,8 @@
   --mod-finance:   var(--series-5);
   --mod-habits:    var(--series-6);
   --mod-goals:     var(--series-7);
+  /* Notes deliberately has no categorical hue - see MODULES in schema.ts. */
+  --mod-notes:     var(--text-secondary);
   --mod-coach:     var(--series-8);
 
   /* Type */

@@ -3,7 +3,9 @@ import type { SkinId } from './themes';
 
 export const SCHEMA_VERSION = 1;
 
-export type ModuleId = 'work' | 'planning' | 'spanish' | 'fitness' | 'finance' | 'habits' | 'goals' | 'coach';
+export type ModuleId =
+  | 'work' | 'planning' | 'spanish' | 'fitness' | 'finance'
+  | 'habits' | 'goals' | 'notes' | 'coach';
 
 /* ------------------------------------------------------------------ */
 /* Module 1 — Abitos Tax Prep (day job)                               */
@@ -62,6 +64,27 @@ export interface Outreach {
   channel: Channel;
   outcome: Outcome;
   notes?: string;
+}
+
+export const IDEA_STAGES = ['Spark', 'Exploring', 'Building', 'Live', 'Parked'] as const;
+export type IdeaStage = (typeof IDEA_STAGES)[number];
+
+export const IDEA_EFFORT = ['Easy start', 'Real project', 'Heavy lift'] as const;
+export type IdeaEffort = (typeof IDEA_EFFORT)[number];
+
+/** A business idea. `summary` is the one line you see in the list; `detail`
+ *  is the long version for the ones that need explaining later. */
+export interface BusinessIdea {
+  id: string;
+  title: string;
+  summary?: string;
+  detail?: string;
+  stage: IdeaStage;
+  effort: IdeaEffort;
+  nextStep?: string;
+  /** Steps the assistant drafted, so a plan survives closing the app. */
+  steps?: { id: string; text: string; done: boolean }[];
+  createdAt: DateKey;
 }
 
 export const DEAL_STAGES = ['Lead', 'Contacted', 'Meeting set', 'Proposal', 'Won', 'Lost'] as const;
@@ -310,7 +333,27 @@ export interface Goal {
 }
 
 /* ------------------------------------------------------------------ */
-/* Module 8 — Life Coach                                               */
+/* Module 8 — Notes and journal                                        */
+/* ------------------------------------------------------------------ */
+
+export const NOTE_KINDS = ['Note', 'Journal', 'List'] as const;
+export type NoteKind = (typeof NOTE_KINDS)[number];
+
+export interface Note {
+  id: string;
+  kind: NoteKind;
+  title: string;
+  body: string;
+  tags: string[];
+  pinned: boolean;
+  /** List notes keep their items separately so they can be ticked off. */
+  items?: { id: string; text: string; done: boolean }[];
+  createdAt: DateKey;
+  updatedAt: number;
+}
+
+/* ------------------------------------------------------------------ */
+/* Module 9 — Life Coach                                               */
 /* ------------------------------------------------------------------ */
 
 export interface CheckIn {
@@ -368,7 +411,7 @@ export interface AppState {
   badges: Badge[];
   activeDays: DateKey[];
   work: { projects: WorkProject[] };
-  planning: { weeklyTarget: number; outreach: Outreach[]; deals: Deal[] };
+  planning: { weeklyTarget: number; outreach: Outreach[]; deals: Deal[]; ideas: BusinessIdea[] };
   spanish: {
     dailyGoalMinutes: number;
     weeklyGoalMinutes: number;
@@ -393,6 +436,10 @@ export interface AppState {
     projection: Projection;
   };
   habits: { items: Habit[]; logs: HabitLog[]; tone: CoachTone };
+  notes: { items: Note[] };
+  /** Week-start keys for weeks where every habit was met, and the ones
+   *  already celebrated so the popup only fires once. */
+  awards: { enlightened: DateKey[]; acknowledged: DateKey[] };
   goals: { items: Goal[] };
   coach: { checkIns: CheckIn[]; chat: ChatMessage[] };
 }
@@ -416,7 +463,7 @@ export function emptyState(): AppState {
     badges: [],
     activeDays: [],
     work: { projects: [] },
-    planning: { weeklyTarget: 50, outreach: [], deals: [] },
+    planning: { weeklyTarget: 50, outreach: [], deals: [], ideas: [] },
     spanish: {
       dailyGoalMinutes: 20,
       weeklyGoalMinutes: 140,
@@ -450,6 +497,8 @@ export function emptyState(): AppState {
       projection: { years: 20, returnPct: 8, inflationPct: 3, real: false, monthlyOverride: null },
     },
     habits: { items: [], logs: [], tone: 'direct' },
+    notes: { items: [] },
+    awards: { enlightened: [], acknowledged: [] },
     goals: { items: [] },
     coach: { checkIns: [], chat: [] },
   };
@@ -471,7 +520,13 @@ export function migrate(raw: unknown): AppState {
     badges: s.badges ?? [],
     activeDays: s.activeDays ?? [],
     work: { ...base.work, ...(s.work ?? {}), projects: s.work?.projects ?? [] },
-    planning: { ...base.planning, ...(s.planning ?? {}), outreach: s.planning?.outreach ?? [], deals: s.planning?.deals ?? [] },
+    planning: {
+      ...base.planning,
+      ...(s.planning ?? {}),
+      outreach: s.planning?.outreach ?? [],
+      deals: s.planning?.deals ?? [],
+      ideas: s.planning?.ideas ?? [],
+    },
     spanish: {
       ...base.spanish,
       ...(s.spanish ?? {}),
@@ -504,6 +559,11 @@ export function migrate(raw: unknown): AppState {
       ...(s.habits ?? {}),
       items: s.habits?.items ?? [],
       logs: s.habits?.logs ?? [],
+    },
+    notes: { items: s.notes?.items ?? [] },
+    awards: {
+      enlightened: s.awards?.enlightened ?? [],
+      acknowledged: s.awards?.acknowledged ?? [],
     },
     // Goals used to live inside the coach slice; lift any legacy ones out so
     // an older save keeps them.
@@ -539,11 +599,14 @@ function liftLegacyGoals(raw: unknown): Goal[] {
 
 export const MODULES: { id: ModuleId; num: number; name: string; blurb: string; icon: string; color: string }[] = [
   { id: 'work',     num: 1, name: 'Abitos Tax Prep', blurb: 'Client projects and what has to ship',   icon: '📁', color: 'var(--mod-work)' },
-  { id: 'planning', num: 2, name: 'Bryce Tax Planning', blurb: 'S-corp outreach and pipeline',        icon: '🎯', color: 'var(--mod-planning)' },
+  { id: 'planning', num: 2, name: 'Business',          blurb: 'Outreach, pipeline and the idea list',  icon: '🎯', color: 'var(--mod-planning)' },
   { id: 'spanish',  num: 3, name: 'Spanish',         blurb: 'italki, Babbel and time on the clock',    icon: '🇪🇸', color: 'var(--mod-spanish)' },
   { id: 'fitness',  num: 4, name: 'Fitness',         blurb: 'MMA, lifting, half marathon, AI coach',   icon: '🏃', color: 'var(--mod-fitness)' },
   { id: 'finance',  num: 5, name: 'Finances',        blurb: 'Budget, investing, spend by category',    icon: '💵', color: 'var(--mod-finance)' },
   { id: 'habits',   num: 6, name: 'Habits',          blurb: 'Daily and weekly, and what is slipping',  icon: '🔁', color: 'var(--mod-habits)' },
   { id: 'goals',    num: 7, name: 'Goals',           blurb: 'What you are actually working toward',    icon: '🏁', color: 'var(--mod-goals)' },
-  { id: 'coach',    num: 8, name: 'Life Coach',      blurb: 'Check-ins and a thinking partner',        icon: '🧭', color: 'var(--mod-coach)' },
+  // Identity colour stops at eight hues. A ninth categorical hue cannot clear
+  // the separation gate, so Notes is distinguished by texture and ink instead.
+  { id: 'notes',    num: 8, name: 'Notes',           blurb: 'Journal, lists and everything else',      icon: '📝', color: 'var(--mod-notes)' },
+  { id: 'coach',    num: 9, name: 'Life Coach',      blurb: 'Check-ins and a thinking partner',        icon: '🧭', color: 'var(--mod-coach)' },
 ];

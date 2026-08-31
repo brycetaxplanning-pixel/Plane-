@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { emptyState, type AppState, type ModuleId } from '../lib/schema';
 import { createAdapter } from '../lib/storage';
+import { reconcileAwards } from '../lib/awards';
 import { todayKey } from '../lib/date';
 import { uid } from '../lib/id';
 import { AppCtx, type AppContextValue, type Toast } from './context';
@@ -17,7 +18,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     adapter.load().then((loaded) => {
       if (cancelled) return;
-      if (loaded) setState(loaded);
+      if (loaded) setState(reconcileAwards(loaded));
       setReady(true);
     });
     return () => { cancelled = true; };

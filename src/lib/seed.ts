@@ -199,6 +199,55 @@ export function sampleState(): AppState {
   }
   s.habits.logs.push({ id: uid('hl'), habitId: sun.id, date: ws, met: true });
 
+  s.planning.ideas = [
+    {
+      id: uid('idea'), title: 'Clips channel for finance YouTubers', stage: 'Spark', effort: 'Easy start',
+      summary: 'Cut long-form financial analysis into clips the creators never post themselves',
+      detail: 'The good financial-analysis channels publish 40-minute videos and never cut them down. Nobody is serving the clip audience for them. Sit in the middle: cut the clips, post them, split revenue or negotiate a licence. Start with three channels, confirm the rights position before anything else.',
+      nextStep: 'Pick three channels and check what their terms allow',
+      createdAt: addDays(today, -12),
+    },
+    {
+      id: uid('idea'), title: 'International tax prep and planning', stage: 'Building', effort: 'Real project',
+      summary: 'Expat and cross-border returns — already taking whatever work comes in',
+      detail: 'Currently reactive: whoever finds me, I take. Worth deciding on one niche (US citizens abroad, or inbound founders) and building around it.',
+      nextStep: 'Pick one niche and write the offer',
+      createdAt: addDays(today, -40),
+    },
+    {
+      id: uid('idea'), title: '401(k) rollover into personal custody', stage: 'Spark', effort: 'Heavy lift',
+      summary: 'Move retirement money out of the big custodians and into the individual\u2019s own control',
+      detail: 'The complicated one. The idea is helping people roll a 401(k) out of Fidelity and the other large custodians into an arrangement they actually control. Needs the custody, compliance and licensing questions answered before it is anything more than a thought. Writing the detail down so the reasoning survives until I come back to it.',
+      createdAt: addDays(today, -8),
+    },
+  ];
+
+  s.notes.items = [
+    {
+      id: uid('note'), kind: 'List', title: 'To do', tags: ['admin'], pinned: true,
+      body: '', createdAt: addDays(today, -3), updatedAt: Date.now(),
+      items: [
+        { id: uid('it'), text: 'Make an Instagram for the flaxseed gel', done: false },
+        { id: uid('it'), text: 'Chase Marisol for the Schwab 1099-B', done: true },
+        { id: uid('it'), text: 'Book a sparring session', done: false },
+      ],
+    },
+    {
+      id: uid('note'), kind: 'List', title: 'Content ideas', tags: ['tax', 'content'], pinned: false,
+      body: '', createdAt: addDays(today, -6), updatedAt: Date.now() - 86400000,
+      items: [
+        { id: uid('it'), text: 'S-corp election explained in 60 seconds', done: false },
+        { id: uid('it'), text: 'What "reasonable salary" actually means', done: false },
+        { id: uid('it'), text: 'Three write-offs people always miss', done: false },
+      ],
+    },
+    {
+      id: uid('note'), kind: 'Journal', title: 'Long week', tags: [], pinned: false,
+      body: 'Busy week on the Halvorsen file. Training felt heavy — legs still cooked from Tuesday sparring and I have not been getting to bed on time. Need to front-load outreach on Monday instead of leaving it to Thursday again.',
+      createdAt: addDays(today, -2), updatedAt: Date.now() - 172800000,
+    },
+  ];
+
   s.coach.checkIns = [4, 3, 5, 4, 3, 4, 4].map((mood, i) => ({
     id: uid('ci'),
     date: addDays(today, i - 6),
