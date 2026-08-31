@@ -316,6 +316,9 @@ export interface Transaction {
   note?: string;
   reviewed: boolean;
   source: 'manual' | 'import';
+  /** The bank's own id, kept from an OFX import so re-importing the same
+   *  statement recognises what it has already seen. */
+  fitid?: string;
 }
 
 export const ACCOUNT_TYPES = ['Brokerage', '401(k)', 'Roth IRA', 'Traditional IRA', 'HSA', 'Crypto', 'Savings'] as const;

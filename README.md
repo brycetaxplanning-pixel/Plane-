@@ -316,6 +316,32 @@ than inventing a number.
 Nothing here connects to a bank. Take-home is typed in, deposits are logged by
 hand, and the spending it is checked against is whatever you imported.
 
+## Getting transactions in
+
+No US bank publishes an API an individual can sign up for, so the free route is
+the file your bank already offers.
+
+- **QFX / OFX** — the "Download for Quicken" button. Prefer this one: it carries
+  the bank's own transaction ids, so re-importing a month that overlaps the last
+  one cannot double anything. Both dialects are read, the old SGML with its
+  unclosed tags and the newer XML.
+- **CSV** — Bank of America, Chase, Amex and Capital One shapes all work as
+  downloaded. The header row is found rather than assumed, because BofA puts a
+  balance summary above it. The sign convention is read off the data rather than
+  a list of banks: Chase and BofA write spending as negative, Amex writes every
+  charge as positive, and whichever sign is in the majority is the spending.
+  Payments, refunds and deposits are left out — this is a spend log.
+
+Nothing is imported twice. A row already in the log is recognised by the bank's
+id where there is one, and otherwise by date, vendor and amount together; the
+count of each is shown before you commit.
+
+If the monthly download gets old, an aggregator can do it automatically.
+SimpleFIN Bridge is about $15 a year and built for exactly this; Teller has a
+free developer tier. Both would run through the Worker in `server/`, since a
+browser cannot call a bank directly. Plaid's production pricing is sales-led and
+the wrong shape for one person.
+
 ## How the finance review queue works
 
 Vendor rules map a substring of the vendor name to a category — `whole foods`

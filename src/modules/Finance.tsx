@@ -6,7 +6,7 @@ import { fmtDate, fmtMonth, lastMonths, monthKey, todayKey } from '../lib/date';
 import { uid } from '../lib/id';
 import {
   SEED_RULES, autoCategorize, fmtMoney, matchRule, monthTotal,
-  parseTransactionsCSV, spendByCategory, spendForVendor, splitsTotal,
+  newRows, parseStatement, spendByCategory, spendForVendor, splitsTotal,
 } from '../lib/finance';
 import { AIError, askJSON, isAIConfigured } from '../lib/ai';
 import { goalRows } from '../lib/budgetGoals';
@@ -559,23 +559,29 @@ function AddTransaction({ onClose, onSave }: { onClose: () => void; onSave: (t: 
 function ImportCSV({ onClose }: { onClose: () => void }) {
   const { state, update, toast } = useApp();
   const [text, setText] = useState('');
-  const [preview, setPreview] = useState<{ rows: ReturnType<typeof parseTransactionsCSV>['rows']; skipped: number } | null>(null);
+  const [preview, setPreview] = useState<ReturnType<typeof parseStatement> | null>(null);
 
   const run = (raw: string) => {
     setText(raw);
-    setPreview(raw.trim() ? parseTransactionsCSV(raw) : null);
+    setPreview(raw.trim() ? parseStatement(raw) : null);
   };
 
+  // Worked out up front so the button can say how many are actually new — the
+  // whole point of downloading a statement monthly is that most of it overlaps.
+  const split = preview ? newRows(preview.rows, state.finance.transactions) : null;
+
   const commit = () => {
-    if (!preview) return;
-    const existing = new Set(state.finance.transactions.map((t) => `${t.date}|${t.vendor}|${t.amount}`));
-    const fresh = preview.rows.filter((r) => !existing.has(`${r.date}|${r.vendor}|${r.amount}`));
-    const txs: Transaction[] = fresh.map((r) => {
+    if (!preview || !split) return;
+    const txs: Transaction[] = split.fresh.map((r) => {
       const auto = autoCategorize({ vendor: r.vendor }, state.finance.rules);
-      return { id: uid('tx'), date: r.date, vendor: r.vendor, amount: r.amount, category: auto.category, reviewed: auto.reviewed, source: 'import' };
+      return {
+        id: uid('tx'), date: r.date, vendor: r.vendor, amount: r.amount,
+        category: auto.category, reviewed: auto.reviewed, source: 'import',
+        fitid: r.fitid,
+      };
     });
     update((s) => ({ ...s, finance: { ...s.finance, transactions: [...s.finance.transactions, ...txs] } }));
-    toast(`Imported ${txs.length}${preview.rows.length - fresh.length ? `, skipped ${preview.rows.length - fresh.length} duplicate` : ''}`);
+    toast(`Imported ${txs.length}${split.duplicates ? `, skipped ${split.duplicates} already there` : ''}`);
     onClose();
   };
 
@@ -586,18 +592,21 @@ function ImportCSV({ onClose }: { onClose: () => void }) {
       footer={
         <>
           <button className="btn" onClick={onClose}>Cancel</button>
-          <button className="btn btn-accent" style={{ ['--mod' as string]: ACCENT }} disabled={!preview?.rows.length} onClick={commit}>
-            Import {preview?.rows.length ?? 0}
+          <button className="btn btn-accent" style={{ ['--mod' as string]: ACCENT }} disabled={!split?.fresh.length} onClick={commit}>
+            Import {split?.fresh.length ?? 0}
           </button>
         </>
       }
     >
       <div className="stack-3">
-        <Field label="CSV file" hint="Most bank exports work: a date column, a description column and an amount or debit column.">
+        <Field
+          label="Statement file"
+          hint="A CSV, or the QFX/OFX your bank offers under “Download for Quicken”. The Quicken file is the better one: it carries the bank’s own transaction ids, so re-importing an overlapping month cannot double anything."
+        >
           <input
             className="input"
             type="file"
-            accept=".csv,text/csv"
+            accept=".csv,.ofx,.qfx,.qbo,text/csv,application/x-ofx,application/vnd.intu.qfx"
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (!file) return;
@@ -608,13 +617,22 @@ function ImportCSV({ onClose }: { onClose: () => void }) {
         <Field label="…or paste it">
           <textarea className="textarea" style={{ minHeight: 110, fontFamily: 'ui-monospace, monospace', fontSize: 12 }} value={text} onChange={(e) => run(e.target.value)} />
         </Field>
-        {preview && (
+        {preview && split && (
           <div className="card card-sunken card-tight">
-            <p className="t-sm t-bold">{preview.rows.length} row{preview.rows.length === 1 ? '' : 's'} readable{preview.skipped ? `, ${preview.skipped} skipped` : ''}</p>
+            <p className="t-sm t-bold">
+              {split.fresh.length} new
+              {split.duplicates ? `, ${split.duplicates} already imported` : ''}
+              {preview.skipped ? `, ${preview.skipped} skipped` : ''}
+            </p>
+            <p className="t-xs t-muted" style={{ marginBottom: 'var(--sp-2)' }}>
+              Read as {preview.format === 'ofx' ? 'a Quicken file' : 'a CSV'}, {preview.rows.length} row
+              {preview.rows.length === 1 ? '' : 's'} in it.
+              {preview.skipped ? ' Skipped rows are credits, refunds and anything without a date, vendor and amount.' : ''}
+            </p>
             <div className="table-scroll" style={{ maxHeight: 170 }}>
               <table className="table">
                 <tbody>
-                  {preview.rows.slice(0, 8).map((r, i) => (
+                  {split.fresh.slice(0, 8).map((r, i) => (
                     <tr key={i}><td className="t-muted">{r.date}</td><td className="truncate" style={{ maxWidth: 160 }}>{r.vendor}</td><td className="num">{fmtMoney(r.amount, state.settings.currency)}</td></tr>
                   ))}
                 </tbody>
