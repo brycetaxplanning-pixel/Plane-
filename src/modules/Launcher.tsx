@@ -6,6 +6,8 @@ import { routeOf, type Route } from '../lib/router';
 import { Icons } from '../components/layout/Icons';
 import { EnlightenedBadge } from '../components/Enlightenment';
 import { isEnlightened } from '../lib/awards';
+import { unreadByModule } from '../lib/notifications';
+import { NotificationBell } from '../components/Notifications';
 
 /** The hub. Every module is one big button; nothing else competes with them. */
 export function Launcher() {
@@ -16,6 +18,8 @@ export function Launcher() {
   const streak = streakOf(state.activeDays);
   const name = state.settings.displayName;
 
+  const unread = unreadByModule(state);
+
   const nudges = MODULES
     .map((m) => ({ module: m, nudge: summaries[m.id as ModuleId].nudge }))
     .filter((n): n is { module: (typeof MODULES)[number]; nudge: string } => Boolean(n.nudge))
@@ -23,12 +27,12 @@ export function Launcher() {
 
   return (
     <div className="launch">
-      <a className="launch-strip" href={routeOf('home')}>
-        <span className="launch-level">
+      <div className="launch-strip">
+        <a className="launch-level" href={routeOf('home')} aria-label={`Level ${level}, open progress`}>
           <span className="launch-level-num">{level}</span>
           <span className="t-xs t-muted">LEVEL</span>
-        </span>
-        <span className="grow" style={{ minWidth: 0 }}>
+        </a>
+        <a className="grow launch-greet" href={routeOf('home')} style={{ minWidth: 0 }}>
           <span className="spread" style={{ marginBottom: 5 }}>
             <span className="row-2" style={{ gap: 6, minWidth: 0 }}>
               <span className="t-sm t-bold truncate">{name ? `${greeting()}, ${name}` : greeting()}</span>
@@ -37,12 +41,13 @@ export function Launcher() {
             <span className="t-xs t-muted t-num launch-xp-num">{into}/{span} XP</span>
           </span>
           <span className="xpbar"><i style={{ width: `${Math.round((into / span) * 100)}%` }} /></span>
-        </span>
+        </a>
         <span className="launch-streak" title={`${streak.current}-day streak`}>
           <span style={{ width: 17, height: 17, display: 'inline-flex', color: 'var(--status-warning)' }}>{Icons.flame()}</span>
           <span className="t-num t-bold">{streak.current}</span>
         </span>
-      </a>
+        <NotificationBell />
+      </div>
 
       <div className="launch-grid">
         {MODULES.map((m, i) => {
@@ -51,11 +56,16 @@ export function Launcher() {
           return (
             <a
               key={m.id}
-              className={`mtile${m.id === 'notes' ? ' mtile-paper' : ''}`}
+              className={`mtile${m.id === 'notes' ? ' mtile-paper' : ''}${unread[m.id] ? ' is-flagged' : ''}`}
               href={routeOf(m.id as Route)}
               style={{ ['--mod' as string]: m.color, animationDelay: `${i * 45}ms` }}
             >
               <span className="mtile-sheen" aria-hidden />
+              {unread[m.id] ? (
+                <span className="mtile-flag" title={`${unread[m.id]} unread`}>
+                  {Icons.bell()}{unread[m.id]}
+                </span>
+              ) : null}
               <span className="mtile-num">{m.num}</span>
               <span className="mtile-glyph" aria-hidden>{m.icon}</span>
               <span className="mtile-name">{m.name}</span>

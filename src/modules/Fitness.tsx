@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTabParam } from '../lib/router';
 import { ACTIVITY_TYPES, bucketOf, type Activity, type ChatMessage } from '../lib/schema';
 import { XP } from '../lib/gamification';
 import { diffDays, dowLabel, fmtDate, fmtDuration, todayKey, weekStart } from '../lib/date';
@@ -20,7 +21,7 @@ export function Fitness() {
   const { state, update, reward, toast } = useApp();
   const stats = fitnessStats(state);
   const [logging, setLogging] = useState(false);
-  const [tab, setTab] = useState<'week' | 'race' | 'physique' | 'coach'>('week');
+  const [tab, setTab] = useTabParam(['week', 'race', 'physique', 'coach'] as const, 'week');
 
   const logActivity = (a: Omit<Activity, 'id'>) => {
     const longRun = (a.distanceKm ?? 0) >= 15;

@@ -71,6 +71,28 @@ Support is uneven and the app is explicit about it: Chrome and Safari have it,
 Firefox does not, and some in-app browsers refuse. Where it's missing the
 microphone simply isn't offered and typing works as normal.
 
+## Notifications
+
+The app raises things on its own: a habit two days into a slip, a client
+project past its date, a deal's next step landing today, the outreach pace
+falling behind mid-week, a race approaching, transactions piling up
+uncategorised, and the strongest finding from the analysis.
+
+- Each condition has a stable key, so opening the app three times in a day
+  never raises the same thing three times.
+- A worsening habit escalates at widening intervals — 2 days, 3, 5, 7, 10 —
+  rather than nagging every morning.
+- Unread items flag their own module on the launcher, so you can see from the
+  home screen which one wants you.
+- The bell in the header opens the last ten on hover, with the full log a click
+  away. Opening one marks it read and deep-links to the right tab.
+
+**Device alerts only fire while the app is open.** An alert that reaches you
+with the app closed needs a server holding a push subscription and signing
+messages; a static site cannot do it. External sources — a saved search for a
+car, say — will feed the same log once there is a backend to run them; the
+notification record already carries a `href` field for that.
+
 ## Enlightenment
 
 Meet every daily habit every day, and every weekly habit, Monday to Sunday,

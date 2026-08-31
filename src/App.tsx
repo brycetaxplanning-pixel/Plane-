@@ -22,6 +22,7 @@ import { Finance } from './modules/Finance';
 import { Habits } from './modules/Habits';
 import { Goals } from './modules/Goals';
 import { Notes } from './modules/Notes';
+import { NotificationsPage } from './components/Notifications';
 import { Coach } from './modules/Coach';
 import { Settings } from './modules/Settings';
 
@@ -76,7 +77,10 @@ function Shell() {
   // every finding in full.
   const insight = award || route === 'coach' ? null : popupInsight(state);
   const module = MODULES.find((m) => m.id === route);
-  const title = route === 'home' ? 'Progress' : route === 'settings' ? 'Settings' : module?.name ?? 'Plane';
+  const title = route === 'home' ? 'Progress'
+    : route === 'settings' ? 'Settings'
+    : route === 'notifications' ? 'Notifications'
+    : module?.name ?? 'Plane';
   const sub = module ? `Module ${module.num} · ${module.blurb}` : undefined;
 
   return (
@@ -100,6 +104,7 @@ function Shell() {
         {route === 'habits' && <Habits />}
         {route === 'goals' && <Goals />}
         {route === 'notes' && <Notes />}
+        {route === 'notifications' && <NotificationsPage />}
         {route === 'coach' && <Coach />}
         {route === 'settings' && <Settings />}
       </main>

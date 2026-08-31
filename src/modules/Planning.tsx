@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTabParam } from '../lib/router';
 import { CHANNELS, DEAL_STAGES, OUTCOMES, type Channel, type Deal, type DealStage, type Outcome } from '../lib/schema';
 import { XP } from '../lib/gamification';
 import { dowLabel, fmtDate, fmtRange, todayKey, weekEnd, weekStart } from '../lib/date';
@@ -21,7 +22,7 @@ export function Planning() {
   const [logging, setLogging] = useState(false);
   const [dealOpen, setDealOpen] = useState<Deal | 'new' | null>(null);
   const [showAll, setShowAll] = useState(false);
-  const [tab, setTab] = useState<'planning' | 'ideas'>('planning');
+  const [tab, setTab] = useTabParam(['planning', 'ideas'] as const, 'planning');
 
   const thisWeek = state.planning.outreach
     .filter((o) => weekStart(o.date) === weekStart())

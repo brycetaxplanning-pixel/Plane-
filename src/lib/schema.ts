@@ -422,6 +422,27 @@ export interface CheckIn {
 /* Shared                                                             */
 /* ------------------------------------------------------------------ */
 
+/** Anything the app wants to tell you about, whether or not you were looking.
+ *  Sources are the modules themselves — a habit going red, a project past due,
+ *  a finding in the log. External sources (a saved search for a car, say) will
+ *  land here too once there is a server to run them. */
+export interface AppNotification {
+  id: string;
+  /** Stable per condition, so the same thing is never raised twice. */
+  key: string;
+  kind: 'insight' | 'habit' | 'due' | 'award' | 'finance' | 'deal' | 'system';
+  module?: ModuleId;
+  title: string;
+  body?: string;
+  /** Where tapping it goes: a module id, plus an optional tab inside it. */
+  to?: string;
+  tab?: string;
+  /** An outside link, for findings that came from off the device. */
+  href?: string;
+  createdAt: number;
+  read: boolean;
+}
+
 /** How the Life Coach answers. Same data, different job. */
 export type CoachMode = 'coach' | 'therapist' | 'straight';
 
@@ -503,6 +524,7 @@ export interface AppState {
   /** Which findings have been shown or waved away, so the app does not keep
    *  raising the same one. */
   insights: { dismissed: string[]; lastPopup: DateKey | null; enabled: boolean };
+  notifications: { items: AppNotification[]; deviceAlerts: boolean };
 }
 
 /* ------------------------------------------------------------------ */
@@ -567,6 +589,7 @@ export function emptyState(): AppState {
     goals: { items: [] },
     coach: { checkIns: [], chat: [], mode: 'coach' },
     insights: { dismissed: [], lastPopup: null, enabled: true },
+    notifications: { items: [], deviceAlerts: false },
   };
 }
 
@@ -648,6 +671,10 @@ export function migrate(raw: unknown): AppState {
       dismissed: s.insights?.dismissed ?? [],
       lastPopup: s.insights?.lastPopup ?? null,
       enabled: s.insights?.enabled ?? true,
+    },
+    notifications: {
+      items: s.notifications?.items ?? [],
+      deviceAlerts: s.notifications?.deviceAlerts ?? false,
     },
   };
 }

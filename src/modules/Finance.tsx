@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTabParam } from '../lib/router';
 import type { Split, Transaction, VendorRule } from '../lib/schema';
 import { XP } from '../lib/gamification';
 import { fmtDate, fmtMonth, lastMonths, monthKey, todayKey } from '../lib/date';
@@ -22,7 +23,7 @@ const ACCENT = 'var(--mod-finance)';
 export function Finance() {
   const { state, update, toast } = useApp();
   const [month, setMonth] = useState(monthKey());
-  const [tab, setTab] = useState<'overview' | 'invest' | 'review' | 'transactions' | 'rules'>('overview');
+  const [tab, setTab] = useTabParam(['overview', 'invest', 'review', 'transactions', 'rules'] as const, 'overview');
   const stats = financeStats(state, month);
   const cur = state.settings.currency;
 

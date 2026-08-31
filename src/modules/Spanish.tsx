@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTabParam } from '../lib/router';
 import type { StudySession } from '../lib/schema';
 import { XP } from '../lib/gamification';
 import { dowLabel, fmtDate, fmtDuration, todayKey } from '../lib/date';
@@ -19,7 +20,7 @@ export function Spanish() {
   const { state, update, reward, toast } = useApp();
   const stats = spanishStats(state);
   const [logging, setLogging] = useState<number | null>(null);
-  const [tab, setTab] = useState<'practice' | 'tutor'>('practice');
+  const [tab, setTab] = useTabParam(['practice', 'tutor'] as const, 'practice');
 
   const logSession = (minutes: number, platform: string, kind: StudySession['kind'], notes: string) => {
     if (minutes <= 0) return;

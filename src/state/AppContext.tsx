@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { emptyState, type AppState, type ModuleId } from '../lib/schema';
 import { createAdapter } from '../lib/storage';
 import { reconcileAwards } from '../lib/awards';
+import { mergeNotifications, raiseDeviceAlerts } from '../lib/notifications';
 import { todayKey } from '../lib/date';
 import { uid } from '../lib/id';
 import { AppCtx, type AppContextValue, type Toast } from './context';
@@ -18,7 +19,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     adapter.load().then((loaded) => {
       if (cancelled) return;
-      if (loaded) setState(reconcileAwards(loaded));
+      if (loaded) {
+        // Conditions are evaluated once per load: opening the app three times
+        // in a day must not raise the same thing three times.
+        const withAwards = reconcileAwards(loaded);
+        const withNotifications = mergeNotifications(withAwards);
+        const fresh = withNotifications.notifications.items.filter(
+          (n) => !withAwards.notifications.items.some((old) => old.key === n.key),
+        );
+        setState(withNotifications);
+        if (withNotifications.notifications.deviceAlerts) raiseDeviceAlerts(fresh);
+      }
       setReady(true);
     });
     return () => { cancelled = true; };

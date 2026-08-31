@@ -28,7 +28,7 @@ export function sampleState(): AppState {
     },
     {
       id: uid('prj'), client: 'Marisol Ortega', service: '1040', stage: 'Waiting on client',
-      priority: 'normal', due: addDays(today, -2), createdAt: addDays(today, -30),
+      priority: 'normal', due: addDays(today, -3), createdAt: addDays(today, -30),
       notes: 'Needs 1099-B from Schwab.',
       tasks: [{ id: uid('t'), title: 'Chase brokerage statements', done: false }],
     },
@@ -66,7 +66,7 @@ export function sampleState(): AppState {
     })));
 
   s.planning.deals = [
-    { id: uid('deal'), name: 'Dana Whitfield — S-corp election', stage: 'Proposal', value: 3200, nextStep: 'Send engagement letter', nextStepDate: addDays(today, 2), createdAt: addDays(today, -9) },
+    { id: uid('deal'), name: 'Dana Whitfield — S-corp election', stage: 'Proposal', value: 3200, nextStep: 'Send engagement letter', nextStepDate: today, createdAt: addDays(today, -9) },
     { id: uid('deal'), name: 'Riverbend Logistics — planning retainer', stage: 'Meeting set', value: 6000, nextStep: 'Discovery call', nextStepDate: addDays(today, 5), createdAt: addDays(today, -4) },
     { id: uid('deal'), name: 'Kestrel Design — entity restructure', stage: 'Won', value: 4500, createdAt: addDays(today, -25) },
   ];
@@ -107,10 +107,12 @@ export function sampleState(): AppState {
       });
     }
 
-    // Client tasks finished, on the projects seeded above.
+    // Client tasks finished. These go on the filed project so the live ones
+    // keep their own short task lists.
+    const archive = s.work.projects.find((p) => p.stage === 'Filed') ?? s.work.projects[0];
     const taskCount = Math.round(1 + quality * 6);
     for (let n = 0; n < taskCount && lastDay >= 0; n++) {
-      s.work.projects[n % s.work.projects.length].tasks.push({
+      archive.tasks.push({
         id: uid('t'),
         title: `Review pass ${weeksAgo}-${n}`,
         done: true,

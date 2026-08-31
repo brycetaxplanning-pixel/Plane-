@@ -6,7 +6,7 @@ import { uid } from '../lib/id';
 import { fmtMoney } from '../lib/finance';
 import { useApp } from '../state/context';
 import { budgetHeadroom, coachStats, financeStats, fitnessStats, habitStats, planningStats, spanishStats, workStats } from '../state/selectors';
-import { routeOf } from '../lib/router';
+import { routeOf, useTabParam } from '../lib/router';
 import { Modal } from '../components/ui/Modal';
 import { Field, SectionHead } from '../components/ui/Field';
 import { Sparkline } from '../components/charts/Sparkline';
@@ -35,7 +35,7 @@ export function Coach() {
   const { state, update, reward } = useApp();
   const stats = coachStats(state);
   const [checkingIn, setCheckingIn] = useState(false);
-  const [tab, setTab] = useState<'checkin' | 'analysis' | 'talk'>('checkin');
+  const [tab, setTab] = useTabParam(['checkin', 'analysis', 'talk'] as const, 'checkin');
   const mode = state.coach.mode;
 
   return (

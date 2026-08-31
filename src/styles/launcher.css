@@ -14,11 +14,13 @@
   color: inherit; text-decoration: none;
   transition: border-color 140ms ease, transform 120ms ease;
 }
-.launch-strip:hover { text-decoration: none; border-color: var(--border-strong); }
-.launch-strip:active { transform: scale(0.995); }
+.launch-strip:hover { border-color: var(--border-strong); }
+.launch-greet { color: inherit; text-decoration: none; }
+.launch-greet:hover { text-decoration: none; }
 
 .launch-level {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-decoration: none;
   flex: none; width: 46px; height: 46px;
   border-radius: var(--r-md);
   background: color-mix(in srgb, var(--skin-accent, var(--series-1)) 16%, var(--surface-1));
@@ -112,6 +114,9 @@
 .mtile-nudge { font-size: 11px; color: var(--text-muted); line-height: 1.3; }
 .mtile-alt { --mod: var(--skin-accent, var(--text-muted)); }
 .mtile-alt .mtile-meter { display: none; }
+
+/* The flag sits where the icon would be, so a flagged tile gives it room. */
+.mtile.is-flagged .mtile-glyph { margin-top: 20px; }
 
 @keyframes mtile-in {
   from { opacity: 0; transform: translateY(14px) scale(0.96); }

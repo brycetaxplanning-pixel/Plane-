@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import { AI_MODELS, isAIConfigured } from '../lib/ai';
 import { SKINS, skinById, skinForDay } from '../lib/themes';
+import { deviceAlertsSupported, requestDeviceAlerts } from '../lib/notifications';
+import { routeOf } from '../lib/router';
 import { EFFECTS } from '../lib/completionFx';
 import { DEFAULT_CATEGORIES, emptyState } from '../lib/schema';
 import { BADGES, earnedBadges, levelFor, streakOf, totalXp } from '../lib/gamification';
@@ -141,6 +143,43 @@ export function Settings() {
             {isAIConfigured(state.settings) ? 'Key set — coaches are live' : 'No key — coaches fall back to built-in advice'}
           </p>
         </div>
+      </section>
+
+      <section className="card">
+        <SectionHead
+          title="Notifications"
+          sub="Things the app raises on its own — a habit slipping, a project past due, a finding in the log"
+        />
+        <p className="t-sm t-sec" style={{ marginBottom: 'var(--sp-3)' }}>
+          {state.notifications.items.length} in the log, {state.notifications.items.filter((n) => !n.read).length} unread.
+          {' '}<a href={routeOf('notifications')}>Open the log →</a>
+        </p>
+
+        {deviceAlertsSupported() ? (
+          <label className="row-2" style={{ cursor: 'pointer' }}>
+            <input
+              className="checkbox"
+              type="checkbox"
+              checked={state.notifications.deviceAlerts}
+              onChange={async (e) => {
+                if (!e.target.checked) {
+                  update((st) => ({ ...st, notifications: { ...st.notifications, deviceAlerts: false } }));
+                  return;
+                }
+                const granted = await requestDeviceAlerts();
+                update((st) => ({ ...st, notifications: { ...st.notifications, deviceAlerts: granted } }));
+                if (!granted) toast('The browser blocked notifications for this site');
+              }}
+            />
+            <span className="t-sm">Also alert me on this device</span>
+          </label>
+        ) : (
+          <p className="t-xs t-muted">This browser has no notification support.</p>
+        )}
+        <p className="t-xs t-muted" style={{ marginTop: 'var(--sp-2)' }}>
+          Device alerts only fire while the app is open. Alerts that reach you with the app closed need a
+          server holding a push subscription, which a site with no backend cannot do.
+        </p>
       </section>
 
       <section className="card">

@@ -26,7 +26,9 @@ export function workStats(s: AppState) {
   const dueThisWeek = open.filter((p) => p.due && inWeek(p.due));
   const waiting = open.filter((p) => p.stage === 'Waiting on client');
   const filedThisWeek = s.work.projects.filter((p) => p.completedAt && inWeek(p.completedAt));
-  const allTasks = s.work.projects.flatMap((p) => p.tasks);
+  // Only tasks on projects still in flight: once a return is filed its tasks
+  // are history, and counting them buries the work that is actually left.
+  const allTasks = open.flatMap((p) => p.tasks);
   const doneTasks = allTasks.filter((t) => t.done);
   return {
     open, overdue, dueThisWeek, waiting, filedThisWeek,
@@ -281,7 +283,7 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
       headline: `${hab.todayDone}/${hab.todayTotal}`,
       caption: 'daily habits',
       nudge: hab.needsAttention.length
-        ? hab.needsAttention[0].statusLabel.toLowerCase() + ` · ${hab.needsAttention[0].habit.title}`
+        ? `${hab.needsAttention[0].habit.title} · ${hab.needsAttention[0].statusLabel.toLowerCase()}`
         : hab.todayTotal === 0 ? 'none set up yet' : 'all on track',
     },
     goals: {
