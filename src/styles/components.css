@@ -132,6 +132,8 @@
   display: flex; align-items: stretch;
   height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
   background: color-mix(in srgb, var(--surface-1) 92%, transparent);
   backdrop-filter: blur(12px);
   border-top: 1px solid var(--border);
@@ -191,7 +193,9 @@
   background: color-mix(in srgb, var(--plane) 88%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
-  padding: var(--sp-3) 0;
+  /* The viewport is `viewport-fit=cover`, so on a notched phone the top inset
+     is the app's to pay — otherwise the title sits under the status bar. */
+  padding: calc(var(--sp-3) + env(safe-area-inset-top, 0px)) 0 var(--sp-3);
   margin-bottom: var(--sp-4);
 }
 

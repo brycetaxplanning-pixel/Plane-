@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { Suspense, lazy, useEffect, useRef } from 'react';
 import { depthOf, useRoute, type Route } from './lib/router';
 import { AppProvider } from './state/AppContext';
 import { useApp } from './state/context';
@@ -13,20 +13,26 @@ import { Nav } from './components/layout/Nav';
 import { Header } from './components/layout/Header';
 import { Toasts } from './components/ui/Toasts';
 import { Launcher } from './modules/Launcher';
-import { Dashboard } from './modules/Dashboard';
-import { Work } from './modules/Work';
-import { Planning } from './modules/Planning';
-import { Spanish } from './modules/Spanish';
-import { Fitness } from './modules/Fitness';
-import { Finance } from './modules/Finance';
-import { Habits } from './modules/Habits';
-import { Goals } from './modules/Goals';
-import { Notes } from './modules/Notes';
-import { NotificationsPage } from './components/Notifications';
-import { Tracker } from './modules/Tracker';
-import { Coach } from './modules/Coach';
-import { Health } from './modules/Health';
-import { Settings } from './modules/Settings';
+
+/**
+ * Every screen but the launcher is fetched when it is first opened. The
+ * launcher is what opens on a cold start, so it stays in the first chunk;
+ * pulling ten modules down over cell service to show ten buttons is waste.
+ */
+const Dashboard = lazy(() => import('./modules/Dashboard').then((m) => ({ default: m.Dashboard })));
+const Work = lazy(() => import('./modules/Work').then((m) => ({ default: m.Work })));
+const Planning = lazy(() => import('./modules/Planning').then((m) => ({ default: m.Planning })));
+const Spanish = lazy(() => import('./modules/Spanish').then((m) => ({ default: m.Spanish })));
+const Fitness = lazy(() => import('./modules/Fitness').then((m) => ({ default: m.Fitness })));
+const Finance = lazy(() => import('./modules/Finance').then((m) => ({ default: m.Finance })));
+const Habits = lazy(() => import('./modules/Habits').then((m) => ({ default: m.Habits })));
+const Goals = lazy(() => import('./modules/Goals').then((m) => ({ default: m.Goals })));
+const Notes = lazy(() => import('./modules/Notes').then((m) => ({ default: m.Notes })));
+const Tracker = lazy(() => import('./modules/Tracker').then((m) => ({ default: m.Tracker })));
+const Coach = lazy(() => import('./modules/Coach').then((m) => ({ default: m.Coach })));
+const Health = lazy(() => import('./modules/Health').then((m) => ({ default: m.Health })));
+const Settings = lazy(() => import('./modules/Settings').then((m) => ({ default: m.Settings })));
+const NotificationsPage = lazy(() => import('./components/Notifications').then((m) => ({ default: m.NotificationsPage })));
 
 import './styles/tokens.css';
 import './styles/themes.css';
@@ -98,6 +104,10 @@ function Shell() {
         style={{ paddingTop: route === 'launcher' ? 'var(--sp-4)' : 0, paddingBottom: 'var(--sp-7)' }}
       >
         {route === 'launcher' && <Launcher />}
+        {/* A module's chunk arrives in a few hundred milliseconds on a bad
+            connection and instantly once cached, so the fallback is a quiet
+            placeholder rather than a spinner that flashes. */}
+        <Suspense fallback={<div className="view-loading" aria-live="polite">Loading…</div>}>
         {route === 'home' && <Dashboard navigate={navigate as (r: Route) => void} />}
         {route === 'work' && <Work />}
         {route === 'planning' && <Planning />}
@@ -112,6 +122,7 @@ function Shell() {
         {route === 'coach' && <Coach />}
         {route === 'health' && <Health />}
         {route === 'settings' && <Settings />}
+        </Suspense>
       </main>
 
       <Toasts />

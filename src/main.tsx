@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { warmScreens } from './lib/warm';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -17,3 +18,7 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     });
   });
 }
+
+// The other screens are code-split; fetch them in the background so they are
+// on the device before the signal goes.
+if (import.meta.env.PROD) warmScreens();

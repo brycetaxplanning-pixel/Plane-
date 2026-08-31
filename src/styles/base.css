@@ -47,7 +47,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   width: 100%;
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: 0 var(--sp-4);
+  /* Landscape on a notched phone puts the cutout down one side. */
+  padding: 0 max(var(--sp-4), env(safe-area-inset-right, 0px)) 0 max(var(--sp-4), env(safe-area-inset-left, 0px));
 }
 
 .stack   { display: flex; flex-direction: column; gap: var(--sp-4); }
@@ -111,4 +112,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* Secondary table columns give up their space on a phone. */
 @media (max-width: 560px) {
   .hide-sm { display: none; }
+}
+
+/* A lazily-fetched screen on its way in. Deliberately plain: on a warm cache
+   it is on screen for a frame or two, and a spinner that brief reads as a
+   glitch. */
+.view-loading {
+  padding: var(--sp-7) 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
 }

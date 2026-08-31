@@ -177,8 +177,19 @@ To turn it on, once, in the browser:
 2. **Build and deployment → Source: GitHub Actions**
 
 The next push publishes to `https://<owner>.github.io/<repo>/`. Open that on a
-phone and use *Add to Home Screen* — the manifest and service worker are already
-there, so it installs as a standalone app and works offline.
+phone and use *Add to Home Screen* — Settings has a card with the steps for
+whichever browser you are in, and offers a one-tap install where the browser
+supports it.
+
+Installed, it is a real offline app: the shell is cached on first visit, and the
+other screens are fetched quietly in the background a couple of seconds after
+the launcher paints (skipped on 2G or with Data Saver on), so a module you have
+never opened still works with no signal. Only the launcher is in the first
+chunk — about 93 kB of JavaScript rather than the 728 kB it was before the split
+— and the Anthropic SDK is fetched only when something actually calls Claude.
+
+Safe-area insets are paid on all four sides, so nothing sits under a notch or a
+home bar in either orientation.
 
 Your data stays in that browser. Two devices are two separate copies until there
 is a backend; *Settings → Export* moves a snapshot between them by hand.

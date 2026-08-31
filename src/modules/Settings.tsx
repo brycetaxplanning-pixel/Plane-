@@ -8,6 +8,7 @@ import { DEFAULT_CATEGORIES, emptyState } from '../lib/schema';
 import { BADGES, earnedBadges, levelFor, streakOf, totalXp } from '../lib/gamification';
 import { downloadFile, exportJSON, importJSON } from '../lib/storage';
 import { sampleState } from '../lib/seed';
+import { InstallPrompt } from '../components/InstallPrompt';
 import { todayKey } from '../lib/date';
 import { useApp } from '../state/context';
 import { Field, SectionHead } from '../components/ui/Field';
@@ -242,6 +243,8 @@ export function Settings() {
         </div>
       </section>
 
+      <InstallPrompt />
+
       <section className="card">
         <SectionHead
           title="Your data"
@@ -288,8 +291,7 @@ export function Settings() {
 
       <section className="card card-sunken">
         <p className="t-xs t-muted">
-          Plane · a local-first habit tracker. Add it to your home screen from your browser's share
-          menu to run it like an app.
+          Plane · a local-first habit tracker. Everything it knows is on this device.
         </p>
       </section>
 

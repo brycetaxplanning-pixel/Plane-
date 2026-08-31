@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import type Anthropic from '@anthropic-ai/sdk';
 import type { ChatMessage, Settings } from './schema';
 
 /** Only models that accept `output_config.effort` are offered, so the
@@ -12,11 +12,27 @@ export const DEFAULT_MODEL = 'claude-opus-5';
 
 export const isAIConfigured = (s: Settings): boolean => s.anthropicApiKey.trim().length > 0;
 
+/**
+ * The SDK is a third of the bundle and most sessions never call Claude at all,
+ * so it is fetched the first time something actually needs it rather than on
+ * the way to the launcher. The module is kept once loaded — both for the client
+ * and for the error classes `describe` matches on.
+ */
+type SDK = typeof import('@anthropic-ai/sdk');
+let sdkPromise: Promise<SDK> | null = null;
+let sdk: SDK | null = null;
+
+async function loadSDK(): Promise<SDK> {
+  sdkPromise ??= import('@anthropic-ai/sdk').then((m) => (sdk = m));
+  return sdkPromise;
+}
+
 /** The key lives in this browser only. `dangerouslyAllowBrowser` makes the SDK
  *  send `anthropic-dangerous-direct-browser-access`, which is what lets a
  *  serverless page call the API at all. */
-function createClient(settings: Settings): Anthropic {
-  return new Anthropic({
+async function createClient(settings: Settings): Promise<Anthropic> {
+  const { default: Client } = await loadSDK();
+  return new Client({
     apiKey: settings.anthropicApiKey.trim(),
     dangerouslyAllowBrowser: true,
   });
@@ -35,19 +51,28 @@ export class AIError extends Error {
 }
 
 function describe(error: unknown): AIError {
-  if (error instanceof Anthropic.AuthenticationError) {
+  // Only reachable after a call, so the SDK is loaded; the guard is for the
+  // case where loading it is itself what failed.
+  const A = sdk?.default;
+  if (!A) {
+    return new AIError(
+      'The AI part of the app could not be loaded.',
+      error instanceof Error ? error.message.slice(0, 120) : 'Check your connection and try again.',
+    );
+  }
+  if (error instanceof A.AuthenticationError) {
     return new AIError('That API key was rejected.', 'Check the key in Settings — it should start with "sk-ant-".');
   }
-  if (error instanceof Anthropic.RateLimitError) {
+  if (error instanceof A.RateLimitError) {
     return new AIError('Rate limited by the API.', 'Wait a few seconds and send it again.');
   }
-  if (error instanceof Anthropic.BadRequestError) {
+  if (error instanceof A.BadRequestError) {
     return new AIError(`The request was rejected: ${error.message}`);
   }
-  if (error instanceof Anthropic.APIConnectionError) {
+  if (error instanceof A.APIConnectionError) {
     return new AIError('Could not reach the Anthropic API.', 'Check your connection and try again.');
   }
-  if (error instanceof Anthropic.APIError) {
+  if (error instanceof A.APIError) {
     // A 5xx body is the API's own JSON, which is no use to the person reading
     // it. Say what happened and what to do; the detail is in the console.
     if (error.status && error.status >= 500) {
@@ -75,7 +100,7 @@ export interface StreamOptions {
 export async function streamChat({
   settings, system, messages, onDelta, signal, effort = 'medium',
 }: StreamOptions): Promise<string> {
-  const client = createClient(settings);
+  const client = await createClient(settings);
   let full = '';
   try {
     const stream = client.messages.stream(
@@ -112,7 +137,7 @@ export async function streamChat({
  *  reply is prompted to be JSON and parsed defensively — a model that wraps
  *  it in prose or a fenced block still gets read correctly. */
 export async function askJSON<T>(settings: Settings, system: string, prompt: string): Promise<T> {
-  const client = createClient(settings);
+  const client = await createClient(settings);
   try {
     const res = await client.messages.create({
       model: settings.aiModel || DEFAULT_MODEL,
