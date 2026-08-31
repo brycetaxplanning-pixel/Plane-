@@ -1,0 +1,114 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--plane);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: 650; line-height: 1.25; letter-spacing: -0.01em; }
+h1 { font-size: 24px; }
+h2 { font-size: 18px; }
+h3 { font-size: 15px; }
+p  { margin: 0; }
+
+a { color: var(--series-1); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--series-1);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--baseline); border-radius: var(--r-pill); border: 3px solid transparent; background-clip: content-box; }
+
+/* ---------- layout primitives ---------- */
+
+.app-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+}
+
+.container {
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--sp-4);
+}
+
+.stack   { display: flex; flex-direction: column; gap: var(--sp-4); }
+.stack-2 { display: flex; flex-direction: column; gap: var(--sp-2); }
+.stack-3 { display: flex; flex-direction: column; gap: var(--sp-3); }
+.row     { display: flex; align-items: center; gap: var(--sp-3); }
+.row-2   { display: flex; align-items: center; gap: var(--sp-2); }
+.wrap    { flex-wrap: wrap; }
+.spread  { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+.grow    { flex: 1 1 auto; min-width: 0; }
+
+.grid { display: grid; gap: var(--sp-4); }
+.grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-auto { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+
+@media (max-width: 720px) {
+  .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-2 { grid-template-columns: minmax(0, 1fr); }
+  .grid-3.tight-mobile { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ---------- text utilities ---------- */
+
+.t-sec   { color: var(--text-secondary); }
+.t-muted { color: var(--text-muted); }
+.t-sm    { font-size: 13px; }
+.t-xs    { font-size: 12px; }
+.t-num   { font-variant-numeric: tabular-nums; }
+.t-bold  { font-weight: 650; }
+.t-up    { text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; font-weight: 650; }
+.t-good  { color: var(--success-text); }
+.t-crit  { color: var(--status-critical); }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* The greeting is the longest title in the app; give it room on a phone
+   rather than clipping the user's own name. */
+@media (max-width: 560px) {
+  h1 { font-size: 20px; }
+}
+
+/* Hero row: a ring beside its numbers on a wide screen, stacked and centred
+   on a phone rather than leaving dead space next to the ring. */
+.hero-split { display: flex; align-items: center; gap: var(--sp-5); }
+.hero-split > .hero-figure { flex: none; }
+.hero-split > .hero-body { flex: 1 1 auto; min-width: 0; }
+@media (max-width: 560px) {
+  .hero-split { flex-direction: column; align-items: stretch; gap: var(--sp-4); }
+  .hero-split > .hero-figure { align-self: center; }
+}
+
+/* Secondary table columns give up their space on a phone. */
+@media (max-width: 560px) {
+  .hide-sm { display: none; }
+}

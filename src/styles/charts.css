@@ -1,0 +1,133 @@
+/* Chart chrome. Grid and axis stay recessive; marks stay thin. */
+
+.viz { position: relative; width: 100%; }
+.viz svg { display: block; width: 100%; overflow: visible; }
+
+.viz-title { font-size: 13px; font-weight: 650; color: var(--text-primary); }
+.viz-sub   { font-size: 12px; color: var(--text-secondary); }
+
+.viz-grid   { stroke: var(--gridline); stroke-width: 1; }
+.viz-axis   { stroke: var(--baseline); stroke-width: 1; }
+.viz-tick   { fill: var(--text-muted); font-size: 10px; }
+.viz-label  { fill: var(--text-secondary); font-size: 11px; font-weight: 600; }
+.viz-value  { fill: var(--text-primary); font-size: 11px; font-weight: 650; font-variant-numeric: tabular-nums; }
+
+/* Hit targets are wider than the marks they cover. */
+.viz-hit { fill: transparent; cursor: default; }
+.viz-hit:hover + .viz-mark, .viz-col:hover .viz-mark { filter: brightness(1.08); }
+
+.viz-tip {
+  position: absolute; z-index: 5;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  padding: 6px 9px;
+  border-radius: var(--r-sm);
+  background: var(--text-primary);
+  color: var(--plane);
+  font-size: 12px; line-height: 1.35;
+  white-space: nowrap;
+  box-shadow: var(--shadow-2);
+}
+.viz-tip b { font-variant-numeric: tabular-nums; }
+
+.viz-legend { display: flex; flex-wrap: wrap; gap: var(--sp-3); font-size: 12px; color: var(--text-secondary); }
+.viz-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.viz-swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.viz-swatch-rule { width: 12px; height: 2px; border-radius: 2px; flex: none; }
+
+/* Progress ring */
+.ring-wrap { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
+.ring-figure { position: relative; display: grid; place-items: center; }
+.ring-center { position: absolute; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.ring-value { font-size: 17px; font-weight: 700; }
+.ring-cap   { font-size: 10px; color: var(--text-muted); }
+.ring-track { stroke: var(--surface-sunken); }
+
+/* Stat tile */
+.tile { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tile-label { font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+/* Proportional figures: tabular digits make a large standalone number look gappy.
+   The clamp keeps a currency value inside its column on a narrow phone instead
+   of overlapping the tile beside it. */
+.tile-value {
+  font-size: clamp(18px, 5.4vw, 26px);
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.tile-value-sm { font-size: clamp(16px, 4.6vw, 20px); }
+.tile-cap { font-size: 12px; color: var(--text-secondary); }
+
+/* Budget rows */
+.bbar { display: grid; grid-template-columns: minmax(84px, 1.1fr) minmax(0, 3fr) auto; gap: var(--sp-3); align-items: center; }
+@media (max-width: 560px) {
+  .bbar { grid-template-columns: minmax(80px, 1.2fr) minmax(0, 1.6fr) auto; gap: var(--sp-2); }
+  .bbar-name { font-size: 12px; }
+  .bbar-num { font-size: 11px; }
+}
+.bbar + .bbar { margin-top: 9px; }
+.bbar-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bbar-num { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-secondary); white-space: nowrap; }
+
+/* Column chart. Real elements, so rounded data-ends and the 2px surface gap
+   between fills hold at any width. */
+.bars {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  border-bottom: 1px solid var(--baseline);
+}
+.bars-col {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  cursor: default;
+}
+.bars-bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  transition: height 420ms cubic-bezier(0.2, 0.8, 0.3, 1), opacity 120ms ease;
+}
+.bars-col:hover .bars-bar { filter: brightness(1.06); }
+.bars-target {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--text-muted);
+  opacity: 0.75;
+}
+.bars-peak {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.bars-axis { display: flex; gap: 2px; margin-top: 4px; }
+.bars-axis > span {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Sparkline. The marker sits just inside the right edge so it never bleeds
+   out of the card. */
+.spark { position: relative; padding-right: 8px; }
+.spark > svg { overflow: hidden; }
+.spark-dot {
+  position: absolute;
+  width: 8px; height: 8px;
+  margin-left: -4px; margin-top: -4px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--surface-1);
+  pointer-events: none;
+}
+.spark-hit { position: absolute; top: 0; bottom: 0; transform: translateX(-50%); }
