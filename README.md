@@ -124,12 +124,18 @@ kind on purpose — a row of five badges means nothing.
 
 ## Themes
 
-Six skins: Classic (which follows your light/dark setting) plus Neon Miami,
-Arcade Brawler, Shinobi, Deployment and Ringworld. They can rotate
-automatically every 24 hours. They are original colour schemes, not licensed
-artwork — each one's eight module colours were run through the palette
+Seven skins: Classic (which follows your light/dark setting) plus Neon Miami,
+Arcade Brawler, Shinobi, Deployment, Ringworld and Late Night Set. They can
+rotate automatically every 24 hours. They are original colour schemes, not
+licensed artwork — each one's eight module colours were run through the palette
 validator against that skin's own surface, so charts stay readable whichever
 skin is up.
+
+Late Night Set puts a cat on the decks above the launcher: an SVG drawn in this
+repo, animated in CSS, with an optional four-on-the-floor loop synthesised in
+the browser from oscillators and filtered noise. It only starts when you press
+play, there is no audio file anywhere in the app, and nothing is fetched to
+draw or play it. `prefers-reduced-motion` holds the whole thing still.
 
 ## Running it
 

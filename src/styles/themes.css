@@ -169,6 +169,36 @@
   --skin-texture: radial-gradient(120% 70% at 50% 0%, rgba(32, 165, 181, 0.14), transparent 62%);
 }
 
+[data-skin="latenight"] {
+  color-scheme: dark;
+  --plane:          #0a0912;
+  --surface-1:      #12101d;
+  --surface-2:      #1b1829;
+  --surface-sunken: #070610;
+  --text-primary:   #f4eefb;
+  --text-secondary: #bfb2d4;
+  --text-muted:     #877a9e;
+  --gridline:       #241f35;
+  --baseline:       #362f4c;
+  --border:         rgba(210, 79, 146, 0.18);
+  --border-strong:  rgba(210, 79, 146, 0.38);
+  --shadow-1:       0 1px 2px rgba(0, 0, 0, 0.65);
+  --shadow-2:       0 12px 34px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(34, 162, 189, 0.14);
+  --overlay:        rgba(5, 4, 10, 0.76);
+
+  --series-1: #22a2bd; --series-2: #d24f92; --series-3: #c48208;
+  --series-4: #5385ee; --series-5: #1aa176; --series-6: #ad6ee8;
+  --series-7: #bd4650; --series-8: #57a03a;
+
+  --seq-100: #0d2f39; --seq-250: #12545f; --seq-400: #22a2bd; --seq-550: #4fc3d6; --seq-700: #93e4ef;
+
+  --skin-accent: #d24f92;
+  --tile-glow: 0 0 0 1px rgba(210, 79, 146, 0.22), 0 8px 26px rgba(34, 162, 189, 0.18);
+  --skin-texture:
+    radial-gradient(90% 60% at 12% 0%, rgba(210, 79, 146, 0.16), transparent 58%),
+    radial-gradient(90% 60% at 88% 0%, rgba(34, 162, 189, 0.14), transparent 58%);
+}
+
 /* Module identity always tracks the active skin's eight slots. */
 [data-skin] {
   --mod-work:     var(--series-1);

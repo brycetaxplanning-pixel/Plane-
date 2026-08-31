@@ -9,6 +9,8 @@ import { isEnlightened } from '../lib/awards';
 import { unreadByModule } from '../lib/notifications';
 import { daysFromToday, timelineItems } from '../lib/timeline';
 import { NotificationBell } from '../components/Notifications';
+import { CatDeck } from '../components/CatDeck';
+import { resolveSkin } from '../lib/themes';
 
 /** The hub. Every module is one big button; nothing else competes with them. */
 export function Launcher() {
@@ -32,6 +34,8 @@ export function Launcher() {
 
   return (
     <div className="launch">
+      {resolveSkin(state.settings) === 'latenight' && <CatDeck />}
+
       <div className="launch-strip">
         <a className="launch-level" href={routeOf('home')} aria-label={`Level ${level}, open progress`}>
           <span className="launch-level-num">{level}</span>

@@ -406,3 +406,82 @@
   to   { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { .pop { animation: none; } }
+
+/* ---------- Late Night Set: the cat on the decks ----------
+   Original SVG, animated in CSS. The platters and the equalizer idle slowly
+   and only run at tempo while the beat is actually playing, so a page you are
+   reading does not have something jigging in the corner. */
+.catdeck {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--series-2) 10%, transparent), transparent 60%),
+    var(--surface-1);
+  box-shadow: var(--tile-glow, none);
+  overflow: hidden;
+  margin-bottom: var(--sp-4);
+}
+.catdeck-art { display: block; width: 100%; height: auto; }
+.catdeck-bar {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--border);
+}
+
+.catdeck .platter { fill: var(--surface-sunken); stroke: var(--border-strong); stroke-width: 1.5; }
+.catdeck .label   { fill: var(--series-2); }
+.catdeck .spindle { fill: var(--text-primary); }
+.catdeck .groove  { fill: none; stroke: var(--series-1); stroke-width: 2; stroke-linecap: round; opacity: 0.8; }
+.catdeck .mixer   { fill: var(--surface-2); stroke: var(--border-strong); stroke-width: 1.2; }
+.catdeck .fader-track { fill: var(--surface-sunken); }
+.catdeck .fader-cap   { fill: var(--series-3); }
+.catdeck .head { fill: var(--surface-2); stroke: var(--series-2); stroke-width: 1.6; }
+.catdeck .ear  { fill: var(--surface-2); stroke: var(--series-2); stroke-width: 1.6; stroke-linejoin: round; }
+.catdeck .eye  { fill: var(--series-1); }
+.catdeck .nose { fill: var(--series-2); }
+.catdeck .mouth, .catdeck .whiskers path {
+  fill: none; stroke: var(--text-muted); stroke-width: 1.2; stroke-linecap: round;
+}
+.catdeck .paw .pad, .catdeck .paw .toe { fill: var(--surface-2); stroke: var(--series-2); stroke-width: 1.4; }
+.catdeck .paw .arm { fill: none; stroke: var(--series-2); stroke-width: 5; stroke-linecap: round; }
+.catdeck .eq rect { fill: var(--series-1); opacity: 0.75; transform-origin: 50% 36px; }
+.catdeck .eq-left rect { fill: var(--series-2); }
+
+/* Idle: a slow turn and a lazy blink. */
+/* Rotate about each platter's own spindle: fill-box would take the bounding
+   box of the group, which the groove arc pulls off centre. */
+.catdeck .deck { transform-box: view-box; animation: deck-spin 7s linear infinite; }
+.catdeck .deck-l { transform-origin: 46px 62px; }
+.catdeck .deck-r { transform-origin: 214px 62px; }
+.catdeck .cat { transform-box: fill-box; transform-origin: 50% 100%; animation: cat-bob 2.4s ease-in-out infinite; }
+.catdeck .paw { transform-box: fill-box; transform-origin: 50% 50%; animation: paw-scratch 2.4s ease-in-out infinite; }
+.catdeck .eq rect { animation: eq-bounce 1.2s ease-in-out infinite alternate; }
+.catdeck .eye { animation: cat-blink 5s step-end infinite; }
+
+/* Playing: everything doubles down to roughly the loop's tempo. */
+.catdeck.is-playing .deck { animation-duration: 2.4s; }
+.catdeck.is-playing .cat  { animation-duration: 1.17s; }
+.catdeck.is-playing .paw  { animation-duration: 1.17s; }
+.catdeck.is-playing .eq rect { animation-duration: 0.59s; }
+
+@keyframes deck-spin { to { transform: rotate(360deg); } }
+@keyframes cat-bob {
+  0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+  50%      { transform: translateY(-3px) rotate(1.5deg); }
+}
+@keyframes paw-scratch {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(-7px, 4px); }
+}
+@keyframes eq-bounce {
+  from { transform: scaleY(0.25); }
+  to   { transform: scaleY(1); }
+}
+@keyframes cat-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95%           { transform: scaleY(0.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catdeck .deck, .catdeck .cat, .catdeck .paw, .catdeck .eq rect, .catdeck .eye { animation: none !important; }
+}
