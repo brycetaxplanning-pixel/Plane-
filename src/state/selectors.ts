@@ -5,6 +5,7 @@ import { allRows, attention, dailyCompletion, type HabitRow } from '../lib/habit
 import { startingTotal } from '../lib/invest';
 import { goalRows } from '../lib/budgetGoals';
 import { healthSummary } from '../lib/health';
+import { datingStats } from '../lib/dating';
 import { weekPlan } from '../lib/fitplan';
 
 export interface ModuleSummary {
@@ -252,6 +253,7 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
   const goal = goalStats(s);
   const coach = coachStats(s);
   const hl = healthSummary(s);
+  const dat = datingStats(s);
 
   return {
     work: {
@@ -345,6 +347,15 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
           : hl.weightDelta !== null && Math.abs(hl.weightDelta) >= 0.1
             ? `${hl.weightDelta > 0 ? '+' : ''}${hl.weightDelta.toFixed(1)} over the last month`
             : hl.today.meals === 0 ? 'nothing logged today' : undefined,
+    },
+    dating: {
+      id: 'dating',
+      progress: 0,
+      headline: `${dat.active.length}`,
+      caption: dat.active.length === 1 ? 'person' : 'people',
+      nudge: dat.monthSpend > 0
+        ? `${dat.monthOutings} outing${dat.monthOutings === 1 ? '' : 's'} this month`
+        : dat.active.length === 0 ? 'nothing tracked yet' : undefined,
     },
     coach: {
       id: 'coach',

@@ -5,7 +5,7 @@ export const SCHEMA_VERSION = 1;
 
 export type ModuleId =
   | 'work' | 'planning' | 'spanish' | 'fitness' | 'finance'
-  | 'habits' | 'goals' | 'notes' | 'coach' | 'health';
+  | 'habits' | 'goals' | 'notes' | 'coach' | 'health' | 'dating';
 
 /* ------------------------------------------------------------------ */
 /* Module 1 — Abitos Tax Prep (day job)                               */
@@ -604,6 +604,41 @@ export interface HealthTargets {
   sleepHours?: number;
 }
 
+/* ---------------- Module 11: Dating ---------------- */
+
+export const DATING_STATUS = ['Talking', 'Seeing', 'Ended'] as const;
+export type DatingStatus = (typeof DATING_STATUS)[number];
+
+/**
+ * Someone you are seeing, and what it costs.
+ *
+ * Deliberately thin on identity: a first name or initials and how you met, and
+ * that is all the app asks for. This is the one module holding data about
+ * another person who never agreed to be in it, so it stores the least that
+ * still makes the numbers work.
+ */
+export interface Person {
+  id: string;
+  /** A first name or initials. The form says so and means it. */
+  label: string;
+  metAt?: string;
+  status: DatingStatus;
+  startedAt: DateKey;
+  notes?: string;
+  archived?: boolean;
+}
+
+export interface Outing {
+  id: string;
+  personId: string;
+  date: DateKey;
+  what: string;
+  cost: number;
+  /** Optional, and off unless you set it. Drives the cost-per figure. */
+  intimate?: boolean;
+  notes?: string;
+}
+
 export interface Settings {
   displayName: string;
   theme: 'system' | 'light' | 'dark';
@@ -670,6 +705,7 @@ export interface AppState {
     meals: Meal[];
     panels: BloodPanel[];
   };
+  dating: { people: Person[]; outings: Outing[] };
   habits: { items: Habit[]; logs: HabitLog[]; tone: CoachTone };
   notes: { items: Note[] };
   /** Week-start keys for weeks where every habit was met, and the ones
@@ -761,6 +797,7 @@ export function emptyState(): AppState {
       meals: [],
       panels: [],
     },
+    dating: { people: [], outings: [] },
     habits: { items: [], logs: [], tone: 'direct' },
     notes: { items: [] },
     awards: { enlightened: [], acknowledged: [] },
@@ -832,6 +869,10 @@ export function migrate(raw: unknown): AppState {
       vitals: s.health?.vitals ?? [],
       meals: s.health?.meals ?? [],
       panels: (s.health?.panels ?? []).map((p) => ({ ...p, markers: p.markers ?? [] })),
+    },
+    dating: {
+      people: s.dating?.people ?? [],
+      outings: s.dating?.outings ?? [],
     },
     habits: {
       ...base.habits,
@@ -929,4 +970,8 @@ export const MODULES: { id: ModuleId; num: number; name: string; blurb: string; 
   // categorical slots are spent, and a tile is identified by its name and
   // number, not by colour alone.
   { id: 'health',   num: 10, name: 'Health',          blurb: 'Weight, food, sleep and bloodwork',       icon: '🩺', color: 'var(--mod-health)' },
+  // Shares the Life Coach hue for the same reason Health shares Fitness's: the
+  // eight categorical slots are spent, and these two sit in the same corner of
+  // life. The name and number tell them apart.
+  { id: 'dating',   num: 11, name: 'Dating',          blurb: 'Who you are seeing and what it costs',    icon: '🌹', color: 'var(--mod-dating)' },
 ];

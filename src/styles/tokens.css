@@ -63,6 +63,7 @@
   /* Shares the Fitness slot: both are the body, and the eight categorical
      hues are spent. Tiles are told apart by name and number. */
   --mod-health:    var(--series-4);
+  --mod-dating:    var(--series-8);
 
   /* Type */
   --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;

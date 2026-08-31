@@ -21,6 +21,7 @@ const SCREENS = [
   () => import('../modules/Tracker'),
   () => import('../modules/Coach'),
   () => import('../modules/Health'),
+  () => import('../modules/Dating'),
   () => import('../modules/Settings'),
 ];
 

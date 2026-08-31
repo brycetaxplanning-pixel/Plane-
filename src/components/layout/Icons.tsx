@@ -28,5 +28,6 @@ export const Icons = {
   grid: () => wrap(<><rect x="3.5" y="3.5" width="7" height="7" rx="2" /><rect x="13.5" y="3.5" width="7" height="7" rx="2" /><rect x="3.5" y="13.5" width="7" height="7" rx="2" /><rect x="13.5" y="13.5" width="7" height="7" rx="2" /></>),
   back: () => wrap(<><path d="M15 5.5 8.5 12l6.5 6.5" /></>),
   plus: () => wrap(<><path d="M12 5.5v13M5.5 12h13" /></>),
+  heart: () => wrap(<path d="M12 20s-7-4.6-7-9.4A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.6C19 15.4 12 20 12 20Z" />),
   pulse: () => wrap(<><path d="M3 12.5h4l2-5 3 10 2.5-6 1.5 3h5" /></>),
 };

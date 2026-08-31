@@ -30,6 +30,7 @@ const Goals = lazy(() => import('./modules/Goals').then((m) => ({ default: m.Goa
 const Notes = lazy(() => import('./modules/Notes').then((m) => ({ default: m.Notes })));
 const Tracker = lazy(() => import('./modules/Tracker').then((m) => ({ default: m.Tracker })));
 const Coach = lazy(() => import('./modules/Coach').then((m) => ({ default: m.Coach })));
+const Dating = lazy(() => import('./modules/Dating').then((m) => ({ default: m.Dating })));
 const Health = lazy(() => import('./modules/Health').then((m) => ({ default: m.Health })));
 const Settings = lazy(() => import('./modules/Settings').then((m) => ({ default: m.Settings })));
 const NotificationsPage = lazy(() => import('./components/Notifications').then((m) => ({ default: m.NotificationsPage })));
@@ -121,6 +122,7 @@ function Shell() {
         {route === 'notifications' && <NotificationsPage />}
         {route === 'coach' && <Coach />}
         {route === 'health' && <Health />}
+        {route === 'dating' && <Dating />}
         {route === 'settings' && <Settings />}
         </Suspense>
       </main>

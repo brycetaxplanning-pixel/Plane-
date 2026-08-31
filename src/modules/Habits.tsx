@@ -12,8 +12,22 @@ import { Modal } from '../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { BarChart } from '../components/charts/BarChart';
 import { Ring } from '../components/charts/Ring';
+import { StatTile } from '../components/charts/StatTile';
+import { hoursAs, sinkTotals } from '../lib/insights';
 
 const ACCENT = 'var(--mod-habits)';
+
+/** The same fact in three registers, matching the tone set below. It states
+ *  the number and stops — no lecture attached. */
+function scold(tone: CoachTone, hours: number, asThings: string | null): string {
+  const h = `${hours}h`;
+  const like = asThings ? ` That is ${asThings}.` : '';
+  if (tone === 'gentle') return `${h} over the cap so far.${like}`;
+  if (tone === 'drill') return `${h} gone. Not lost — spent, by you, on purpose.${like}`;
+  return `${h} past the cap since you started counting.${like}`;
+}
+
+
 
 const TONES: { id: CoachTone; label: string; blurb: string }[] = [
   { id: 'gentle', label: 'Gentle', blurb: 'Encouraging' },
@@ -84,6 +98,8 @@ export function Habits() {
       </div>
     );
   }
+
+  const sinks = sinkTotals(state);
 
   return (
     <div className="stack">
@@ -171,6 +187,72 @@ export function Habits() {
             formatValue={(n) => `${n}%`}
             ariaLabel="Percentage of daily habits completed each day this week"
           />
+        </section>
+      )}
+
+      {sinks.length > 0 && (
+        <section className="card">
+          <SectionHead
+            title="What it has cost so far"
+            sub="Anything you capped, totalled up since you started logging it"
+          />
+          <div className="stack-4">
+            {sinks.map((sink) => {
+              const over = sink.hoursOver;
+              const asThings = hoursAs(state, over);
+              return (
+                <div key={sink.habit.id} className="stack-2" style={{ marginBottom: 'var(--sp-4)' }}>
+                  <div className="spread">
+                    <span className="t-sm t-bold">{sink.habit.emoji} {sink.habit.title}</span>
+                    <span className="t-xs t-muted">
+                      {sink.daysLogged} day{sink.daysLogged === 1 ? '' : 's'} logged · cap {sink.capPerDay}h
+                    </span>
+                  </div>
+
+                  <div className="grid grid-3" style={{ gap: 'var(--sp-3)' }}>
+                    <StatTile
+                      label="Over the cap"
+                      value={`${over}h`}
+                      caption={`all time · ${sink.hoursOverThisMonth}h this month`}
+                    />
+                    <StatTile
+                      label="Total on it"
+                      value={`${sink.hoursTotal}h`}
+                      caption={`${sink.averagePerDay}h a day on average`}
+                    />
+                    <StatTile
+                      label="Under the cap"
+                      value={`${sink.daysUnder}/${sink.daysLogged}`}
+                      caption={sink.daysUnder === sink.daysLogged ? 'every logged day' : 'days you kept it down'}
+                    />
+                  </div>
+
+                  {over > 0 && (
+                    <div className="callout callout-warn">
+                      <strong className="t-sm">{scold(state.habits.tone, over, asThings)}</strong>
+                      {/* Three weeks before a yearly figure is offered: a rate
+                          from five days is noise wearing a big number. */}
+                      {sink.daysLogged >= 21 ? (
+                        <p className="t-sm" style={{ margin: '4px 0 0' }}>
+                          At this rate that is {sink.projectedYear}h a year over the cap you set yourself
+                          {sink.projectedYear >= 24 ? ` — ${(sink.projectedYear / 24).toFixed(0)} whole days` : ''}.
+                        </p>
+                      ) : (
+                        <p className="t-sm" style={{ margin: '4px 0 0' }}>
+                          {21 - sink.daysLogged} more logged day{21 - sink.daysLogged === 1 ? '' : 's'} and this can
+                          be read as a rate rather than a run of days.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <p className="t-xs t-muted">
+            Only days you logged are counted. A day with nothing entered is left out rather than assumed to be zero, so
+            these totals are a floor, not a guess.
+          </p>
         </section>
       )}
 

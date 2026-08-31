@@ -1,4 +1,4 @@
-import { bucketOf, type AppState } from './schema';
+import { bucketOf, type AppState, type Habit } from './schema';
 import { addDays, fmtDate, fmtRange, lastWeeks, monthKey, todayKey, weekStart, type DateKey } from './date';
 import { allRows, dailyCompletion } from './habits';
 
@@ -423,6 +423,112 @@ export interface TimeSink {
  * type in; this just adds it up and puts it next to the hours you actually
  * have.
  */
+/**
+ * The running total for a capped time habit — screen time being the one this
+ * was built for. The weekly view above says how this week is going; this says
+ * how much of your life has gone into it since you started counting, which is
+ * the number that actually stings.
+ *
+ * Only logged days count. A day you did not log is not assumed to be zero and
+ * not assumed to be bad — it is simply not counted, and the number of days is
+ * reported alongside so the total can be read for what it is.
+ */
+export interface SinkTotal {
+  habit: Habit;
+  unit: string;
+  daysLogged: number;
+  /** Every hour logged against this habit, ever. */
+  hoursTotal: number;
+  hoursThisMonth: number;
+  /** Hours beyond the cap, summed over the days that went over. */
+  hoursOver: number;
+  hoursOverThisMonth: number;
+  /** Days that came in at or under the cap. */
+  daysUnder: number;
+  capPerDay: number;
+  /** Average across logged days, so a week of not logging cannot flatter it. */
+  averagePerDay: number;
+  /** What the overage would be over a year at this rate. */
+  projectedYear: number;
+}
+
+/**
+ * Puts a number of hours into terms taken from what this person actually does:
+ * the length of their own Spanish sessions, their own training sessions. Falls
+ * back to plain days only when there is nothing logged to compare against —
+ * an invented equivalent would be worse than none.
+ */
+export function hoursAs(state: AppState, hours: number): string | null {
+  if (hours < 1) return null;
+
+  const sessions = state.spanish.sessions;
+  const activities = state.fitness.activities;
+
+  const avgStudy = sessions.length
+    ? sessions.reduce((n, x) => n + x.minutes, 0) / sessions.length / 60
+    : 0;
+  const avgTraining = activities.length
+    ? activities.reduce((n, x) => n + x.minutes, 0) / activities.length / 60
+    : 0;
+
+  if (avgStudy > 0 && hours / avgStudy >= 2) {
+    return `${Math.round(hours / avgStudy)} Spanish sessions, the length you actually do them`;
+  }
+  if (avgTraining > 0 && hours / avgTraining >= 2) {
+    return `${Math.round(hours / avgTraining)} training sessions`;
+  }
+  if (hours >= 24) return `${(hours / 24).toFixed(1)} full days`;
+  return null;
+}
+
+export function sinkTotals(state: AppState): SinkTotal[] {
+  const toHours = (v: number, unit: string) => (unit.startsWith('min') ? v / 60 : v);
+  const month = monthKey();
+  const round = (n: number) => Math.round(n * 10) / 10;
+
+  return state.habits.items
+    .filter((h) => h.kind === 'under' && !h.archived && h.unit && TIME_UNITS.includes(h.unit.toLowerCase()))
+    .map((h) => {
+      const unit = (h.unit ?? 'h').toLowerCase();
+      const capPerDay = toHours(h.target ?? 0, unit);
+      const logs = state.habits.logs.filter((l) => l.habitId === h.id && l.amount !== undefined);
+
+      let hoursTotal = 0;
+      let hoursThisMonth = 0;
+      let hoursOver = 0;
+      let hoursOverThisMonth = 0;
+      let daysUnder = 0;
+
+      for (const l of logs) {
+        const hours = toHours(l.amount ?? 0, unit);
+        const over = Math.max(0, hours - capPerDay);
+        hoursTotal += hours;
+        hoursOver += over;
+        if (over === 0) daysUnder += 1;
+        if (monthKey(l.date) === month) {
+          hoursThisMonth += hours;
+          hoursOverThisMonth += over;
+        }
+      }
+
+      const daysLogged = logs.length;
+      return {
+        habit: h,
+        unit: h.unit ?? 'h',
+        daysLogged,
+        hoursTotal: round(hoursTotal),
+        hoursThisMonth: round(hoursThisMonth),
+        hoursOver: round(hoursOver),
+        hoursOverThisMonth: round(hoursOverThisMonth),
+        daysUnder,
+        capPerDay: round(capPerDay),
+        averagePerDay: daysLogged ? round(hoursTotal / daysLogged) : 0,
+        projectedYear: daysLogged ? round((hoursOver / daysLogged) * 365) : 0,
+      };
+    })
+    .filter((s) => s.daysLogged > 0);
+}
+
 export function timeSinks(state: AppState): TimeSink[] {
   const week = lastWeeks(1)[0];
   const toHours = (v: number, unit: string) => (unit.startsWith('min') ? v / 60 : v);

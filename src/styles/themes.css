@@ -211,6 +211,7 @@
   --mod-notes:    var(--text-secondary);
   --mod-coach:    var(--series-8);
   --mod-health:   var(--series-4);
+  --mod-dating:   var(--series-8);
 }
 
 /* A skin's accent drives primary actions and the level bar. */
