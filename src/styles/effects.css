@@ -377,8 +377,10 @@
    The unprompted insight card.
 ------------------------------------------------------------------ */
 
+/* Below the modal layer (60): an unprompted card must never sit on top of a
+   dialog the user opened, or it blocks the buttons underneath it. */
 .pop {
-  position: fixed; z-index: 70;
+  position: fixed; z-index: 55;
   left: var(--sp-4); right: var(--sp-4);
   bottom: calc(var(--nav-h) + 14px + env(safe-area-inset-bottom, 0px));
   padding: var(--sp-4);

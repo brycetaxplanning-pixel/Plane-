@@ -13,8 +13,8 @@ tells you what is asking for attention.
 |---|--------|----------------|
 | 1 | **Abitos Tax Prep** | Client projects, their stage (not started → filed), due dates and per-project task lists. |
 | 2 | **Business** | The weekly target of 50 S-corp outreach contacts, the per-day pace needed to still hit it, an 8-week history and a deal pipeline — plus a numbered **idea list**, where "Help me start it" turns an idea into first actions you can tick off. |
-| 3 | **Spanish** | One-tap links out to italki and Babbel, a session stopwatch, and minutes logged per day — daily goal, weekly goal, and total hours over time. |
-| 4 | **Fitness** | The weekly quotas — 3 MMA, 4 lifting/calisthenics, 12 sessions total (leaving 5 flexible for running or basketball) — plus half-marathon build tracking and an AI coach that can see the whole log. |
+| 3 | **Spanish** | One-tap links out to italki and Babbel, a session stopwatch, minutes logged per day — and an **AI tutor you talk to out loud**, built for a commute. It listens, replies in Spanish, speaks it back, corrects one thing at a time, and logs the time when you stop. |
+| 4 | **Fitness** | A weekly plan you build from pills: lock in the things that happen every week (4 lifts, 3 MMA), and the remainder become open slots you fill however you like. Locked lines carry over on Monday; one-off lines don't. Plus half-marathon tracking, physique goals with measurements, and an AI coach that can see the whole log. |
 | 5 | **Finances** | Monthly budget vs. actual by category, CSV import, vendor rules, a review queue that asks what a charge was actually for, and an **Invest** tab that projects your accounts forward with sliders for horizon, return and monthly contribution. |
 | 6 | **Habits** | Daily and weekly habits with green / yellow / red status. Green is done, yellow is one miss, red is two or more in a row — with a "days since" count and an escalating nudge whose bluntness you set. |
 | 7 | **Goals** | One visual card per goal: a picture, what it costs, and how you get there. Fields adapt to the kind of goal — a purchase asks for a price, a training goal asks for a window in weeks. |
@@ -47,6 +47,19 @@ It deliberately refuses to say more than that:
 
 At most one finding is raised unprompted, at most once a day, and dismissing
 one retires it for good. All of it can be switched off in Settings.
+
+## The Spanish tutor
+
+Press start and talk. It uses the browser's speech recognition to hear you,
+sends the turn to Claude with a brief written for the ear — no markdown, no
+lists, expect mistranscribed words — and speaks the reply back through the
+device's own Spanish voice. Corrections come back as one short English line,
+at most one per turn, and can be spoken aloud too. Time is logged to Spanish
+automatically when you end the session.
+
+It needs two things the browser may not have: speech recognition (Chrome and
+Safari, not Firefox) and an installed Spanish voice. Both are checked up front
+and named if missing, rather than failing silently mid-sentence.
 
 ## Talking instead of typing
 

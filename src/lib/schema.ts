@@ -112,9 +112,18 @@ export interface StudyLink {
 
 export type TutorLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 
+export const DIALECTS = [
+  { id: 'es-ES', label: 'Spain' },
+  { id: 'es-MX', label: 'Mexico' },
+  { id: 'es-US', label: 'US Spanish' },
+  { id: 'es-AR', label: 'Argentina' },
+] as const;
+export type Dialect = (typeof DIALECTS)[number]['id'];
+
 export interface TutorConfig {
   level: TutorLevel;
   topic: string;
+  dialect: Dialect;
   /** Playback speed of the tutor's voice; slower helps at lower levels. */
   speechRate: number;
   /** Keep listening after the tutor finishes speaking — the hands-free loop. */
@@ -205,6 +214,19 @@ export interface RaceGoal {
   targetTime?: string;
 }
 
+/** One line of the weekly plan: an activity and how many times a week.
+ *  Locked lines carry over automatically; unlocked ones belong to the week
+ *  they were added in and disappear afterwards. */
+export interface PlanItem {
+  id: string;
+  activity: string;
+  perWeek: number;
+  locked: boolean;
+  /** Set only on unlocked lines: the Monday of the week they apply to. */
+  week?: DateKey;
+  createdAt: DateKey;
+}
+
 export interface FitnessTargets {
   mma: number;
   strength: number;
@@ -291,7 +313,7 @@ export type Cadence = 'daily' | 'weekly';
  *  - check: did it or didn't
  *  - amount: hit at least a number (protein, minutes)
  *  - before: happened no later than a clock time (in bed by 23:30) */
-export type HabitKind = 'check' | 'amount' | 'before';
+export type HabitKind = 'check' | 'amount' | 'before' | 'under';
 
 export interface Habit {
   id: string;
@@ -301,7 +323,7 @@ export interface Habit {
   kind: HabitKind;
   /** Weekly habits: how many times a week counts as done. */
   timesPerWeek?: number;
-  /** amount: the floor to clear. */
+  /** amount: the floor to clear. under: the ceiling not to cross. */
   target?: number;
   unit?: string;
   /** before: 24h clock time, e.g. "23:30". */
@@ -460,6 +482,7 @@ export interface AppState {
     chat: ChatMessage[];
     measurements: Measurement[];
     physique: PhysiqueGoal[];
+    plan: PlanItem[];
   };
   finance: {
     budgets: Record<string, number>;
@@ -513,6 +536,7 @@ export function emptyState(): AppState {
       tutor: {
         level: 'Intermediate',
         topic: 'Everyday conversation',
+        dialect: 'es-MX',
         speechRate: 0.95,
         autoContinue: true,
         translate: true,
@@ -526,6 +550,7 @@ export function emptyState(): AppState {
       chat: [],
       measurements: [],
       physique: [],
+      plan: [],
     },
     finance: {
       budgets: {},
@@ -585,6 +610,7 @@ export function migrate(raw: unknown): AppState {
       chat: s.fitness?.chat ?? [],
       measurements: s.fitness?.measurements ?? [],
       physique: s.fitness?.physique ?? [],
+      plan: s.fitness?.plan ?? [],
     },
     finance: {
       ...base.finance,

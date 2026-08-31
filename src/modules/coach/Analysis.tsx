@@ -1,4 +1,4 @@
-import { findInsights, realityCheck, spendPace, weeklyRows, type Insight } from '../../lib/insights';
+import { findInsights, realityCheck, spendPace, timeSinks, weeklyRows, type Insight } from '../../lib/insights';
 import { fmtMoney } from '../../lib/finance';
 import { fmtDate } from '../../lib/date';
 import { useApp } from '../../state/context';
@@ -7,6 +7,21 @@ import { BarChart } from '../../components/charts/BarChart';
 import { StatTile } from '../../components/charts/StatTile';
 
 const ACCENT = 'var(--mod-coach)';
+
+/** Turns spare hours into something the user already said they wanted, which
+ *  lands harder than the raw number. */
+function equivalents(hours: number, reality: ReturnType<typeof realityCheck>): string {
+  const training = reality.demands.find((d) => d.name.startsWith('Training'));
+  const spanish = reality.demands.find((d) => d.name === 'Spanish');
+  if (spanish && spanish.hours > 0 && hours >= spanish.hours) {
+    return `${(hours / spanish.hours).toFixed(1)}× the week of Spanish`;
+  }
+  if (training && training.hours > 0) {
+    const sessions = Math.round((hours / training.hours) * 12);
+    if (sessions >= 1) return `about ${sessions} training session${sessions === 1 ? '' : 's'}`;
+  }
+  return `${hours}h of the week`;
+}
 
 const KIND_ICON: Record<Insight['kind'], string> = {
   split: '⚖️', trend: '📈', neglect: '💤', streak: '🔥', balance: '🧩',
@@ -18,6 +33,7 @@ export function Analysis() {
   const rows = weeklyRows(state, 8);
   const reality = realityCheck(state);
   const pace = spendPace(state);
+  const sinks = timeSinks(state);
 
   const dismissed = state.insights.dismissed.length;
 
@@ -110,6 +126,38 @@ export function Analysis() {
           admin and other people are not in here.
         </p>
       </section>
+
+      {sinks.length > 0 && (
+        <section className="card">
+          <SectionHead title="Where the hours went" sub="What you capped, against what you actually did" />
+          {sinks.map((sink) => (
+            <div key={sink.habit} className="stack-2" style={{ marginBottom: 'var(--sp-3)' }}>
+              <div className="spread">
+                <span className="t-sm t-bold">{sink.habit}</span>
+                <span className={sink.overBy > 0 ? 't-sm t-crit t-num' : 't-sm t-good t-num'}>
+                  {sink.hoursThisWeek}h across {sink.daysLogged} day{sink.daysLogged === 1 ? '' : 's'}
+                </span>
+              </div>
+              <div className="xpbar">
+                <i style={{
+                  width: `${Math.min(100, (sink.hoursThisWeek / Math.max(0.1, sink.capForLoggedDays)) * 100)}%`,
+                  background: sink.overBy > 0 ? 'var(--status-critical)' : 'var(--status-good)',
+                }} />
+              </div>
+              <p className="t-xs t-sec">
+                {sink.overBy > 0
+                  ? `${sink.overBy}h over your own ${sink.capPerDay}h-a-day cap. That is ${equivalents(sink.overBy, reality)} you said you wanted.`
+                  : `Inside your ${sink.capPerDay}h-a-day cap by ${Math.abs(sink.overBy)}h.`}
+                {sink.daysLogged < 7 && ` At this rate the week lands around ${sink.projectedWeek}h.`}
+              </p>
+            </div>
+          ))}
+          <p className="t-xs t-muted">
+            Typed in by hand. Apple has no public API for Screen Time, so nothing can read it for you —
+            the weekly figure from your phone's own report is the number to put here.
+          </p>
+        </section>
+      )}
 
       <section className="card">
         <SectionHead title="Eight weeks, side by side" sub="The columns the findings above are computed from" />

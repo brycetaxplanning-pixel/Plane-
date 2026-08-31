@@ -260,6 +260,7 @@ function HabitRowView({
             ? ` · ${row.weekCount}/${row.weekTarget} this week`
             : row.daysSince !== null && row.daysSince > 0 ? ` · ${row.daysSince} day${row.daysSince === 1 ? '' : 's'} since` : ''}
           {row.habit.kind === 'amount' && row.habit.target ? ` · target ${row.habit.target}${row.habit.unit ?? ''}` : ''}
+          {row.habit.kind === 'under' && row.habit.target ? ` · cap ${row.habit.target}${row.habit.unit ?? ''}` : ''}
           {row.habit.kind === 'before' && row.habit.targetTime ? ` · by ${row.habit.targetTime}` : ''}
         </span>
         {!weekly && (
@@ -303,15 +304,17 @@ function LogForm({
           <button
             className="btn btn-accent"
             style={{ ['--mod' as string]: ACCENT }}
-            onClick={() => onSave(habit.kind === 'amount' ? { amount: Number(amount) || 0 } : { time })}
+            onClick={() => onSave(habit.kind === 'before' ? { time } : { amount: Number(amount) || 0 })}
           >
             Log it
           </button>
         </>
       }
     >
-      {habit.kind === 'amount' ? (
-        <Field label={`How much? (target ${habit.target}${habit.unit ?? ''})`}>
+      {habit.kind === 'amount' || habit.kind === 'under' ? (
+        <Field label={habit.kind === 'under'
+          ? `How much? (cap ${habit.target}${habit.unit ?? ''})`
+          : `How much? (target ${habit.target}${habit.unit ?? ''})`}>
           <input className="input" type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />
         </Field>
       ) : (
@@ -359,8 +362,8 @@ function HabitForm({
               cadence,
               kind,
               timesPerWeek: cadence === 'weekly' ? Math.max(1, Number(timesPerWeek) || 1) : undefined,
-              target: kind === 'amount' ? Number(target) || 0 : undefined,
-              unit: kind === 'amount' ? unit.trim() || undefined : undefined,
+              target: kind === 'amount' || kind === 'under' ? Number(target) || 0 : undefined,
+              unit: kind === 'amount' || kind === 'under' ? unit.trim() || undefined : undefined,
               targetTime: kind === 'before' ? targetTime : undefined,
               createdAt: habit?.createdAt ?? todayKey(),
             })}
@@ -399,13 +402,16 @@ function HabitForm({
           <div className="row-2 wrap">
             <button type="button" className="chip" aria-pressed={kind === 'check'} onClick={() => setKind('check')}>Just did it</button>
             <button type="button" className="chip" aria-pressed={kind === 'amount'} onClick={() => setKind('amount')}>Hit a number</button>
+            <button type="button" className="chip" aria-pressed={kind === 'under'} onClick={() => setKind('under')}>Stay under a number</button>
             <button type="button" className="chip" aria-pressed={kind === 'before'} onClick={() => setKind('before')}>By a time</button>
           </div>
         </Field>
 
-        {kind === 'amount' && (
+        {(kind === 'amount' || kind === 'under') && (
           <div className="grid grid-2" style={{ gap: 'var(--sp-3)' }}>
-            <Field label="At least"><input className="input" type="number" min={0} value={target} onChange={(e) => setTarget(e.target.value)} placeholder="180" /></Field>
+            <Field label={kind === 'under' ? 'No more than' : 'At least'}>
+              <input className="input" type="number" min={0} value={target} onChange={(e) => setTarget(e.target.value)} placeholder={kind === 'under' ? '3' : '180'} />
+            </Field>
             <Field label="Unit"><input className="input" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="g" /></Field>
           </div>
         )}

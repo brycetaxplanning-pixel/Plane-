@@ -31,6 +31,8 @@ const metLog = (logs: HabitLog[], habitId: string, date: DateKey) =>
  *  a target change never rewrites history — `met` is frozen at log time. */
 export function meetsTarget(habit: Habit, value: { amount?: number; time?: string }): boolean {
   if (habit.kind === 'amount') return (value.amount ?? 0) >= (habit.target ?? 0);
+  // A ceiling rather than a floor — for the things you want less of.
+  if (habit.kind === 'under') return (value.amount ?? 0) <= (habit.target ?? 0);
   if (habit.kind === 'before') {
     if (!value.time || !habit.targetTime) return false;
     // Anything logged before 05:00 belongs to the night before, so "in bed by

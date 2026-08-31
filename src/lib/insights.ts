@@ -399,6 +399,57 @@ export function realityCheck(state: AppState, jobHours = 45, sleepHours = 8): Re
   return { demands, committed, available, jobHours, sleepHours, overBy: committed - available };
 }
 
+const TIME_UNITS = ['h', 'hr', 'hrs', 'hour', 'hours', 'min', 'mins', 'minute', 'minutes'];
+
+export interface TimeSink {
+  habit: string;
+  unit: string;
+  /** Hours logged against this cap this week. */
+  hoursThisWeek: number;
+  /** What the cap allowed across the days actually logged — not across the
+   *  whole week. Comparing one logged day against a seven-day allowance
+   *  reports a heavy day as comfortably under. */
+  capForLoggedDays: number;
+  capPerDay: number;
+  daysLogged: number;
+  overBy: number;
+  /** Where the week lands if the logged days are representative. */
+  projectedWeek: number;
+}
+
+/**
+ * Habits with a ceiling and a time unit — screen time being the obvious one.
+ * There is no public API for iOS Screen Time, so the number is whatever you
+ * type in; this just adds it up and puts it next to the hours you actually
+ * have.
+ */
+export function timeSinks(state: AppState): TimeSink[] {
+  const week = lastWeeks(1)[0];
+  const toHours = (v: number, unit: string) => (unit.startsWith('min') ? v / 60 : v);
+
+  return state.habits.items
+    .filter((h) => h.kind === 'under' && !h.archived && h.unit && TIME_UNITS.includes(h.unit.toLowerCase()))
+    .map((h) => {
+      const logs = state.habits.logs.filter((l) => l.habitId === h.id && weekStart(l.date) === week && l.amount !== undefined);
+      const unit = (h.unit ?? 'h').toLowerCase();
+      const hoursThisWeek = logs.reduce((n, l) => n + toHours(l.amount ?? 0, unit), 0);
+      const capPerDay = toHours(h.target ?? 0, unit);
+      const capForLoggedDays = capPerDay * logs.length;
+      const round = (n: number) => Math.round(n * 10) / 10;
+      return {
+        habit: h.title,
+        unit: h.unit ?? 'h',
+        hoursThisWeek: round(hoursThisWeek),
+        capForLoggedDays: round(capForLoggedDays),
+        capPerDay: round(capPerDay),
+        daysLogged: logs.length,
+        overBy: round(hoursThisWeek - capForLoggedDays),
+        projectedWeek: round(logs.length ? (hoursThisWeek / logs.length) * 7 : 0),
+      };
+    })
+    .filter((s) => s.daysLogged > 0);
+}
+
 /** A short, factual summary of the current month's spending pace, used by the
  *  analysis panel. */
 export function spendPace(state: AppState): { spent: number; budget: number; dayOfMonth: number; daysInMonth: number } | null {

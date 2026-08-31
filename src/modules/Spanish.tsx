@@ -5,6 +5,7 @@ import { dowLabel, fmtDate, fmtDuration, todayKey } from '../lib/date';
 import { uid } from '../lib/id';
 import { useApp } from '../state/context';
 import { spanishStats } from '../state/selectors';
+import { Tutor } from './spanish/Tutor';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { BarChart } from '../components/charts/BarChart';
@@ -18,6 +19,7 @@ export function Spanish() {
   const { state, update, reward, toast } = useApp();
   const stats = spanishStats(state);
   const [logging, setLogging] = useState<number | null>(null);
+  const [tab, setTab] = useState<'practice' | 'tutor'>('practice');
 
   const logSession = (minutes: number, platform: string, kind: StudySession['kind'], notes: string) => {
     if (minutes <= 0) return;
@@ -39,6 +41,15 @@ export function Spanish() {
 
   return (
     <div className="stack">
+      <div className="tabs" role="tablist">
+        <button className="tab" role="tab" aria-selected={tab === 'practice'} onClick={() => setTab('practice')}>Practice</button>
+        <button className="tab" role="tab" aria-selected={tab === 'tutor'} onClick={() => setTab('tutor')}>AI tutor</button>
+      </div>
+
+      {tab === 'tutor' && <Tutor />}
+
+      {tab === 'practice' && (
+      <>
       <section className="card" style={{ ['--mod' as string]: ACCENT }}>
         <SectionHead title="Go practice" sub="Opens in a new tab — come back and log the time" />
         <div className="grid grid-2" style={{ gap: 'var(--sp-3)' }}>
@@ -187,6 +198,9 @@ export function Spanish() {
           </button>
         </div>
       </section>
+
+      </>
+      )}
 
       {logging !== null && (
         <LogForm initialMinutes={logging} platforms={state.spanish.links.map((l) => l.label)} onClose={() => setLogging(null)} onSave={logSession} />

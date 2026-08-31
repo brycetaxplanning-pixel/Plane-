@@ -12,6 +12,7 @@ import { Ring } from '../components/charts/Ring';
 import { StatTile } from '../components/charts/StatTile';
 import { Chat } from '../components/Chat';
 import { Physique } from './fitness/Physique';
+import { Plan } from './fitness/Plan';
 
 const ACCENT = 'var(--mod-fitness)';
 
@@ -51,10 +52,17 @@ export function Fitness() {
             label={`${stats.total}`}
             caption={`of ${stats.targets.total}`}
           /></div>
-          <div className="hero-body grid grid-3 tight-mobile" style={{ gap: 'var(--sp-3)' }}>
-            <QuotaTile name="MMA" done={stats.mma} target={stats.targets.mma} />
-            <QuotaTile name="Lifting" done={stats.strength} target={stats.targets.strength} />
-            <QuotaTile name="Anything else" done={stats.flexDone} target={stats.flexTarget} />
+          <div className="hero-body stack-2">
+            <p className="t-sm t-sec">
+              {stats.remaining > 0
+                ? `${stats.remaining} more to hit ${stats.targets.total} this week.`
+                : `Week complete — ${stats.total} sessions in.`}
+            </p>
+            <p className="t-xs t-muted">
+              {stats.runKmThisWeek > 0
+                ? `${stats.runKmThisWeek.toFixed(1)} km covered this week.`
+                : 'No distance logged this week.'}
+            </p>
           </div>
         </div>
         <button
@@ -75,8 +83,10 @@ export function Fitness() {
 
       {tab === 'week' && (
         <>
+          <Plan />
+
           <section className="card">
-            <SectionHead title="Sessions by day" sub="Twelve a week, spread however it works" />
+            <SectionHead title="Sessions by day" sub={`${stats.targets.total} a week, spread however it works`} />
             <BarChart
               data={stats.byDay.map((d) => ({ key: d.key, value: d.value, label: dowLabel(d.key) }))}
               color={ACCENT}
@@ -120,23 +130,6 @@ export function Fitness() {
             )}
           </section>
 
-          <section className="card">
-            <SectionHead title="Weekly quotas" sub="Change these if the plan changes" />
-            <div className="grid grid-3 tight-mobile" style={{ gap: 'var(--sp-3)' }}>
-              {(['mma', 'strength', 'total'] as const).map((k) => (
-                <Field key={k} label={k === 'mma' ? 'MMA' : k === 'strength' ? 'Strength' : 'Total'}>
-                  <input
-                    className="input" type="number" min={0}
-                    value={state.fitness.targets[k]}
-                    onChange={(e) => update((s) => ({
-                      ...s,
-                      fitness: { ...s.fitness, targets: { ...s.fitness.targets, [k]: Math.max(0, Number(e.target.value) || 0) } },
-                    }))}
-                  />
-                </Field>
-              ))}
-            </div>
-          </section>
         </>
       )}
 
@@ -174,21 +167,6 @@ export function Fitness() {
       )}
 
       {logging && <ActivityForm onClose={() => setLogging(false)} onSave={logActivity} />}
-    </div>
-  );
-}
-
-function QuotaTile({ name, done, target }: { name: string; done: number; target: number }) {
-  const met = target > 0 && done >= target;
-  return (
-    <div className="tile">
-      <span className="tile-label">{name}</span>
-      <span className="tile-value tile-value-sm">
-        {done}<span className="t-muted" style={{ fontSize: 15 }}> / {target}</span>
-      </span>
-      <span className={met ? 'status status-good' : 'status status-neutral'} style={{ alignSelf: 'flex-start' }}>
-        {met ? 'Met' : `${target - done} left`}
-      </span>
     </div>
   );
 }

@@ -216,6 +216,7 @@ export function sampleState(): AppState {
     { id: uid('hab'), title: 'Pray',               emoji: '🙏', cadence: 'daily',  kind: 'check',  createdAt: addDays(today, -30) },
     { id: uid('hab'), title: 'Hit protein',        emoji: '🥩', cadence: 'daily',  kind: 'amount', target: 180, unit: 'g', createdAt: addDays(today, -30) },
     { id: uid('hab'), title: 'In bed by 11:30',    emoji: '😴', cadence: 'daily',  kind: 'before', targetTime: '23:30', createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'Screen time',         emoji: '📱', cadence: 'daily',  kind: 'under',  target: 3, unit: 'h', createdAt: addDays(today, -30) },
     { id: uid('hab'), title: 'Call five friends',  emoji: '📱', cadence: 'weekly', kind: 'check',  timesPerWeek: 5, createdAt: addDays(today, -30) },
     { id: uid('hab'), title: 'Get some sun',       emoji: '🌞', cadence: 'weekly', kind: 'check',  timesPerWeek: 2, createdAt: addDays(today, -30) },
     { id: uid('hab'), title: 'Spar',               emoji: '🥊', cadence: 'weekly', kind: 'check',  timesPerWeek: 1, createdAt: addDays(today, -30) },
@@ -223,7 +224,7 @@ export function sampleState(): AppState {
 
   // A fortnight of history with deliberate gaps, so green, yellow and red all
   // show up straight away rather than everything reading as failing.
-  const [stretch, pray, protein, bed, callFriends, sun, spar] = s.habits.items;
+  const [stretch, pray, protein, bed, screen, callFriends, sun, spar] = s.habits.items;
   for (let i = 13; i >= 0; i--) {
     const date = addDays(today, -i);
     // Pray: solid, including today — the green case.
@@ -232,6 +233,11 @@ export function sampleState(): AppState {
     if (i === 0 || (i > 2 && i % 4 !== 0)) s.habits.logs.push({ id: uid('hl'), habitId: stretch.id, date, met: true, amount: 15 + (i % 3) * 5 });
     // Protein: missed the last two days — the red case.
     if (i > 1) s.habits.logs.push({ id: uid('hl'), habitId: protein.id, date, met: true, amount: 180 + (i % 5) * 8 });
+    // Screen time: over the cap most days, which is the point of tracking it.
+    if (i <= 6) {
+      const hours = [4.8, 5.4, 3.1, 6.2, 4.1, 2.6, 5.0][i] ?? 4;
+      s.habits.logs.push({ id: uid('hl'), habitId: screen.id, date, met: hours <= 3, amount: hours });
+    }
     // Bed: missed yesterday — the yellow case — and late a few times before.
     if (i !== 1) {
       const late = i > 1 && i % 5 === 0;
@@ -255,6 +261,12 @@ export function sampleState(): AppState {
     s.habits.logs.push({ id: uid('hl'), habitId: callFriends.id, date: addDays(ws, Math.min(k, elapsedDays)), met: true });
   }
   s.habits.logs.push({ id: uid('hl'), habitId: sun.id, date: ws, met: true });
+
+  s.fitness.plan = [
+    { id: uid('plan'), activity: 'Weightlifting', perWeek: 4, locked: true, createdAt: addDays(today, -60) },
+    { id: uid('plan'), activity: 'MMA', perWeek: 3, locked: true, createdAt: addDays(today, -60) },
+    { id: uid('plan'), activity: 'Run', perWeek: 1, locked: false, week: ws, createdAt: today },
+  ];
 
   s.fitness.physique = [
     { id: uid('phy'), title: 'Bigger chest', area: 'Chest', site: 'Chest', target: 108, unit: 'cm', plan: 'Two pressing sessions a week, top set plus back-offs', done: false, createdAt: addDays(today, -60) },

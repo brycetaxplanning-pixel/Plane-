@@ -271,6 +271,8 @@
 @keyframes blink { 0%, 60%, 100% { opacity: 0.25; } 30% { opacity: 1; } }
 
 /* ---------- toast ---------- */
+/* Toasts float above everything but are never clickable, so they cannot
+   swallow a tap meant for a dialog button underneath. */
 .toast-wrap {
   position: fixed; z-index: 80;
   left: 50%; transform: translateX(-50%);
@@ -537,3 +539,71 @@
 }
 .insight-title { font-size: 14px; font-weight: 680; line-height: 1.3; margin-bottom: 3px; }
 .stack-4 { display: flex; flex-direction: column; }
+
+/* ---------- Spanish tutor ---------- */
+.tutor-stage {
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-5) var(--sp-4);
+  margin-top: var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--surface-sunken);
+}
+.tutor-orb { position: relative; display: grid; place-items: center; width: 78px; height: 78px; }
+.tutor-orb > i {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--mod, var(--series-3));
+  opacity: 0.25;
+}
+.tutor-orb > i:nth-child(2) { inset: 12px; opacity: 0.4; }
+.tutor-orb > i:nth-child(3) { inset: 24px; opacity: 1; background: var(--mod, var(--series-3)); border-color: transparent; }
+
+/* Each phase gets its own motion, so the state is readable at a glance from
+   the passenger seat without reading the label. */
+.tutor-stage[data-phase="listening"] .tutor-orb > i { animation: orb-listen 1.5s ease-in-out infinite; }
+.tutor-stage[data-phase="listening"] .tutor-orb > i:nth-child(2) { animation-delay: 0.2s; }
+.tutor-stage[data-phase="listening"] .tutor-orb > i:nth-child(3) { animation-delay: 0.4s; }
+.tutor-stage[data-phase="speaking"] .tutor-orb > i:nth-child(3) { animation: orb-speak 0.7s ease-in-out infinite; }
+.tutor-stage[data-phase="thinking"] .tutor-orb > i { animation: orb-think 1.8s linear infinite; }
+.tutor-stage[data-phase="greeting"] .tutor-orb > i { animation: orb-think 1.8s linear infinite; }
+
+@keyframes orb-listen { 0%, 100% { transform: scale(1); opacity: 0.2; } 50% { transform: scale(1.1); opacity: 0.6; } }
+@keyframes orb-speak  { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
+@keyframes orb-think  { to { transform: rotate(360deg); } }
+
+.tutor-phase { font-size: 14px; font-weight: 650; }
+.tutor-clock { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
+.tutor-fix {
+  display: block;
+  margin-top: 7px; padding-top: 7px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--status-warning);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) { .tutor-orb > i { animation: none !important; } }
+
+/* ---------- weekly fitness plan ---------- */
+.pillbar { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.plan-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 13px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-1);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  transition: border-color 120ms ease, transform 90ms ease;
+}
+.plan-pill:hover { transform: translateY(-1px); border-color: var(--mod, var(--series-4)); }
+.plan-pill.is-met {
+  background: color-mix(in srgb, var(--status-good) 14%, var(--surface-1));
+  border-color: color-mix(in srgb, var(--status-good) 44%, transparent);
+}
+/* A dashed edge marks a line that will not carry over to next week. */
+.plan-pill.is-temp { border-style: dashed; }
+.plan-pill.is-open { border-style: dashed; color: var(--text-muted); cursor: default; }
+.plan-pill.is-open:hover { transform: none; border-color: var(--border-strong); }
+.plan-lock { font-size: 10px; opacity: 0.65; }
+.plan-count { color: var(--text-secondary); font-size: 12px; }

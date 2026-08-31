@@ -3,6 +3,7 @@ import { inWeek, lastDays, lastWeeks, monthKey, todayKey, weekDays, weekStart, t
 import { needsReview, spendByCategory } from '../lib/finance';
 import { allRows, attention, dailyCompletion, type HabitRow } from '../lib/habits';
 import { startingTotal } from '../lib/invest';
+import { weekPlan } from '../lib/fitplan';
 
 export interface ModuleSummary {
   id: ModuleId;
@@ -259,11 +260,13 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
       progress: fit.targets.total ? fit.total / fit.targets.total : 0,
       headline: `${fit.total}/${fit.targets.total}`,
       caption: 'sessions',
-      nudge: fit.mma < fit.targets.mma
-        ? `${fit.targets.mma - fit.mma} MMA left`
-        : fit.strength < fit.targets.strength
-          ? `${fit.targets.strength - fit.strength} lifting left`
-          : fit.remaining > 0 ? `${fit.remaining} to fill` : 'week complete',
+      nudge: (() => {
+        const plan = weekPlan(s);
+        const short = plan.rows.find((r) => !r.met);
+        if (short) return `${short.item.perWeek - short.done} ${short.item.activity} left`;
+        if (plan.open > plan.openFilled) return `${plan.open - plan.openFilled} open slot${plan.open - plan.openFilled === 1 ? '' : 's'}`;
+        return fit.remaining > 0 ? `${fit.remaining} to fill` : 'week complete';
+      })(),
     },
     finance: {
       id: 'finance',
