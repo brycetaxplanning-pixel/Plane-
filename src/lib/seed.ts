@@ -264,6 +264,10 @@ export function sampleState(): AppState {
   // Health: a fortnight of food and weigh-ins, and two panels a year apart so
   // a marker can be read as a direction rather than a single number.
   s.health.targets = { protein: 180, calories: 2600, sleepHours: 7, weight: 178 };
+  // A real install starts with no weekly training target — you choose it. The
+  // sample is meant to show the module with a week already built, so it sets
+  // one; without it every figure here reads "of 0".
+  s.fitness.targets = { mma: 3, strength: 4, total: 12 };
   s.health.weightUnit = 'lb';
 
   const MEALS: [string, string, number, number][] = [

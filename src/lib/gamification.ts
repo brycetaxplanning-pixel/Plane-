@@ -105,7 +105,8 @@ export const BADGES: BadgeDef[] = [
   },
   {
     id: 'outreach-50', name: 'Fifty in a week', description: 'Hit the weekly outreach target', icon: 'phone',
-    earned: (s) => weekCount(s.planning.outreach.map((o) => o.date)) >= s.planning.weeklyTarget,
+    earned: (s) => s.planning.weeklyTarget > 0
+      && weekCount(s.planning.outreach.map((o) => o.date)) >= s.planning.weeklyTarget,
   },
   {
     id: 'outreach-100', name: 'Century', description: '100 outreach conversations all time', icon: 'milestone',
@@ -113,11 +114,13 @@ export const BADGES: BadgeDef[] = [
   },
   {
     id: 'quota-12', name: 'Full dozen', description: 'Twelve fitness sessions in one week', icon: 'rosette',
-    earned: (s) => weekCount(s.fitness.activities.map((a) => a.date)) >= s.fitness.targets.total,
+    earned: (s) => s.fitness.targets.total > 0
+      && weekCount(s.fitness.activities.map((a) => a.date)) >= s.fitness.targets.total,
   },
   {
     id: 'mma-3', name: 'Three rounds', description: 'Three MMA sessions in one week', icon: 'glove',
-    earned: (s) => s.fitness.activities.filter((a) => inWeek(a.date) && bucketOf(a.type) === 'mma').length >= s.fitness.targets.mma,
+    earned: (s) => s.fitness.targets.mma > 0
+      && s.fitness.activities.filter((a) => inWeek(a.date) && bucketOf(a.type) === 'mma').length >= s.fitness.targets.mma,
   },
   {
     id: 'run-21', name: 'Half marathon', description: 'Covered 21.1 km in a single run', icon: 'trophy',

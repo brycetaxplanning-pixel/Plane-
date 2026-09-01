@@ -712,6 +712,123 @@
 .plan-lock svg { width: 100%; height: 100%; }
 .plan-count { color: var(--text-secondary); font-size: 12px; }
 
+/* ---------- the weekly tick list ---------- */
+
+/* Every planned session is a box you tick as you finish it. Big enough to hit
+   with a thumb and one hand, because that is the state you are in when you
+   finish training. */
+.ticks { display: flex; flex-direction: column; gap: 2px; }
+
+.tickrow {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  border: 1px solid transparent;
+}
+.tickrow.is-met {
+  background: color-mix(in srgb, var(--status-good) 13%, var(--surface-2));
+  border-color: color-mix(in srgb, var(--status-good) 34%, transparent);
+}
+.tickrow.is-open { opacity: 0.72; }
+
+.tickrow-name {
+  display: inline-flex; align-items: center; gap: 6px;
+  flex: 1 1 auto; min-width: 0;
+  background: none; border: none; padding: 0;
+  font: inherit; font-size: 13.5px; font-weight: 650;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.tickrow.is-open .tickrow-name { cursor: default; color: var(--text-secondary); }
+
+.tickrow-boxes { display: flex; gap: 5px; flex: none; }
+
+.tick {
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border-radius: 9px;
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 120ms cubic-bezier(0.2, 0.8, 0.3, 1), background 140ms ease, border-color 140ms ease;
+}
+.tick svg { width: 17px; height: 17px; stroke-width: 2.8; }
+.tick:hover { border-color: var(--mod, var(--series-4)); transform: scale(1.08); }
+.tick:active { transform: scale(0.9); }
+.tick.is-done {
+  background: var(--mod, var(--series-4));
+  border-color: var(--mod, var(--series-4));
+  /* The tick sits on the module's own colour, so it takes the ink that
+     colour was chosen to carry rather than a fixed white. */
+  color: var(--skin-accent-ink, #fff);
+  animation: tick-pop 260ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+.tickrow.is-open .tick { cursor: default; }
+.tickrow.is-open .tick:hover { transform: none; border-color: var(--border-strong); }
+
+.tickrow-count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 12px; font-weight: 600;
+  color: var(--text-secondary);
+}
+.tickrow.is-met .tickrow-count { color: var(--success-text); }
+
+@keyframes tick-pop {
+  from { transform: scale(0.55); }
+  60%  { transform: scale(1.14); }
+  to   { transform: scale(1); }
+}
+/* ---------- arriving ---------- */
+
+/* Panels land one after another when a module opens, so a screen reads as
+   something that arrives rather than something that was already sitting
+   there. Eight is as deep as it needs to go — past that you have scrolled,
+   and the animation has finished before you get to it. */
+.view .hero { animation: panel-in 420ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+.view > .stack > .card,
+.view > .stack > section.card,
+.view > .stack > .stack > .card { animation: panel-in 420ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+.view > .stack > *:nth-child(1) { animation-delay: 40ms; }
+.view > .stack > *:nth-child(2) { animation-delay: 80ms; }
+.view > .stack > *:nth-child(3) { animation-delay: 120ms; }
+.view > .stack > *:nth-child(4) { animation-delay: 160ms; }
+.view > .stack > *:nth-child(5) { animation-delay: 200ms; }
+.view > .stack > *:nth-child(6) { animation-delay: 240ms; }
+.view > .stack > *:nth-child(7) { animation-delay: 280ms; }
+.view > .stack > *:nth-child(n+8) { animation-delay: 320ms; }
+
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* A panel belongs to its module: a short bar of the module's colour before
+   the heading, which is the cheapest possible way to say so and does not
+   compete with anything. */
+.card-head, .viz-head { position: relative; }
+.viz-title::before {
+  content: "";
+  display: inline-block;
+  width: 3px; height: 0.85em;
+  margin-right: 8px;
+  vertical-align: -1px;
+  border-radius: 2px;
+  background: var(--mod, var(--series-1));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tick.is-done { animation: none; }
+  .tick:hover, .tick:active { transform: none; }
+  .view .hero, .view > .stack > .card, .view > .stack > section.card,
+  .view > .stack > .stack > .card { animation: none; }
+  .hero-foil > i { animation: none; transform: none; }
+}
+
 /* ---------- notifications ---------- */
 .bell-wrap { position: relative; display: inline-flex; }
 .bell { position: relative; }
@@ -914,9 +1031,31 @@
   overflow: hidden;
 }
 
+.hero-foil {
+  position: absolute; inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 46%, transparent 78%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 46%, transparent 78%);
+}
+.hero-foil > i {
+  position: absolute; inset: -60% -55%;
+  background: linear-gradient(
+    68deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.11) 49%,
+    rgba(160, 226, 255, 0.09) 53%,
+    transparent 60%);
+  transform: translateX(-55%);
+  animation: foil 7.5s linear infinite;
+}
+/* Everything on the face sits over the sweep. */
+.hero > :not(.hero-foil) { position: relative; z-index: 1; }
+
 .hero-mark {
   display: grid; place-items: center;
-  width: 44px; height: 44px;
+  width: 50px; height: 50px;
   flex: none;
   border-radius: var(--r-md);
   background: color-mix(in srgb, var(--mod-lift) 16%, transparent);
@@ -934,7 +1073,7 @@
 }
 .hero-name {
   margin: 3px 0 0;
-  font-size: 17px; font-weight: 720;
+  font-size: 19px; font-weight: 760;
   letter-spacing: 0.05em; text-transform: uppercase;
   line-height: 1.15;
   color: var(--card-ink);
@@ -948,7 +1087,7 @@
 .hero-stat { text-align: right; flex: none; }
 .hero-stat b {
   display: block;
-  font-size: 24px; font-weight: 760; letter-spacing: -0.02em;
+  font-size: 28px; font-weight: 780; letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   color: var(--card-ink);
   line-height: 1.05;

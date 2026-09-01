@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ACTIVITY_TYPES, type PlanItem } from '../../lib/schema';
 import { PLAN_PRESETS, suggestions, weekPlan } from '../../lib/fitplan';
 import { todayKey, weekStart } from '../../lib/date';
+import { XP } from '../../lib/gamification';
 import { uid } from '../../lib/id';
 import { useApp } from '../../state/context';
 import { Modal } from '../../components/ui/Modal';
@@ -10,8 +11,15 @@ import { Icons } from '../../components/layout/Icons';
 
 const ACCENT = 'var(--mod-fitness)';
 
+/** A sensible length for a session ticked off in one tap. Everything is
+ *  editable afterwards; this is only so a tick does not have to ask. */
+const PRESET_MINUTES: Record<string, number> = {
+  Weightlifting: 60, MMA: 90, Calisthenics: 45, Run: 40, 'Long run': 100,
+  Cycling: 60, Swim: 45, Yoga: 45, Basketball: 90,
+};
+
 export function Plan() {
-  const { state, update, toast } = useApp();
+  const { state, update, reward, toast } = useApp();
   const plan = weekPlan(state);
   const week = weekStart();
   const [adding, setAdding] = useState<PlanItem | 'new' | null>(null);
@@ -47,6 +55,49 @@ export function Plan() {
   const remove = (id: string) => {
     update((s) => ({ ...s, fitness: { ...s.fitness, plan: s.fitness.plan.filter((p) => p.id !== id) } }));
     toast('Removed from the plan');
+  };
+
+  /** One tap = one session of this activity, logged today. */
+  const tick = (activity: string) => {
+    const done = state.fitness.activities.filter(
+      (a) => weekStart(a.date) === week && a.type === activity,
+    ).length;
+    const target = state.fitness.targets.total;
+    const totalNow = state.fitness.activities.filter((a) => weekStart(a.date) === week).length;
+    const completesWeek = target > 0 && totalNow + 1 === target;
+
+    reward(
+      'fitness',
+      XP.fitnessSession + (completesWeek ? XP.weeklyTargetHit : 0),
+      completesWeek ? `Week complete — ${target} sessions` : `Logged ${activity}`,
+      (s) => ({
+        ...s,
+        fitness: {
+          ...s.fitness,
+          activities: [...s.fitness.activities, {
+            id: uid('act'),
+            date: todayKey(),
+            type: activity,
+            minutes: PRESET_MINUTES[activity] ?? 60,
+          }],
+        },
+      }),
+    );
+    toast(`${activity} ${done + 1} logged`);
+  };
+
+  /** Tapping a filled box takes the most recent one back. */
+  const untick = (activity: string) => {
+    const mine = state.fitness.activities
+      .filter((a) => weekStart(a.date) === week && a.type === activity)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    const last = mine[mine.length - 1];
+    if (!last) return;
+    update((s) => ({
+      ...s,
+      fitness: { ...s.fitness, activities: s.fitness.activities.filter((a) => a.id !== last.id) },
+    }));
+    toast(`${activity} unticked`);
   };
 
   const setTotal = (total: number) =>
@@ -93,29 +144,62 @@ export function Plan() {
       <section className="card" style={{ ['--mod' as string]: ACCENT }}>
         <SectionHead
           title="This week's plan"
-          sub={`${plan.total} of ${plan.target} sessions logged`}
+          sub={plan.target
+            ? `${plan.total} of ${plan.target} sessions logged`
+            : `${plan.total} logged — set a weekly total below`}
           action={<button className="btn btn-sm" onClick={() => setAdding('new')}>+ Add</button>}
         />
 
-        <div className="pillbar">
+        {/* Every planned session is a box you tick as you finish it. That was
+            the whole point of a plan and it was missing: the only way to move
+            a count was to open a form and fill it in, which nobody does with a
+            gym bag in one hand. A tick logs a session of that activity today;
+            tapping a filled one takes the last one back. */}
+        <div className="ticks">
           {plan.rows.map((r) => (
-            <button
-              key={r.item.id}
-              className={`plan-pill${r.met ? ' is-met' : ''}${r.item.locked ? '' : ' is-temp'}`}
-              onClick={() => setAdding(r.item)}
-              title={r.item.locked ? 'Locked in every week' : 'This week only'}
-            >
-              {r.item.locked && <span className="plan-lock" aria-hidden>{Icons.lock()}</span>}
-              <span className="plan-name">{r.item.activity}</span>
-              <span className="plan-count t-num">{Math.min(r.done, r.item.perWeek)}/{r.item.perWeek}</span>
-            </button>
+            <div className={`tickrow${r.met ? ' is-met' : ''}`} key={r.item.id}>
+              <button
+                className="tickrow-name"
+                onClick={() => setAdding(r.item)}
+                title={r.item.locked ? 'Locked in every week — tap to edit' : 'This week only — tap to edit'}
+              >
+                {r.item.locked && <span className="plan-lock" aria-hidden>{Icons.lock()}</span>}
+                {r.item.activity}
+              </button>
+
+              <div className="tickrow-boxes">
+                {Array.from({ length: r.item.perWeek }, (_, i) => {
+                  const done = i < r.done;
+                  return (
+                    <button
+                      key={i}
+                      className={`tick${done ? ' is-done' : ''}`}
+                      aria-pressed={done}
+                      aria-label={`${r.item.activity}, session ${i + 1} of ${r.item.perWeek}`}
+                      onClick={() => (done ? untick(r.item.activity) : tick(r.item.activity))}
+                    >
+                      <span aria-hidden>{Icons.check()}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <span className="tickrow-count t-num">{Math.min(r.done, r.item.perWeek)}/{r.item.perWeek}</span>
+            </div>
           ))}
 
           {plan.open > 0 && (
-            <span className="plan-pill is-open" title="Slots you fill in as the week goes">
-              <span className="plan-name">Open</span>
-              <span className="plan-count t-num">{Math.min(plan.openFilled, plan.open)}/{plan.open}</span>
-            </span>
+            <div className="tickrow is-open">
+              <span className="tickrow-name">Anything</span>
+              <div className="tickrow-boxes">
+                {Array.from({ length: plan.open }, (_, i) => (
+                  <span key={i} className={`tick${i < plan.openFilled ? ' is-done' : ''}`} aria-hidden>
+                    <span>{Icons.check()}</span>
+                  </span>
+                ))}
+              </div>
+              <span className="tickrow-count t-num">{Math.min(plan.openFilled, plan.open)}/{plan.open}</span>
+            </div>
           )}
         </div>
 

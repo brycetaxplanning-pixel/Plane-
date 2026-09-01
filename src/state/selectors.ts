@@ -288,8 +288,10 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
     fitness: {
       id: 'fitness',
       progress: fit.targets.total ? fit.total / fit.targets.total : 0,
-      headline: `${fit.total}/${fit.targets.total}`,
-      caption: 'sessions',
+      // A target you have not set yet is not a target of zero, and "0/0" on
+      // the card says nothing. Until one exists the card counts what you did.
+      headline: fit.targets.total ? `${fit.total}/${fit.targets.total}` : `${fit.total}`,
+      caption: fit.targets.total ? 'sessions' : 'sessions logged',
       nudge: (() => {
         const plan = weekPlan(s);
         const short = plan.rows.find((r) => !r.met);

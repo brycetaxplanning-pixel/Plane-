@@ -115,7 +115,10 @@ await page.evaluate(() => localStorage.setItem('plane.state.v1', JSON.stringify(
 await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(400);
 const migrated = await readState();
-migrated.fitness?.targets?.total === 12 && migrated.finance?.categories?.length > 0
+// The point is that a missing slice is filled in with the shape it should
+// have, not that the number happens to be any particular value — the weekly
+// training target now starts unset, because it is yours to choose.
+typeof migrated.fitness?.targets?.total === 'number' && migrated.finance?.categories?.length > 0
   ? ok('a partial legacy payload is filled in, not crashed on') : bad('migration', JSON.stringify(migrated).slice(0, 160));
 
 await browser.close();

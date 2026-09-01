@@ -28,7 +28,12 @@ export function ModuleHero({ id }: { id: ModuleId }) {
 
   return (
     <section className={`hero hero-${rank}${id === 'notes' ? ' hero-paper' : ''}`}>
-      <span className="hero-mark"><ModuleGlyph id={id} size={30} /></span>
+      {/* The card's sweep, carried inside. It is softer here than on a tile:
+          a hero is a much bigger surface, and the tile's band at full strength
+          would take the mono line above the name below the contrast floor. */}
+      {rank !== 'base' && <span className="hero-foil" aria-hidden><i /></span>}
+
+      <span className="hero-mark"><ModuleGlyph id={id} size={34} /></span>
 
       {rank === 'gold' && (
         <span className="hero-medal" title="This week's target is met">

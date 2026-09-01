@@ -269,6 +269,16 @@ for (const skin of SKINS) {
         .map((a) => a.finished.catch(() => undefined)),
     ));
 
+    // And wait for any toast to clear. A toast is a light pill fixed over the
+    // page for about three seconds, and it lands wherever it lands — twice it
+    // came down squarely on a launcher card and the sampler dutifully reported
+    // the label as unreadable, because at that instant it was: it had a toast
+    // on top of it. That is an occlusion, not the label's background, and the
+    // audit measures a screen at rest.
+    await page.locator('.toast-wrap .toast').first()
+      .waitFor({ state: 'detached', timeout: 5000 })
+      .catch(() => undefined);
+
     const found = await page.evaluate(MEASURE);
     const img = found.some((f) => f.painted) ? await backdrop(page) : null;
 

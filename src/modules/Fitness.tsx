@@ -53,13 +53,17 @@ export function Fitness() {
             size={96}
             stroke={9}
             label={`${stats.total}`}
-            caption={`of ${stats.targets.total}`}
+            caption={stats.targets.total ? `of ${stats.targets.total}` : 'logged'}
           /></div>
           <div className="hero-body stack-2">
             <p className="t-sm t-sec">
-              {stats.remaining > 0
-                ? `${stats.remaining} more to hit ${stats.targets.total} this week.`
-                : `Week complete — ${stats.total} sessions in.`}
+              {/* With no target set there is nothing to be short of, and
+                  "week complete" would be a lie about an empty week. */}
+              {!stats.targets.total
+                ? 'No weekly target yet — build the week below and it starts counting.'
+                : stats.remaining > 0
+                  ? `${stats.remaining} more to hit ${stats.targets.total} this week.`
+                  : `Week complete — ${stats.total} sessions in.`}
             </p>
             <p className="t-xs t-muted">
               {stats.runKmThisWeek > 0
@@ -97,7 +101,12 @@ export function Fitness() {
           <Plan />
 
           <section className="card">
-            <SectionHead title="Sessions by day" sub={`${stats.targets.total} a week, spread however it works`} />
+            <SectionHead
+              title="Sessions by day"
+              sub={stats.targets.total
+                ? `${stats.targets.total} a week, spread however it works`
+                : 'What you have logged so far'}
+            />
             <BarChart
               data={stats.byDay.map((d) => ({ key: d.key, value: d.value, label: dowLabel(d.key) }))}
               color={ACCENT}

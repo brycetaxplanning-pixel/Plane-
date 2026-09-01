@@ -787,7 +787,9 @@ export function emptyState(): AppState {
       tutorChat: [],
     },
     fitness: {
-      targets: { mma: 3, strength: 4, total: 12 },
+      // Blank on purpose. A weekly target you did not choose is someone
+      // else's target, and the module asks for it before it counts anything.
+      targets: { mma: 0, strength: 0, total: 0 },
       race: { name: 'Half marathon', distanceKm: 21.1 },
       activities: [],
       chat: [],

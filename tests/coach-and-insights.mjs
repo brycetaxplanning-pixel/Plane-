@@ -93,9 +93,9 @@ console.log('\n3. The weekly plan: locked lines, open slots and rollover');
   const { ctx, page } = await ctxPage();
   await page.goto(BASE + '#/fitness', { waitUntil: 'networkidle' });
   await page.waitForTimeout(500);
-  const bar = await page.locator('.pillbar').innerText();
-  /Weightlifting/.test(bar) && /MMA/.test(bar) ? ok('locked lines render as pills') : bad('pills', bar);
-  /Open/.test(bar) ? ok('the leftover slots are shown as Open') : bad('open', bar);
+  const bar = await page.locator('.ticks').innerText();
+  /Weightlifting/.test(bar) && /MMA/.test(bar) ? ok('locked lines are listed') : bad('rows', bar);
+  /Anything/.test(bar) ? ok('the leftover slots get a row of their own') : bad('open', bar);
   const st = await read(page);
   const committed = st.fitness.plan.filter((p) => p.locked || p.week).reduce((n, p) => n + p.perWeek, 0);
   const open = st.fitness.targets.total - committed;
@@ -117,6 +117,24 @@ console.log('\n3. The weekly plan: locked lines, open slots and rollover');
   });
   rolled.carriesOver.length === rolled.locked.length && rolled.carriesOver.includes('Weightlifting')
     ? ok('only locked lines carry into next week') : bad('rollover', JSON.stringify(rolled));
+
+  // Ticking a box is the whole point of the plan: one tap logs a session of
+  // that activity today, and tapping a full one takes the last one back.
+  {
+    const row = page.locator('.tickrow').filter({ hasText: 'Weightlifting' }).first();
+    const before = (await read(page)).fitness.activities.filter((a) => a.type === 'Weightlifting').length;
+    await row.locator('.tick:not(.is-done)').first().click();
+    await page.waitForTimeout(400);
+    const mid = (await read(page)).fitness.activities.filter((a) => a.type === 'Weightlifting');
+    mid.length === before + 1 ? ok('a tick logs a session') : bad('tick', `${before} -> ${mid.length}`);
+    mid[mid.length - 1]?.date === new Date().toISOString().slice(0, 10)
+      ? ok('dated today') : bad('tick date', JSON.stringify(mid[mid.length - 1]));
+
+    await row.locator('.tick.is-done').last().click();
+    await page.waitForTimeout(400);
+    const after = (await read(page)).fitness.activities.filter((a) => a.type === 'Weightlifting').length;
+    after === before ? ok('and unticking takes it back') : bad('untick', `expected ${before}, got ${after}`);
+  }
 
   await page.getByRole('button', { name: '+ Add' }).click();
   await page.locator('.modal-body').getByRole('button', { name: 'Swim', exact: true }).click();
