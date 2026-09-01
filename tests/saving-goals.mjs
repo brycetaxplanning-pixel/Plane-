@@ -49,7 +49,21 @@ console.log('\n2. The verdict is honest about a goal that will not make its date
   const tesla = cards.filter({ hasText: 'Tesla in cash' }).first();
   const text = await tesla.innerText();
   /a month short of the date/.test(text) ? ok('it says how far short, in money') : bad('shortfall', text.slice(0, 140));
-  /March 2030/.test(text) ? ok('and when it actually lands at the current rate') : bad('projection', text.slice(0, 140));
+  // The projection is counted forward from *today*, so pinning it to a literal
+  // month makes this suite fail on the first of whichever month tips it over —
+  // which is exactly what happened, on a commit that changed no app code. What
+  // the check is actually for is that the card names a landing month and that
+  // the month is past the date the goal was wanted by, which is the whole point
+  // of the section: the goal will not make its date.
+  const landing = text.match(/gets there around ([A-Za-z]+ \d{4})/);
+  const wanted = text.match(/wanted by ([A-Za-z]+ \d{1,2}, \d{4})/);
+  if (!landing || !wanted) {
+    bad('projection', text.slice(0, 200));
+  } else if (Date.parse(landing[1]) > Date.parse(wanted[1])) {
+    ok(`and when it actually lands at the current rate (${landing[1]}, past ${wanted[1]})`);
+  } else {
+    bad('projection', `lands ${landing[1]}, which is not after ${wanted[1]}`);
+  }
   /movable categories/.test(text) ? ok('and where the money could come from') : bad('cuts', 'no cut suggestions');
 
   const fund = cards.filter({ hasText: 'Emergency fund' }).first();
