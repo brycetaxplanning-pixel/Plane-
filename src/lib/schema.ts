@@ -374,7 +374,9 @@ export type HabitKind = 'check' | 'amount' | 'before' | 'under';
 export interface Habit {
   id: string;
   title: string;
-  emoji: string;
+  /** Yours to pick, and optional: a habit added from a preset has none, and
+   *  the row falls back to its cadence mark. */
+  emoji?: string;
   cadence: Cadence;
   kind: HabitKind;
   /** Weekly habits: how many times a week counts as done. */

@@ -8,6 +8,7 @@ import { EmptyState, Field, SectionHead } from '../../components/ui/Field';
 import { DictateInput } from '../../components/ui/Dictation';
 import { Sparkline } from '../../components/charts/Sparkline';
 import { StatTile } from '../../components/charts/StatTile';
+import { Icons } from '../../components/layout/Icons';
 
 const ACCENT = 'var(--mod-fitness)';
 
@@ -25,11 +26,11 @@ const SITE_SUGGESTIONS = ['Chest', 'Shoulders', 'Waist', 'Arm', 'Thigh', 'Weight
 /** Routines that belong in the Habits module rather than here — offered as a
  *  one-tap hand-off so the tracking lives where the streaks are. */
 const MOBILITY_HABITS = [
-  { title: 'Thoracic extension', emoji: '🧘', minutes: 10 },
-  { title: 'Hip flexor stretch', emoji: '🦵', minutes: 10 },
-  { title: 'Foam roll', emoji: '🧻', minutes: 15 },
-  { title: 'Dead hangs', emoji: '🪢', minutes: 5 },
-];
+  { title: 'Thoracic extension', icon: 'spine', minutes: 10 },
+  { title: 'Hip flexor stretch', icon: 'leg', minutes: 10 },
+  { title: 'Foam roll', icon: 'roller', minutes: 15 },
+  { title: 'Dead hangs', icon: 'bar', minutes: 5 },
+] as const;
 
 export function Physique() {
   const { state, update, toast } = useApp();
@@ -50,13 +51,36 @@ export function Physique() {
   const goals = state.fitness.physique.filter((g) => !g.done);
   const existingHabits = new Set(state.habits.items.map((h) => h.title.toLowerCase()));
 
-  const addMobilityHabit = (h: (typeof MOBILITY_HABITS)[number]) => {
+  /** Adds the habit, or takes it away again if it is already there. The
+   *  button used to add and then disable itself, so a tap you did not mean to
+   *  make put a daily habit in another module with no way back from here. */
+  const toggleMobilityHabit = (h: (typeof MOBILITY_HABITS)[number]) => {
+    const existing = state.habits.items.find((x) => x.title.toLowerCase() === h.title.toLowerCase());
+    if (existing) {
+      const logs = state.habits.logs.filter((l) => l.habitId === existing.id);
+      update((s) => ({
+        ...s,
+        habits: {
+          ...s.habits,
+          items: s.habits.items.filter((x) => x.id !== existing.id),
+          logs: s.habits.logs.filter((l) => l.habitId !== existing.id),
+        },
+      }));
+      toast(`${h.title} removed from your daily habits`, undefined, {
+        label: 'Undo',
+        run: () => update((s) => ({
+          ...s,
+          habits: { ...s.habits, items: [...s.habits.items, existing], logs: [...s.habits.logs, ...logs] },
+        })),
+      });
+      return;
+    }
     update((s) => ({
       ...s,
       habits: {
         ...s.habits,
         items: [...s.habits.items, {
-          id: uid('hab'), title: h.title, emoji: h.emoji,
+          id: uid('hab'), title: h.title,
           cadence: 'daily' as const, kind: 'amount' as const,
           target: h.minutes, unit: 'min', createdAt: todayKey(),
         }],
@@ -75,7 +99,7 @@ export function Physique() {
         />
         {goals.length === 0 ? (
           <EmptyState
-            icon="💪"
+            icon={Icons.arm()}
             title="No physique goals yet"
             hint="Bigger chest, wider back, straighter posture — measurable or not, both work."
           />
@@ -116,7 +140,7 @@ export function Physique() {
           action={<button className="btn btn-sm btn-accent" style={{ ['--mod' as string]: ACCENT }} onClick={() => setMeasuring(true)}>+ Log</button>}
         />
         {bySite.size === 0 ? (
-          <EmptyState icon="📏" title="Nothing measured yet" hint="Two points a month is enough to see a direction." />
+          <EmptyState icon={Icons.ruler()} title="Nothing measured yet" hint="Two points a month is enough to see a direction." />
         ) : (
           <div className="grid grid-2" style={{ gap: 'var(--sp-4)' }}>
             {[...bySite.entries()].map(([site, list]) => {
@@ -151,20 +175,25 @@ export function Physique() {
 
       <section className="card">
         <SectionHead
-          title="Posture and mobility work"
-          sub="This kind of work only counts if it happens most days, so it belongs with your habits"
+          title="Add a daily habit"
+          sub="Mobility only counts if it happens most days, so these are tracked in Habits, not here. Tap to add one — tap again to take it off."
         />
         <div className="row-2 wrap">
-          {MOBILITY_HABITS.map((h) => (
-            <button
-              key={h.title}
-              className="chip"
-              disabled={existingHabits.has(h.title.toLowerCase())}
-              onClick={() => addMobilityHabit(h)}
-            >
-              {existingHabits.has(h.title.toLowerCase()) ? '✓ ' : '+ '}{h.emoji} {h.title}
-            </button>
-          ))}
+          {MOBILITY_HABITS.map((h) => {
+            const on = existingHabits.has(h.title.toLowerCase());
+            return (
+              <button
+                key={h.title}
+                className={`chip mob-chip${on ? ' is-on' : ''}`}
+                aria-pressed={on}
+                onClick={() => toggleMobilityHabit(h)}
+              >
+                <span className="mob-mark" aria-hidden>{on ? Icons.check() : Icons.plus()}</span>
+                <span className="mob-mark" aria-hidden>{Icons[h.icon]()}</span>
+                {h.title}
+              </button>
+            );
+          })}
         </div>
         <p className="t-xs t-muted" style={{ marginTop: 'var(--sp-3)' }}>
           Tracking is all this does. Persistent adhesions, disc pain or a posture problem that hurts is

@@ -67,10 +67,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setToasts((list) => list.filter((t) => t.id !== id));
   }, []);
 
-  const toast = useCallback((text: string, xp?: number) => {
+  const toast = useCallback((text: string, xp?: number, action?: { label: string; run: () => void }) => {
     const id = uid('toast');
-    setToasts((list) => [...list, { id, text, xp }]);
-    setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), 3200);
+    setToasts((list) => [...list, { id, text, xp, action }]);
+    // A toast you can act on has to outlast a glance at the screen.
+    setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), action ? 6000 : 3200);
   }, []);
 
   const update = useCallback((fn: (s: AppState) => AppState) => {

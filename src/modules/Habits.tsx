@@ -15,6 +15,7 @@ import { Ring } from '../components/charts/Ring';
 import { StatTile } from '../components/charts/StatTile';
 import { hoursAs, sinkTotals } from '../lib/insights';
 import { Icons } from '../components/layout/Icons';
+import { SwipeRow } from '../components/ui/SwipeRow';
 
 const ACCENT = 'var(--mod-habits)';
 
@@ -40,6 +41,27 @@ export function Habits() {
   const { state, update, reward, toast } = useApp();
   const stats = habitStats(state);
   const [editing, setEditing] = useState<Habit | 'new' | null>(null);
+
+  /** Removes the habit and its logs, and offers the whole lot straight back —
+   *  a swipe is easy to do by accident and a habit carries its history. */
+  const removeHabit = (habit: Habit) => {
+    const logs = state.habits.logs.filter((l) => l.habitId === habit.id);
+    update((s) => ({
+      ...s,
+      habits: {
+        ...s.habits,
+        items: s.habits.items.filter((h) => h.id !== habit.id),
+        logs: s.habits.logs.filter((l) => l.habitId !== habit.id),
+      },
+    }));
+    toast(`${habit.title} deleted`, undefined, {
+      label: 'Undo',
+      run: () => update((s) => ({
+        ...s,
+        habits: { ...s.habits, items: [...s.habits.items, habit], logs: [...s.habits.logs, ...logs] },
+      })),
+    });
+  };
   const [logging, setLogging] = useState<HabitRow | null>(null);
 
   const commitLog = (habit: Habit, value: { amount?: number; time?: string }) => {
@@ -139,7 +161,9 @@ export function Habits() {
           <SectionHead title="Every day" sub={`${stats.todayDone} of ${stats.todayTotal} done today`} />
           <div className="stack-2">
             {stats.daily.map((row) => (
-              <HabitRowView key={row.habit.id} row={row} onLog={() => quickLog(row)} onUndo={() => undoToday(row.habit)} onEdit={() => setEditing(row.habit)} />
+              <SwipeRow key={row.habit.id} label={row.habit.title} onDelete={() => removeHabit(row.habit)}>
+                <HabitRowView row={row} onLog={() => quickLog(row)} onUndo={() => undoToday(row.habit)} onEdit={() => setEditing(row.habit)} />
+              </SwipeRow>
             ))}
           </div>
         </section>
@@ -150,7 +174,9 @@ export function Habits() {
           <SectionHead title="Every week" sub="Counts reset on Monday" />
           <div className="stack-2">
             {stats.weekly.map((row) => (
-              <HabitRowView key={row.habit.id} row={row} onLog={() => quickLog(row)} onUndo={() => undoToday(row.habit)} onEdit={() => setEditing(row.habit)} />
+              <SwipeRow key={row.habit.id} label={row.habit.title} onDelete={() => removeHabit(row.habit)}>
+                <HabitRowView row={row} onLog={() => quickLog(row)} onUndo={() => undoToday(row.habit)} onEdit={() => setEditing(row.habit)} />
+              </SwipeRow>
             ))}
           </div>
         </section>
@@ -334,7 +360,9 @@ function HabitRowView({
 
       <button className="habit-main" onClick={onEdit}>
         <span className="row-2" style={{ gap: 6 }}>
-          <span aria-hidden>{row.habit.emoji}</span>
+          <span className="habit-mark" aria-hidden>
+            {row.habit.emoji ?? (row.habit.cadence === 'weekly' ? Icons.calendar() : Icons.repeat())}
+          </span>
           <span className="t-sm t-bold truncate">{row.habit.title}</span>
         </span>
         <span className="habit-sub">

@@ -5,6 +5,8 @@ export interface Toast {
   id: string;
   text: string;
   xp?: number;
+  /** An optional way back. A swipe that deletes something needs one. */
+  action?: { label: string; run: () => void };
 }
 
 export interface AppContextValue {
@@ -25,7 +27,7 @@ export interface AppContextValue {
    */
   saveError: 'full' | 'failed' | null;
   toasts: Toast[];
-  toast: (text: string, xp?: number) => void;
+  toast: (text: string, xp?: number, action?: { label: string; run: () => void }) => void;
   dismissToast: (id: string) => void;
 }
 

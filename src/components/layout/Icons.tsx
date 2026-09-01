@@ -97,6 +97,33 @@ export const Icons = {
   </>),
   /** An `i` in a ring — the app talking about itself. */
   info: () => wrap(<><circle cx="12" cy="12" r="8.8" /><path d="M12 11v5.4" /><path d="M12 7.7h.1" /></>),
+  /** A spine, arched — thoracic extension. */
+  spine: () => wrap(<>
+    <path d="M8.4 3.4c3.4 1.6 5.2 4.4 5.2 8.6s-1.8 7-5.2 8.6" />
+    <path d="M9.6 5.6h4M11.4 9h4M11.8 12.6h4M11.4 16.2h4M9.6 19.4h4" />
+  </>),
+  /** A leg, bent — the hip flexor stretch. */
+  leg: () => wrap(<><circle cx="9.6" cy="4.4" r="2" /><path d="M9.6 7v5.4l4.6 3.2-1.4 5" /><path d="M9.6 12.4 5.4 16l1.2 4.4" /></>),
+  /** A roller. */
+  roller: () => wrap(<><rect x="2.8" y="8.4" width="18.4" height="7.2" rx="3.6" /><path d="M8.2 8.4v7.2M13.4 8.4v7.2" /></>),
+  /** A bar, hung from. */
+  bar: () => wrap(<><path d="M3.4 5.4h17.2" /><path d="M7.4 5.4v3.2M16.6 5.4v3.2" /><path d="M12 5.4v6" /><circle cx="12" cy="13.6" r="2.2" /><path d="M12 15.8v4.8" /></>),
+  /** A tape measure. */
+  ruler: () => wrap(<>
+    <rect x="2.6" y="7.4" width="18.8" height="9.2" rx="1.8" />
+    <path d="M7 7.4v3M11 7.4v4.4M15 7.4v3M19 7.4v4.4" />
+  </>),
+  /** An arm — the physique goals. */
+  arm: () => wrap(<>
+    <path d="M4.4 16.6c0-3.4 2.2-5.6 5.4-5.6h3.6a3.2 3.2 0 0 0 3.2-3.2V5.4" />
+    <path d="M13.6 4.6h6.2v6.2" /><path d="M4.4 16.6v3.8h5.2v-3.8" />
+  </>),
+  /** Delete. */
+  trash: () => wrap(<>
+    <path d="M4.2 6.6h15.6" /><path d="M9.4 6.6V4.8a1.4 1.4 0 0 1 1.4-1.4h2.4a1.4 1.4 0 0 1 1.4 1.4v1.8" />
+    <path d="M6.6 6.6l.9 12.6a1.6 1.6 0 0 0 1.6 1.4h5.8a1.6 1.6 0 0 0 1.6-1.4l.9-12.6" />
+    <path d="M10.4 10.6v6M13.6 10.6v6" />
+  </>),
   /** The rank marker's tick. */
   check: () => wrap(<path d="m5 12.6 4.6 4.6L19 6.4" />),
   /** An office — Business's list of companies. */

@@ -328,6 +328,9 @@
   bottom: calc(var(--nav-h) + 14px + env(safe-area-inset-bottom, 0px));
   display: flex; flex-direction: column; gap: var(--sp-2);
   width: min(420px, calc(100vw - 32px));
+  /* Click-through, so a toast never blocks what is behind it. Anything in a
+     toast that is meant to be pressed has to opt back in — see .toast-action,
+     which was unclickable until it did. */
   pointer-events: none;
 }
 @media (min-width: 900px) { .toast-wrap { bottom: 20px; left: calc(232px + (100vw - 232px) / 2); } }
@@ -1161,3 +1164,79 @@
   letter-spacing: 0.1em;
 }
 .tile-value, .t-num { font-variant-numeric: tabular-nums; }
+
+/* ---------- swipe to delete ---------- */
+
+.swipe { position: relative; overflow: hidden; border-radius: var(--r-md); }
+
+.swipe-delete {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  border: none;
+  background: var(--status-critical);
+  color: #fff;
+  font-size: 11px; font-weight: 700;
+  cursor: pointer;
+}
+.swipe-delete svg { width: 18px; height: 18px; }
+
+.swipe-face {
+  position: relative;
+  background: var(--surface-1);
+  /* Vertical panning stays with the page, so the list still scrolls; the
+     horizontal axis is ours. */
+  touch-action: pan-y;
+  transition: transform 220ms cubic-bezier(0.2, 0.85, 0.3, 1);
+  will-change: transform;
+}
+
+/* A hint that the gesture exists, for anyone who has never tried it. */
+.swipe.is-open .swipe-face { box-shadow: -6px 0 12px rgba(0, 0, 0, 0.35); }
+
+@media (prefers-reduced-motion: reduce) {
+  .swipe-face { transition: none; }
+}
+
+/* ---------- toast action ---------- */
+
+/* A toast is an inverted pill — light ground, dark ink — on every skin, so it
+   cannot take an accent from the palette: those are all chosen against the
+   page, not against this. --seq-400 measured 4.05:1 here. The action takes the
+   toast's own ink and is marked by weight and a rule instead, which inherits
+   the pill's 17:1 whatever the skin does.
+
+   Worth knowing: the contrast audit waits for toasts to clear before it
+   measures, so nothing in here is covered by it. These two colours are the
+   toast's own, which is why that is safe. */
+.toast-action {
+  flex: none;
+  border: none;
+  background: none;
+  padding: 2px 4px;
+  font: inherit;
+  font-weight: 800;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.toast-action:hover { text-decoration-thickness: 2px; }
+
+/* ---------- the mobility toggles ---------- */
+
+/* These add and remove a habit in another module, so they have to look like
+   switches rather than links: pressed state, a tick when on, a plus when off. */
+.mob-chip { gap: 5px; padding: 7px 12px; }
+.mob-mark { display: inline-flex; width: 15px; height: 15px; flex: none; }
+.mob-mark svg { width: 100%; height: 100%; }
+.mob-chip.is-on {
+  background: color-mix(in srgb, var(--status-good) 16%, var(--surface-1));
+  border-color: color-mix(in srgb, var(--status-good) 46%, transparent);
+  color: var(--text-primary);
+}
+.mob-chip.is-on .mob-mark:first-child { color: var(--success-text); }
+
+/* A habit's own mark, when it has no emoji of its own. */
+.habit-mark { display: inline-flex; width: 16px; height: 16px; flex: none; color: var(--text-secondary); }
+.habit-mark svg { width: 100%; height: 100%; }
