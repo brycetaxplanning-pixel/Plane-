@@ -16,7 +16,8 @@ on:
   push:
     branches:
       - main
-      # The app currently lives on this branch; drop this line once it merges.
+      # Work happens here and merges to main. Pushes here run the full test
+      # suite but do not deploy — see the `if` on the build job.
       - claude/habit-tracker-multi-module-tuagzh
   workflow_dispatch:
 
@@ -66,8 +67,14 @@ jobs:
       - name: End-to-end suites
         run: npm test
 
+  # Only main publishes. The github-pages environment refuses a deployment
+  # from any other branch, and it refuses it before the runner starts — so
+  # without this the job fails in two seconds with no log to explain itself,
+  # which is exactly how the first successful build was lost. A push to a work
+  # branch still runs every test above; it just stops here.
   build:
     needs: test
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
