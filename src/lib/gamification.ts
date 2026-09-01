@@ -156,6 +156,18 @@ export const BADGES: BadgeDef[] = [
   },
 ];
 
+/** A module's card rank, read straight off this week's progress toward its
+ *  target. Under half is a plain frame, half or more earns the hue and the
+ *  foil, and hitting the target earns gold. The launcher draws it as a card;
+ *  a module screen draws it as the rule under its heading. */
+export type Rank = 'base' | 'rare' | 'gold';
+
+export function rankOf(progress: number): Rank {
+  if (progress >= 1) return 'gold';
+  if (progress >= 0.5) return 'rare';
+  return 'base';
+}
+
 export function earnedBadges(s: AppState): BadgeDef[] {
   return BADGES.filter((b) => b.earned(s));
 }

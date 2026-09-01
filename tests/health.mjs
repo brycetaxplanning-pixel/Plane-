@@ -46,7 +46,11 @@ console.log('\n2. Today shows food against the target');
   await dismiss(page);
   const body = await page.locator('.stack').first().innerText();
   /of 180g/.test(body) ? ok('the ring is against the protein target') : bad('ring', body.slice(0, 120));
-  /Logged today/.test(body) ? ok('and today\'s meals are listed') : bad('meals', 'no list');
+  // Case-insensitive on purpose. innerText returns *rendered* text, so a
+  // heading styled `text-transform: uppercase` comes back shouting even though
+  // the DOM still says "Logged today". What this line is checking is that the
+  // meals are listed, not how the heading above them is set.
+  /logged today/i.test(body) ? ok('and today\'s meals are listed') : bad('meals', 'no list');
   /average across the \d+ days you logged/.test(body)
     ? ok('the average counts only the days with a log') : bad('average', 'wrong basis');
   await ctx.close();

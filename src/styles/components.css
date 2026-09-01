@@ -880,3 +880,145 @@
   color: var(--text-secondary);
 }
 .medal-won .medal-name { color: var(--text-primary); }
+
+/* ------------------------------------------------------------------
+   Inside a module.
+
+   The launcher establishes a card and then the module screen used to throw
+   all of it away — a plain title over plain panels, no mark, no hue, no
+   number. These rules carry the same material inward: the hero is the card
+   opened out, and every panel is cut from the same stock.
+
+   The foil deliberately does not come with it. The sweep is what a card
+   earns; spending it on every screen would make it wallpaper. The rank
+   arrives as the rule under the hero instead.
+------------------------------------------------------------------ */
+
+.hero {
+  --mod-lift: color-mix(in srgb, var(--mod, var(--series-1)) 72%, #fff);
+
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-4) var(--sp-4) calc(var(--sp-4) + 4px);
+  border-radius: var(--tile-radius, var(--r-lg));
+  border: 1px solid color-mix(in srgb, var(--mod-lift) 24%, var(--border));
+  background:
+    radial-gradient(84% 150% at 6% -30%, color-mix(in srgb, var(--mod-lift) 34%, transparent), transparent 62%),
+    linear-gradient(180deg, var(--card-stock), var(--card-stock-lo));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--shadow-1);
+  color: var(--card-ink);
+  overflow: hidden;
+}
+
+.hero-mark {
+  display: grid; place-items: center;
+  width: 44px; height: 44px;
+  flex: none;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--mod-lift) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mod-lift) 26%, transparent);
+  color: var(--mod-lift);
+}
+.hero-paper .hero-mark { color: var(--card-ink); }
+
+.hero-lines { min-width: 0; }
+.hero-num {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--card-ink-dim);
+}
+.hero-name {
+  margin: 3px 0 0;
+  font-size: 17px; font-weight: 720;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  line-height: 1.15;
+  color: var(--card-ink);
+}
+.hero-blurb {
+  margin: 4px 0 0;
+  font-size: 12px; line-height: 1.35;
+  color: var(--card-ink-dim);
+}
+
+.hero-stat { text-align: right; flex: none; }
+.hero-stat b {
+  display: block;
+  font-size: 24px; font-weight: 760; letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--card-ink);
+  line-height: 1.05;
+}
+.hero-cap {
+  display: block; margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.04em;
+  color: var(--card-ink-dim);
+}
+
+/* Gold needs its own marker here. Two modules take a yellow hue, and on those
+   a rank rule in the module colour is the same colour as a rank rule in gold —
+   the card solves that with the medallion, so the hero carries it too. */
+.hero-medal {
+  position: absolute; top: 12px; right: 14px;
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--rare-medal);
+  color: var(--rare-ink);
+}
+.hero-medal svg { width: 14px; height: 14px; stroke-width: 2.6; }
+
+/* The rank, as the rule along the bottom rather than a sweep. */
+.hero-meter {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 4px;
+  grid-column: 1 / -1;
+  background: var(--card-rule);
+}
+.hero-meter > i {
+  display: block; height: 100%;
+  background: var(--mod-lift);
+  transition: width 620ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.hero-rare { border-color: color-mix(in srgb, var(--mod-lift) 44%, transparent); }
+.hero-gold { border-color: color-mix(in srgb, var(--rare-gold) 62%, transparent); }
+.hero-gold .hero-meter > i { background: var(--rare-gold); }
+
+@media (max-width: 460px) {
+  .hero { grid-template-columns: auto 1fr; row-gap: var(--sp-3); }
+  .hero-stat { grid-column: 1 / -1; text-align: left; display: flex; align-items: baseline; gap: 8px; }
+  .hero-cap { margin-top: 0; }
+  .hero-blurb { display: none; }
+}
+
+/* ---------- panels, cut from the same stock ---------- */
+
+/* The hairline is what makes a panel read as a surface laid on the page
+   rather than a hole cut in it — the same trick the cards use. */
+.card {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), var(--shadow-1);
+  border-radius: var(--tile-radius, var(--r-lg));
+}
+
+/* A heading inside a module is set the way a card's name is, so the two read
+   as one system rather than two. */
+.viz-title, .card-head h2 {
+  font-size: 11.5px; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--text-primary);
+}
+.viz-sub { font-size: 12px; color: var(--text-secondary); }
+
+/* A figure's label takes the mono face, the way a card's caption does. Not
+   .tile-cap: that one carries whole sentences — "5 a day for the 6 days left"
+   — and a sentence set in mono is harder to read, not more precise. */
+.tile-label, .mod-num {
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+}
+.tile-value, .t-num { font-variant-numeric: tabular-nums; }

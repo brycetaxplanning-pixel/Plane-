@@ -43,6 +43,7 @@ import './styles/components.css';
 import './styles/charts.css';
 import './styles/launcher.css';
 import './styles/effects.css';
+import { ModuleHero } from './components/layout/ModuleHero';
 
 export default function App() {
   return (
@@ -113,16 +114,25 @@ function Shell() {
 
       <Nav route={route} />
 
-      {route !== 'launcher' && <Header title={title} sub={sub} showBack route={route} />}
+      {route !== 'launcher' && (
+        <Header title={title} sub={sub} showBack hero={Boolean(module)} route={route} />
+      )}
 
       <main
         id="main"
         tabIndex={-1}
         className={`container view ${direction}`}
         key={route}
-        style={{ paddingTop: route === 'launcher' ? 'var(--sp-4)' : 0, paddingBottom: 'var(--sp-7)' }}
+        style={{
+          paddingTop: route === 'launcher' ? 'var(--sp-4)' : 0,
+          paddingBottom: 'var(--sp-7)',
+          // Set once, here, so every panel, chart and control inside a module
+          // inherits its hue instead of each screen having to pass its own.
+          ...(module ? { ['--mod' as string]: module.color } : {}),
+        }}
       >
         {route === 'launcher' && <Launcher />}
+        {module && <ModuleHero id={module.id} />}
         {/* A module's chunk arrives in a few hundred milliseconds on a bad
             connection and instantly once cached, so the fallback is a quiet
             placeholder rather than a spinner that flashes. */}

@@ -1,5 +1,5 @@
 import { MODULES, type ModuleId } from '../lib/schema';
-import { levelFor, streakOf, totalXp } from '../lib/gamification';
+import { levelFor, rankOf, streakOf, totalXp } from '../lib/gamification';
 import { moduleSummaries } from '../state/selectors';
 import { useApp } from '../state/context';
 import { routeOf, type Route } from '../lib/router';
@@ -179,13 +179,6 @@ export function Launcher() {
       )}
     </div>
   );
-}
-
-/** A card's rank, read straight off this week's progress. */
-function rankOf(pct: number): 'base' | 'rare' | 'gold' {
-  if (pct >= 1) return 'gold';
-  if (pct >= 0.5) return 'rare';
-  return 'base';
 }
 
 function greeting(): string {

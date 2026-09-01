@@ -187,6 +187,24 @@ lighter than the page, so a card reads as an object lying on it. Because a card
 supplies its own ground it also supplies its own ink: nothing inside one takes
 `--text-primary`.
 
+## Inside a module
+
+The launcher establishes a card and the module screen used to throw all of it
+away — a plain title over plain panels, no mark, no hue, no number. A module now
+opens on the same card, expanded: the same stock, the same mark, the same
+number, and the same meter reading the same weekly progress, so tapping a card
+feels like opening it rather than leaving for somewhere else. The module's hue
+is set once on the view, so every panel, chart and control below inherits it
+instead of each screen passing its own.
+
+The foil deliberately does not come inside. The sweep is what a card earns, and
+spending it on every screen in the app would make it wallpaper. The rank arrives
+as the rule under the heading instead — plus a medallion when it is gold, because
+two modules take a yellow hue and on those a rank rule in the module colour is
+the same colour as a rank rule in gold.
+
+## The marks
+
 There are no emoji. An emoji is drawn by the platform, at the platform's weight,
 in the platform's palette, so eleven modules end up reading as eleven pictures
 from eleven places. `components/layout/Icons.tsx` is one line set instead — a

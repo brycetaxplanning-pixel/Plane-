@@ -12,10 +12,13 @@ interface HeaderProps {
   sub?: string;
   /** Modules get a way back to the launcher; the launcher itself does not. */
   showBack?: boolean;
+  /** A module screen states its own name in the hero below, in the module's
+   *  own material. Repeating it up here would be the same words twice. */
+  hero?: boolean;
   route: Route;
 }
 
-export function Header({ title, sub, showBack, route }: HeaderProps) {
+export function Header({ title, sub, showBack, hero, route }: HeaderProps) {
   const { state } = useApp();
   const xp = totalXp(state.xp);
   const { level, into, span } = levelFor(xp);
@@ -33,8 +36,14 @@ export function Header({ title, sub, showBack, route }: HeaderProps) {
 
         <div className="spread" style={{ alignItems: 'flex-start', marginTop: showBack ? 4 : 0 }}>
           <div className="grow" style={{ minWidth: 0 }}>
-            <h1>{title}</h1>
-            <p className="t-sm t-sec">{sub ?? fmtDateLong(todayKey())}</p>
+            {hero ? (
+              <p className="t-xs t-muted t-num">{fmtDateLong(todayKey())}</p>
+            ) : (
+              <>
+                <h1>{title}</h1>
+                <p className="t-sm t-sec">{sub ?? fmtDateLong(todayKey())}</p>
+              </>
+            )}
           </div>
 
           <div className="row-2" style={{ flex: 'none' }}>
