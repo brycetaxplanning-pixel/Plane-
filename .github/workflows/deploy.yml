@@ -28,8 +28,15 @@ permissions:
 
 # Let a run finish rather than cancelling it, so a half-published site is never
 # left behind; queue any push that lands mid-deploy.
+#
+# Scoped per branch. A single shared group looked right — only one thing
+# publishes, so serialise everything — but GitHub keeps at most one *pending*
+# run per group and cancels the older one when a newer arrives. Pushing the
+# work branch a moment after main therefore cancelled main's queued deploy
+# outright. Only main deploys, so per-branch grouping still serialises every
+# run that can actually publish.
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
