@@ -81,7 +81,7 @@ export function Launcher() {
                 ['--foil-delay' as string]: `${i * -520}ms`,
               }}
             >
-              <span className="mtile-foil" aria-hidden />
+              <span className="mtile-foil" aria-hidden><i /></span>
 
               {/* Top-left is the card number, unless something is unread —
                   then it is the count, because that is the thing worth
@@ -118,7 +118,7 @@ export function Launcher() {
         })}
 
         <a className="mtile mtile-alt" href={routeOf('tracker')} style={{ animationDelay: `${MODULES.length * 45}ms` }}>
-          <span className="mtile-foil" aria-hidden />
+          <span className="mtile-foil" aria-hidden><i /></span>
           <span className="mtile-glyph" aria-hidden>{Icons.calendar()}</span>
           <span className="mtile-name">Tracker</span>
           <span className="mtile-stat">
@@ -129,7 +129,7 @@ export function Launcher() {
         </a>
 
         <a className="mtile mtile-alt" href={routeOf('home')} style={{ animationDelay: `${(MODULES.length + 1) * 45}ms` }}>
-          <span className="mtile-foil" aria-hidden />
+          <span className="mtile-foil" aria-hidden><i /></span>
           <span className="mtile-glyph" aria-hidden>{Icons.chart()}</span>
           <span className="mtile-name">Progress</span>
           <span className="mtile-stat">
@@ -140,7 +140,7 @@ export function Launcher() {
         </a>
 
         <a className="mtile mtile-alt" href={routeOf('settings')} style={{ animationDelay: `${(MODULES.length + 2) * 45}ms` }}>
-          <span className="mtile-foil" aria-hidden />
+          <span className="mtile-foil" aria-hidden><i /></span>
           <span className="mtile-glyph" aria-hidden>{Icons.gear()}</span>
           <span className="mtile-name">Settings</span>
           <span className="mtile-stat">

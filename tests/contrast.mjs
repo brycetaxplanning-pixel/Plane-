@@ -201,8 +201,8 @@ const composite = (fg, bg) => ({
 });
 
 /** One shot of the page with every glyph hidden, so the words' own grounds are
- *  visible. Animations are pinned to a fixed time first, or a moving highlight
- *  would land somewhere different on every run. */
+ *  visible. Endless animations are pinned first, or a moving highlight lands
+ *  somewhere different on every run. */
 async function backdrop(page) {
   await page.addStyleTag({
     content: '*, *::before, *::after { color: transparent !important;'
@@ -210,7 +210,19 @@ async function backdrop(page) {
   });
   await page.evaluate(() => {
     for (const a of document.getAnimations()) {
-      if (a.effect?.getTiming().iterations === Infinity) { a.pause(); a.currentTime = 0; }
+      const t = a.effect?.getTiming();
+      if (t?.iterations !== Infinity) continue;
+      a.pause();
+      // Half way through its own cycle, not timeline zero. A negative
+      // animation-delay — the launcher staggers the foil sweeps with one —
+      // makes timeline zero an arbitrary point in the cycle, so the band
+      // landed somewhere different on every run and a washed-out label was
+      // only caught when it happened to land on one. Half way puts the band
+      // across the middle of the card, which is where centred text is, so the
+      // worst moment of the sweep is the one that gets measured.
+      const dur = Number(t.duration) || 0;
+      const delay = Number(t.delay) || 0;
+      a.currentTime = dur / 2 + delay;
     }
   });
   const png = await page.screenshot({ fullPage: true });

@@ -105,11 +105,27 @@
 
 /* ---- the foil ---- */
 
-/* Behind the text but above the card's own ground, which is what `isolation`
-   on the card buys. Earned cards sweep on their own; every card sweeps once
-   on hover, so an unearned one still answers a touch. */
+/* Two elements, because the fade has to be fixed to the card while the band
+   moves across it. The outer box is the card; the inner one is the sweep.
+   Behind the text but above the card's own ground, which is what `isolation`
+   on the card buys. Earned cards sweep on their own; every card sweeps once on
+   hover, so an unearned one still answers a touch. */
 .mtile-foil {
-  position: absolute; inset: -45% -55%;
+  position: absolute; inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+  /* The sweep dies out above the stat block. At full strength the band lifts
+     the ground to the point where the caption ink sits at 2.7:1 — the contrast
+     audit caught exactly that on the Goals and Notes cards — so the foil is
+     confined to the half of the card that carries the mark and the name, both
+     of which are set in the full card ink and stay above 5:1 underneath it.
+     It also just looks more like light catching the top edge of a card. */
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 30%, transparent 46%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 30%, transparent 46%);
+}
+.mtile-foil > i {
+  position: absolute; inset: -60% -55%;
   /* A narrow specular band. The first version spanned 24 degrees of the
      gradient and read as a purple smudge rather than a sweep. */
   background: linear-gradient(
@@ -120,18 +136,16 @@
     transparent 56.5%);
   opacity: 0;
   transform: translateX(-55%);
-  pointer-events: none;
-  z-index: -1;
 }
-.mtile:hover .mtile-foil { animation: foil-pass 760ms ease-out; }
-.mtile-rare .mtile-foil,
-.mtile-gold .mtile-foil {
+.mtile:hover .mtile-foil > i { animation: foil-pass 760ms ease-out; }
+.mtile-rare .mtile-foil > i,
+.mtile-gold .mtile-foil > i {
   opacity: 1;
   animation: foil 6.5s linear infinite;
   animation-delay: var(--foil-delay, 0ms);
 }
-.mtile-rare:hover .mtile-foil,
-.mtile-gold:hover .mtile-foil { animation-duration: 2.2s; }
+.mtile-rare:hover .mtile-foil > i,
+.mtile-gold:hover .mtile-foil > i { animation-duration: 2.2s; }
 
 /* ---- rank ---- */
 
@@ -184,15 +198,19 @@
 }
 .mtile-flag svg { width: 11px; height: 11px; }
 
-.mtile-glyph {
+.mtile-glyph,
+/* A module card renders <ModuleGlyph>, which is .glyph — without naming it
+   here the hue rule below missed every module and the marks came out in the
+   plain card ink. */
+.mtile > .glyph {
   display: grid; place-items: center;
   width: 30px; height: 30px;
   color: var(--mod-lift);
   margin-bottom: 9px;
 }
-.mtile-glyph svg { width: 100%; height: 100%; }
+.mtile-glyph svg, .mtile > .glyph svg { width: 100%; height: 100%; }
 /* Notes has no categorical hue of its own, so its mark takes the ink. */
-.mtile-paper .mtile-glyph { color: var(--card-ink); }
+.mtile-paper > .glyph { color: var(--card-ink); }
 
 .mtile-name {
   font-size: 11px; font-weight: 720;
@@ -298,7 +316,7 @@
 @media (prefers-reduced-motion: reduce) {
   .mtile, .view { animation: none; }
   .mtile:hover { transform: none; }
-  .mtile-foil { animation: none !important; opacity: 0.55; transform: none; }
+  .mtile-foil > i { animation: none !important; opacity: 0.55; transform: none; }
 }
 
 /* Notes has no categorical hue, so its card is ruled instead of tinted. */
