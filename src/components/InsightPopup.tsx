@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Insight } from '../lib/insights';
 import { routeOf } from '../lib/router';
+import { Icons } from './layout/Icons';
 
 /**
  * The unprompted one. Slides in a moment after the app settles rather than
@@ -29,7 +30,7 @@ export function InsightPopup({
     <aside className="pop" role="status" aria-live="polite">
       <div className="pop-head">
         <span className="pop-kicker">Something I noticed</span>
-        <button className="btn btn-ghost btn-icon" aria-label="Close" onClick={onSnooze}>✕</button>
+        <button className="btn btn-ghost btn-icon" aria-label="Close" onClick={onSnooze}><span className="btn-glyph" aria-hidden>{Icons.close()}</span></button>
       </div>
       <h3 className="pop-title">{insight.title}</h3>
       <p className="t-sm t-sec">{insight.body}</p>

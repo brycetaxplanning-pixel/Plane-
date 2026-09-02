@@ -17,6 +17,7 @@ import { Field, SectionHead } from '../components/ui/Field';
 import { Modal } from '../components/ui/Modal';
 import { StatTile } from '../components/charts/StatTile';
 import { BadgeWall } from '../components/BadgeMedal';
+import { Icons } from '../components/layout/Icons';
 
 export function Settings() {
   const { state, update, replaceAll, toast, storageName } = useApp();
@@ -199,7 +200,7 @@ export function Settings() {
                   aria-label={`Remove ${c}`}
                   onClick={() => update((s) => ({ ...s, finance: { ...s.finance, categories: s.finance.categories.filter((x) => x !== c) } }))}
                 >
-                  ✕
+                  <span className="btn-glyph" aria-hidden>{Icons.close()}</span>
                 </button>
               )}
             </span>

@@ -120,7 +120,7 @@ export function Ideas() {
       {offer && (
         <section className="card">
           <div className="insight">
-            <span className="insight-icon" aria-hidden>🤝</span>
+            <span className="insight-icon" aria-hidden>{Icons.bulb()}</span>
             <div className="grow" style={{ minWidth: 0 }}>
               <p className="insight-title">Let me help you out with "{offer.title}"</p>
               <p className="t-sm t-sec" style={{ margin: '0 0 var(--sp-3)' }}>

@@ -1,3 +1,4 @@
+import type { IconName } from '../components/layout/Icons';
 import type { AppState, Habit, HabitLog } from './schema';
 import { addDays, diffDays, inWeek, lastDays, todayKey, weekStart, type DateKey } from './date';
 
@@ -128,12 +129,15 @@ export const statusColor = (s: HabitStatus): string => {
   }
 };
 
-export const statusIcon = (s: HabitStatus): string => {
+/** Named marks rather than characters. "‼" in particular is in the emoji
+ *  block and iOS draws it as a red emoji, which is exactly the thing this app
+ *  does not do. */
+export const statusIcon = (s: HabitStatus): IconName => {
   switch (s) {
-    case 'done': return '✓';
-    case 'yellow': return '!';
-    case 'red': return '‼';
-    default: return '○';
+    case 'done': return 'check';
+    case 'yellow': return 'alert';
+    case 'red': return 'alert';
+    default: return 'dot';
   }
 };
 

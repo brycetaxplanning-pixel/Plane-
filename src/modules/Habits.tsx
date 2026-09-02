@@ -14,7 +14,8 @@ import { BarChart } from '../components/charts/BarChart';
 import { Ring } from '../components/charts/Ring';
 import { StatTile } from '../components/charts/StatTile';
 import { hoursAs, sinkTotals } from '../lib/insights';
-import { Icons } from '../components/layout/Icons';
+import { Icons, type IconName } from '../components/layout/Icons';
+import { MarkPicker } from '../components/ui/MarkPicker';
 import { SwipeRow } from '../components/ui/SwipeRow';
 
 const ACCENT = 'var(--mod-habits)';
@@ -140,7 +141,7 @@ export function Habits() {
           </div>
           <div className="hero-body stack-2">
             {stats.needsAttention.length === 0 ? (
-              <p className="status status-good" style={{ alignSelf: 'flex-start' }}>✓ Nothing is slipping</p>
+              <p className="status status-good" style={{ alignSelf: 'flex-start' }}><span className="btn-glyph" aria-hidden>{Icons.check()}</span> Nothing is slipping</p>
             ) : (
               <>
                 <p className="t-sm t-bold">{stats.needsAttention[0].nudge}</p>
@@ -230,7 +231,12 @@ export function Habits() {
               return (
                 <div key={sink.habit.id} className="stack-2" style={{ marginBottom: 'var(--sp-4)' }}>
                   <div className="spread">
-                    <span className="t-sm t-bold">{sink.habit.emoji} {sink.habit.title}</span>
+                    <span className="t-sm t-bold row-2" style={{ gap: 6 }}>
+                      <span className="habit-mark" aria-hidden>
+                        {sink.habit.icon ? Icons[sink.habit.icon]() : Icons.repeat()}
+                      </span>
+                      {sink.habit.title}
+                    </span>
                     <span className="t-xs t-muted">
                       {sink.daysLogged} day{sink.daysLogged === 1 ? '' : 's'} logged · cap {sink.capPerDay}h
                     </span>
@@ -356,12 +362,14 @@ function HabitRowView({
 
   return (
     <div className="habit" style={{ ['--stat' as string]: statusColor(row.status) }}>
-      <span className="habit-dot" aria-hidden>{statusIcon(row.status)}</span>
+      <span className="habit-dot" aria-hidden>{Icons[statusIcon(row.status)]()}</span>
 
       <button className="habit-main" onClick={onEdit}>
         <span className="row-2" style={{ gap: 6 }}>
           <span className="habit-mark" aria-hidden>
-            {row.habit.emoji ?? (row.habit.cadence === 'weekly' ? Icons.calendar() : Icons.repeat())}
+            {row.habit.icon
+              ? Icons[row.habit.icon]()
+              : row.habit.cadence === 'weekly' ? Icons.calendar() : Icons.repeat()}
           </span>
           <span className="t-sm t-bold truncate">{row.habit.title}</span>
         </span>
@@ -446,7 +454,7 @@ function HabitForm({
   onDelete?: () => void;
 }) {
   const [title, setTitle] = useState(habit?.title ?? '');
-  const [emoji, setEmoji] = useState(habit?.emoji ?? '🔁');
+  const [icon, setIcon] = useState<IconName | undefined>(habit?.icon);
   const [cadence, setCadence] = useState<Cadence>(habit?.cadence ?? 'daily');
   const [kind, setKind] = useState<HabitKind>(habit?.kind ?? 'check');
   const [timesPerWeek, setTimesPerWeek] = useState(String(habit?.timesPerWeek ?? 1));
@@ -469,7 +477,7 @@ function HabitForm({
             onClick={() => onSave({
               id: habit?.id ?? uid('hab'),
               title: title.trim(),
-              emoji: emoji.trim() || '🔁',
+              icon,
               cadence,
               kind,
               timesPerWeek: cadence === 'weekly' ? Math.max(1, Number(timesPerWeek) || 1) : undefined,
@@ -485,10 +493,8 @@ function HabitForm({
       }
     >
       <div className="stack-3">
+        <MarkPicker value={icon} onChange={setIcon} />
         <div className="row-2" style={{ alignItems: 'flex-end' }}>
-          <Field label="Icon">
-            <input className="input" style={{ width: 64, textAlign: 'center' }} value={emoji} maxLength={2} onChange={(e) => setEmoji(e.target.value)} />
-          </Field>
           <div className="grow">
             <Field label="Habit">
               <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Stretch" autoFocus />

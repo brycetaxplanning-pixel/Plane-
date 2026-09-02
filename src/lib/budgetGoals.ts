@@ -1,3 +1,4 @@
+import type { IconName } from '../components/layout/Icons';
 /** Saving goals: what a thing costs, what you have put aside, and — the part
  *  that matters — whether the plan survives contact with your real spending.
  *  Every figure here comes from logged transactions or from something you
@@ -13,7 +14,7 @@ import type { DateKey } from './date';
 export interface GoalPreset {
   id: string;
   name: string;
-  emoji: string;
+  icon: IconName;
   blurb: string;
   /** Suggests an amount from real data where it can. Null when only you
    *  know the number. */
@@ -30,7 +31,7 @@ export const GOAL_PRESETS: GoalPreset[] = [
   {
     id: 'emergency',
     name: 'Emergency fund',
-    emoji: '🛟',
+    icon: 'shield',
     blurb: 'Three months of spending, sitting somewhere boring.',
     suggest: (s) => {
       const avg = averageMonthlySpend(s);
@@ -47,7 +48,7 @@ export const GOAL_PRESETS: GoalPreset[] = [
   {
     id: 'car',
     name: 'Car in cash',
-    emoji: '🚗',
+    icon: 'car',
     blurb: 'The whole price up front, no payment to carry.',
     months: 18,
     questions: [
@@ -59,7 +60,7 @@ export const GOAL_PRESETS: GoalPreset[] = [
   {
     id: 'move',
     name: 'Moving out',
-    emoji: '🏠',
+    icon: 'house',
     blurb: 'Deposit, first month, and the furniture you cannot avoid.',
     suggest: (s) => {
       const rent = averageCategory(s, 'Housing');
@@ -76,7 +77,7 @@ export const GOAL_PRESETS: GoalPreset[] = [
   {
     id: 'tax',
     name: 'Tax set-aside',
-    emoji: '🧾',
+    icon: 'receipt',
     blurb: 'The bill you already know is coming.',
     months: 6,
     questions: [
@@ -88,7 +89,7 @@ export const GOAL_PRESETS: GoalPreset[] = [
   {
     id: 'roth',
     name: 'Roth for the year',
-    emoji: '📈',
+    icon: 'trend',
     blurb: 'Filled steadily rather than in a December panic.',
     months: 12,
     questions: [
@@ -100,7 +101,7 @@ export const GOAL_PRESETS: GoalPreset[] = [
   {
     id: 'runway',
     name: 'Business runway',
-    emoji: '💼',
+    icon: 'briefcase',
     blurb: 'Months you could go without a client paying.',
     suggest: (s) => {
       const avg = averageMonthlySpend(s);
@@ -117,7 +118,7 @@ export const GOAL_PRESETS: GoalPreset[] = [
   {
     id: 'trip',
     name: 'A trip',
-    emoji: '✈️',
+    icon: 'plane',
     blurb: 'Flights, the bed, and the spending once you are there.',
     months: 8,
     questions: [
@@ -129,7 +130,7 @@ export const GOAL_PRESETS: GoalPreset[] = [
   {
     id: 'custom',
     name: 'Something else',
-    emoji: '🎯',
+    icon: 'target',
     blurb: 'Name it yourself.',
     months: 12,
     questions: [

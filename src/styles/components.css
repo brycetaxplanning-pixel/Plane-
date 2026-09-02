@@ -434,8 +434,8 @@
   /* Pulled most of the way to the text colour: the tint behind it carries the
      status, and the glyph has to be legible on top of it. */
   color: color-mix(in srgb, var(--stat, var(--text-muted)) 30%, var(--text-primary));
-  font-size: 13px; font-weight: 800; line-height: 1;
 }
+.habit-dot svg { width: 15px; height: 15px; stroke-width: 2.4; }
 .habit-main {
   display: flex; flex-direction: column; gap: 3px;
   flex: 1 1 auto; min-width: 0;
@@ -479,7 +479,13 @@
   overflow: hidden;
 }
 .goal-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.goal-emoji { font-size: 62px; line-height: 1; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22)); }
+.goal-emoji {
+  display: grid; place-items: center;
+  width: 58px; height: 58px;
+  color: var(--mod, var(--series-7));
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
+}
+.goal-emoji svg { width: 100%; height: 100%; stroke-width: 1.4; }
 
 .goal-body { display: flex; flex-direction: column; gap: 7px; padding: var(--sp-4); flex: 1 1 auto; }
 .goal-title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
@@ -1240,3 +1246,89 @@
 /* A habit's own mark, when it has no emoji of its own. */
 .habit-mark { display: inline-flex; width: 16px; height: 16px; flex: none; color: var(--text-secondary); }
 .habit-mark svg { width: 100%; height: 100%; }
+
+/* ---------- the mark picker ---------- */
+
+.marks { border: none; padding: 0; margin: 0; min-width: 0; }
+.marks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+  gap: 6px;
+  margin-top: 6px;
+  max-height: 168px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.mark {
+  aspect-ratio: 1;
+  display: grid; place-items: center;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 110ms ease, border-color 120ms ease, background 120ms ease;
+}
+.mark svg { width: 21px; height: 21px; }
+.mark:hover { transform: translateY(-1px); border-color: var(--border-strong); color: var(--text-primary); }
+.mark.is-on {
+  background: color-mix(in srgb, var(--mod, var(--series-1)) 20%, var(--surface-2));
+  border-color: color-mix(in srgb, var(--mod, var(--series-1)) 60%, transparent);
+  color: var(--text-primary);
+}
+@media (prefers-reduced-motion: reduce) { .mark:hover { transform: none; } }
+
+/* A note's pin. Filled when pinned, outline when not — the same mark either
+   way, so the control does not change shape under the thumb. */
+.pin-mark { display: inline-flex; width: 17px; height: 17px; }
+.pin-mark svg { width: 100%; height: 100%; }
+.is-pinned .pin-mark svg { fill: currentColor; }
+.goal-mark { display: inline-flex; width: 19px; height: 19px; flex: none; color: var(--mod, var(--series-7)); }
+.goal-mark svg { width: 100%; height: 100%; }
+
+/* ---------- the week, as slots you can count ---------- */
+
+.weekgrid { margin-bottom: var(--sp-4); }
+
+.weekgrid-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+.weekgrid-left {
+  font-size: 34px; font-weight: 800; line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--mod, var(--series-4));
+}
+.weekgrid-word {
+  font-size: 13px; font-weight: 650;
+  color: var(--text-primary);
+}
+.weekgrid-of {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* A grid rather than a wrapping flex row: twelve slots came out as eleven and
+   a lonely one, which reads as a mistake rather than a count. */
+.weekgrid-boxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+  gap: 6px;
+}
+.wslot {
+  height: 26px;
+  border-radius: 6px;
+  border: 1.5px solid color-mix(in srgb, var(--mod, var(--series-4)) 30%, transparent);
+  background: transparent;
+}
+.wslot.is-done {
+  background: var(--mod, var(--series-4));
+  border-color: var(--mod, var(--series-4));
+}
+
+.weekgrid-extra {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--success-text);
+}

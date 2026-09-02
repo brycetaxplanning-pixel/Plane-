@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { Icons } from '../layout/Icons';
 
 interface ModalProps {
   title: string;
@@ -72,7 +73,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
       <div className="modal" role="dialog" aria-modal="true" aria-label={title} ref={box} tabIndex={-1}>
         <div className="modal-head">
           <h2>{title}</h2>
-          <button className="btn btn-ghost btn-icon" onClick={onClose} aria-label="Close">✕</button>
+          <button className="btn btn-ghost btn-icon" onClick={onClose} aria-label="Close"><span className="btn-glyph" aria-hidden>{Icons.close()}</span></button>
         </div>
         <div className="modal-body">{children}</div>
         {footer && <div className="modal-foot">{footer}</div>}

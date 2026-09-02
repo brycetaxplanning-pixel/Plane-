@@ -150,6 +150,32 @@ export function Plan() {
           action={<button className="btn btn-sm" onClick={() => setAdding('new')}>+ Add</button>}
         />
 
+        {/* The whole week as one row of boxes: every session you owe it, in
+            order, filled as they land. The rows underneath say which is which,
+            but this is the part you read from across the room — how many are
+            still empty is how many are left. */}
+        {plan.target > 0 && (
+          <div className="weekgrid">
+            <div className="weekgrid-head">
+              <b className="weekgrid-left">{Math.max(0, plan.target - plan.total)}</b>
+              <span className="weekgrid-word">
+                {plan.total >= plan.target ? 'week complete' : 'left this week'}
+              </span>
+              <span className="weekgrid-of t-num">{Math.min(plan.total, plan.target)}/{plan.target} done</span>
+            </div>
+            <div className="weekgrid-boxes" aria-hidden>
+              {Array.from({ length: plan.target }, (_, i) => (
+                <span key={i} className={`wslot${i < plan.total ? ' is-done' : ''}`} />
+              ))}
+            </div>
+            {plan.total > plan.target && (
+              <p className="weekgrid-extra">
+                {plan.total - plan.target} more than you set out to do.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Every planned session is a box you tick as you finish it. That was
             the whole point of a plan and it was missing: the only way to move
             a count was to open a form and fill it in, which nobody does with a

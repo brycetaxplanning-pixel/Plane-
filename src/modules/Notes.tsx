@@ -171,7 +171,7 @@ function NoteCard({
       <div className="spread" style={{ alignItems: 'flex-start' }}>
         <button className="note-title grow" onClick={onOpen}>{note.title || 'Untitled'}</button>
         <button className="note-pin" onClick={onPin} aria-pressed={note.pinned} aria-label={note.pinned ? 'Unpin' : 'Pin'}>
-          {note.pinned ? '★' : '☆'}
+          <span className="pin-mark" aria-hidden>{Icons.star()}</span>
         </button>
       </div>
 

@@ -1,10 +1,11 @@
+import type { IconName } from '../components/layout/Icons';
 import type { AppState } from './schema';
 import { addDays, inWeek, weekDays, weekStart, type DateKey } from './date';
 
 export interface Award {
   id: string;
   name: string;
-  emoji: string;
+  icon: IconName;
   blurb: string;
 }
 
@@ -14,7 +15,7 @@ export const AWARDS: Award[] = [
   {
     id: 'enlightened',
     name: 'Enlightenment',
-    emoji: '🧘',
+    icon: 'lotus' as const,
     blurb: 'Every daily habit, every day, and every weekly habit — for a whole week.',
   },
 ];

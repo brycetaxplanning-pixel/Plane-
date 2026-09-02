@@ -9,7 +9,8 @@ import { useApp } from '../state/context';
 import { goalStats } from '../state/selectors';
 import { Modal } from '../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
-import { Icons } from '../components/layout/Icons';
+import { Icons, type IconName } from '../components/layout/Icons';
+import { MarkPicker } from '../components/ui/MarkPicker';
 
 const ACCENT = 'var(--mod-goals)';
 
@@ -95,7 +96,7 @@ export function Goals() {
           <div className="stack-2">
             {stats.done.map((g) => (
               <div key={g.id} className="rowitem rowitem-done">
-                <span aria-hidden style={{ fontSize: 18 }}>{g.emoji}</span>
+                <span className="goal-mark" aria-hidden>{Icons[g.icon ?? 'flag']()}</span>
                 <span className="rowitem-title grow t-sm">{g.title}</span>
                 <button
                   className="link-btn"
@@ -135,7 +136,7 @@ function GoalPhoto({ goal }: { goal: Goal }) {
   const src = useGoalImage(goal);
   return src
     ? <img src={src} alt="" />
-    : <span className="goal-emoji" aria-hidden>{goal.emoji}</span>;
+    : <span className="goal-emoji" aria-hidden>{Icons[goal.icon ?? 'flag']()}</span>;
 }
 
 /** `image` is checked first so a state that has not been lifted yet — an import
@@ -216,7 +217,7 @@ function GoalForm({
 }) {
   const [title, setTitle] = useState(goal?.title ?? '');
   const [kind, setKind] = useState<GoalKind>(goal?.kind ?? 'Purchase');
-  const [emoji, setEmoji] = useState(goal?.emoji ?? '🏁');
+  const [icon, setIcon] = useState<IconName | undefined>(goal?.icon);
   // Seeded from the store when the goal already has a photo. It is handed back
   // inline on save and moved out again by the caller.
   const [image, setImage] = useState(goal?.image);
@@ -262,7 +263,7 @@ function GoalForm({
               id: goal?.id ?? uid('goal'),
               title: title.trim(),
               kind,
-              emoji: emoji.trim() || '🏁',
+              icon,
               image,
               imageId: image ? goal?.imageId : undefined,
               cost: fields.cost && cost ? Number(cost) : undefined,
@@ -297,9 +298,8 @@ function GoalForm({
           </div>
         </Field>
 
-        <Field label="Picture" hint="An emoji, or a photo of the actual thing you want.">
+        <Field label="Picture" hint="A photo of the actual thing you want beats any mark — use one if you have it.">
           <div className="row-2 wrap">
-            <input className="input" style={{ width: 64, textAlign: 'center' }} value={emoji} maxLength={2} onChange={(e) => setEmoji(e.target.value)} />
             <button className="btn btn-sm" onClick={() => fileRef.current?.click()}>{image ? 'Replace photo' : 'Add a photo'}</button>
             {image && <button className="btn btn-sm btn-ghost" onClick={() => setImage(undefined)}>Remove</button>}
             <input
@@ -319,6 +319,8 @@ function GoalForm({
           {image && <img src={image} alt="" style={{ marginTop: 8, borderRadius: 'var(--r-md)', maxHeight: 120 }} />}
           {imgError && <span className="t-xs t-crit">{imgError}</span>}
         </Field>
+
+        {!image && <MarkPicker value={icon} onChange={setIcon} label="Or pick a mark" />}
 
         {(fields.cost || fields.monthly) && (
           <div className="grid grid-2" style={{ gap: 'var(--sp-3)' }}>

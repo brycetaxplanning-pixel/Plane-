@@ -18,6 +18,7 @@ import { Analysis } from './coach/Analysis';
 import { realityCheck } from '../lib/insights';
 import type { CoachMode } from '../lib/schema';
 import { Tabs, panelProps } from '../components/ui/Tabs';
+import { Icons } from '../components/layout/Icons';
 
 const ACCENT = 'var(--mod-coach)';
 const SCALE = [1, 2, 3, 4, 5];
@@ -70,7 +71,7 @@ export function Coach() {
 
         {stats.checkedInToday ? (
           <div className="spread" style={{ marginTop: 'var(--sp-4)' }}>
-            <span className="status status-good">✓ Checked in today</span>
+            <span className="status status-good"><span className="btn-glyph" aria-hidden>{Icons.check()}</span> Checked in today</span>
             <button className="btn btn-sm" onClick={() => setCheckingIn(true)}>Update it</button>
           </div>
         ) : (

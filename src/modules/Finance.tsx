@@ -377,7 +377,7 @@ The user says it was: ${describe.trim()}`,
                 onChange={(e) => setSplit(s.id, { amount: Number(e.target.value) || 0 })}
               />
               {splits.length > 1 && (
-                <button className="btn btn-ghost btn-icon" aria-label="Remove line" onClick={() => setSplits((l) => l.filter((x) => x.id !== s.id))}>✕</button>
+                <button className="btn btn-ghost btn-icon" aria-label="Remove line" onClick={() => setSplits((l) => l.filter((x) => x.id !== s.id))}><span className="btn-glyph" aria-hidden>{Icons.close()}</span></button>
               )}
             </div>
           ))}
@@ -429,7 +429,7 @@ function TransactionsPanel({ month }: { month: string }) {
         </div>
 
         {list.length === 0 ? (
-          <EmptyState icon="🧾" title="No transactions" hint="Import a CSV from your bank or add one by hand." />
+          <EmptyState icon={Icons.receipt()} title="No transactions" hint="Import a CSV from your bank or add one by hand." />
         ) : (
           <div className="table-scroll">
             <table className="table">
@@ -710,7 +710,7 @@ function RulesPanel() {
           }
         />
         {state.finance.rules.length === 0 ? (
-          <EmptyState icon="⚙️" title="No rules yet" hint="Starter rules cover the usual grocery stores, gas stations and subscriptions." />
+          <EmptyState icon={Icons.gear()} title="No rules yet" hint="Starter rules cover the usual grocery stores, gas stations and subscriptions." />
         ) : (
           <div className="table-scroll">
             <table className="table">

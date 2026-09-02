@@ -15,7 +15,8 @@ import { BarChart } from '../components/charts/BarChart';
 import { Ring } from '../components/charts/Ring';
 import { StatTile } from '../components/charts/StatTile';
 import { Tabs, panelProps } from '../components/ui/Tabs';
-import { Icons } from '../components/layout/Icons';
+import { Icons, type IconName } from '../components/layout/Icons';
+import { MarkPicker } from '../components/ui/MarkPicker';
 
 const ACCENT = 'var(--mod-planning)';
 
@@ -105,7 +106,7 @@ export function Planning() {
           setActiveId(id.replace(/^biz-/, ''));
         }}
         tabs={[
-          ...businesses.map((b) => ({ id: `biz-${b.id}`, label: `${b.emoji} ${b.name}` })),
+          ...businesses.map((b) => ({ id: `biz-${b.id}`, label: b.name })),
           { id: 'ideas', label: `Ideas${state.planning.ideas.length ? ` (${state.planning.ideas.length})` : ''}` },
         ]}
       />
@@ -257,7 +258,7 @@ export function Planning() {
                           toast('Entry removed');
                         }}
                       >
-                        ✕
+                        <span className="btn-glyph" aria-hidden>{Icons.close()}</span>
                       </button>
                     </td>
                   </tr>
@@ -493,7 +494,7 @@ function BusinessForm({
   onDelete?: () => void;
 }) {
   const [name, setName] = useState(business?.name ?? '');
-  const [emoji, setEmoji] = useState(business?.emoji ?? '🏢');
+  const [icon, setIcon] = useState<IconName | undefined>(business?.icon);
   const [weeklyTarget, setWeeklyTarget] = useState(String(business?.weeklyTarget ?? 50));
   const [notes, setNotes] = useState(business?.notes ?? '');
 
@@ -512,7 +513,7 @@ function BusinessForm({
             onClick={() => onSave({
               id: business?.id ?? uid('biz'),
               name: name.trim(),
-              emoji: emoji.trim() || '🏢',
+              icon,
               weeklyTarget: Math.max(0, Number(weeklyTarget) || 0),
               notes: notes.trim() || undefined,
               createdAt: business?.createdAt ?? todayKey(),
@@ -524,10 +525,8 @@ function BusinessForm({
       }
     >
       <div className="stack-3">
+        <MarkPicker value={icon} onChange={setIcon} />
         <div className="row-2" style={{ alignItems: 'flex-end' }}>
-          <Field label="Icon">
-            <input className="input" style={{ width: 64, textAlign: 'center' }} value={emoji} maxLength={2} onChange={(e) => setEmoji(e.target.value)} />
-          </Field>
           <div className="grow">
             <DictateInput label="Name" value={name} onChange={setName} placeholder="Flaxseed gel" autoFocus />
           </div>

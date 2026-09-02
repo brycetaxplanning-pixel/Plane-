@@ -1,3 +1,4 @@
+import type { IconName } from '../components/layout/Icons';
 import type { DateKey } from './date';
 import type { SkinId } from './themes';
 
@@ -62,7 +63,9 @@ export type Outcome = (typeof OUTCOMES)[number];
 export interface Business {
   id: string;
   name: string;
-  emoji: string;
+  icon?: IconName;
+  /** Dead — see Habit.icon. */
+  emoji?: string;
   /** Contacts a week for this business. Zero means it is not an outreach
    *  business at all — a product line, say — and the counter is hidden. */
   weeklyTarget: number;
@@ -262,7 +265,9 @@ export interface FitnessTargets {
 export interface SavingGoal {
   id: string;
   name: string;
-  emoji: string;
+  icon?: IconName;
+  /** Dead — see Habit.icon. */
+  emoji?: string;
   /** What it costs in full. */
   target: number;
   /** What you can put in each month, as you have decided it. */
@@ -374,8 +379,11 @@ export type HabitKind = 'check' | 'amount' | 'before' | 'under';
 export interface Habit {
   id: string;
   title: string;
-  /** Yours to pick, and optional: a habit added from a preset has none, and
-   *  the row falls back to its cadence mark. */
+  /** The mark you picked for it. Optional: one added from a preset has none
+   *  and the row falls back to its cadence mark. */
+  icon?: IconName;
+  /** Dead. Saves made before the marks replaced emoji still carry one; it is
+   *  never read or written. Kept so an old state loads without a migration. */
   emoji?: string;
   cadence: Cadence;
   kind: HabitKind;
@@ -417,8 +425,10 @@ export interface Goal {
   id: string;
   title: string;
   kind: GoalKind;
-  /** The picture. An emoji always; a photo when one has been added. */
-  emoji: string;
+  /** The mark, until a photo is added. */
+  icon?: IconName;
+  /** Dead — see Habit.icon. */
+  emoji?: string;
   /** A photo, held in IndexedDB rather than inline — see lib/images.ts. */
   imageId?: string;
   /** Legacy, and the transport form. Older saves stored the data URL here, and
@@ -746,7 +756,6 @@ function primaryBusiness(): Business {
   return {
     id: 'biz_primary',
     name: 'Bryce Tax Planning',
-    emoji: '🎯',
     weeklyTarget: 50,
     createdAt: '2026-01-01',
   };
@@ -966,8 +975,7 @@ function liftLegacyGoals(raw: unknown): Goal[] {
       id: old.id ?? `goal_${Math.random().toString(36).slice(2, 10)}`,
       title: old.title ?? 'Goal',
       kind: 'Custom' as GoalKind,
-      emoji: '🎯',
-      plan: old.target,
+        plan: old.target,
       module: old.module,
       due: old.due,
       done: Boolean(old.done),

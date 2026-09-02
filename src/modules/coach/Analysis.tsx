@@ -67,7 +67,7 @@ export function Analysis() {
                   title="Don't show this again"
                   onClick={() => update((s) => ({ ...s, insights: { ...s.insights, dismissed: [...s.insights.dismissed, i.id] } }))}
                 >
-                  ✕
+                  <span className="btn-glyph" aria-hidden>{Icons.close()}</span>
                 </button>
               </article>
             ))}

@@ -118,6 +118,30 @@ export const Icons = {
     <path d="M4.4 16.6c0-3.4 2.2-5.6 5.4-5.6h3.6a3.2 3.2 0 0 0 3.2-3.2V5.4" />
     <path d="M13.6 4.6h6.2v6.2" /><path d="M4.4 16.6v3.8h5.2v-3.8" />
   </>),
+  /** A car. */
+  car: () => wrap(<>
+    <path d="M3.4 15.4v-2.2l1.8-4.4A2 2 0 0 1 7.1 7.6h9.8a2 2 0 0 1 1.9 1.2l1.8 4.4v2.2" />
+    <path d="M3.4 15.4h17.2v2.4h-3.2v-2.4M6.8 15.4v2.4H3.4v-2.4" />
+    <circle cx="7.6" cy="13.2" r="1" /><circle cx="16.4" cy="13.2" r="1" />
+  </>),
+  /** A house. */
+  house: () => wrap(<><path d="M3.4 10.6 12 4l8.6 6.6" /><path d="M5.6 9.4V20h12.8V9.4" /><path d="M9.8 20v-5.4h4.4V20" /></>),
+  /** A shield — the money you keep back for when something goes wrong. */
+  shield: () => wrap(<path d="M12 3.2l7.4 2.6v6.4c0 4.2-3 7-7.4 8.6-4.4-1.6-7.4-4.4-7.4-8.6V5.8z" />),
+  /** A case — a business. */
+  briefcase: () => wrap(<>
+    <rect x="2.8" y="7.4" width="18.4" height="12.2" rx="2" />
+    <path d="M8.8 7.4V5.6a1.6 1.6 0 0 1 1.6-1.6h3.2a1.6 1.6 0 0 1 1.6 1.6v1.8" />
+    <path d="M2.8 12.6h18.4" />
+  </>),
+  /** A star — anything you want it to be. */
+  star: () => wrap(<path d="m12 3.6 2.6 5.6 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 10l6-.8z" />),
+  /** Attention. */
+  alert: () => wrap(<><path d="M12 4.6v9.2" /><path d="M12 18.4h.1" /></>),
+  /** Nothing yet. */
+  dot: () => wrap(<circle cx="12" cy="12" r="7.4" />),
+  /** Close. */
+  close: () => wrap(<><path d="M6 6l12 12M18 6L6 18" /></>),
   /** Delete. */
   trash: () => wrap(<>
     <path d="M4.2 6.6h15.6" /><path d="M9.4 6.6V4.8a1.4 1.4 0 0 1 1.4-1.4h2.4a1.4 1.4 0 0 1 1.4 1.4v1.8" />
@@ -231,6 +255,24 @@ export const Icons = {
 /** Every mark by name, so a definition elsewhere can point at one without
  *  importing JSX. */
 export type IconName = keyof typeof Icons;
+
+/**
+ * The marks offered when you name something of your own — a habit, a goal, a
+ * business, a saving pot.
+ *
+ * This is what replaced the emoji field. An emoji is drawn by the platform,
+ * so a set of them never looks like one set, and picking one meant a keyboard
+ * full of faces and flags to find a dumbbell. These are the same eleven-module
+ * hand, so anything you name looks like it belongs in the app.
+ */
+export const PICKABLE: IconName[] = [
+  'star', 'flag', 'target', 'trophy', 'rosette', 'milestone',
+  'run', 'glove', 'spine', 'pulse', 'plate', 'drop',
+  'repeat', 'clock', 'hourglass', 'moon', 'sprout', 'mountain',
+  'wallet', 'bank', 'receipt', 'trend', 'briefcase', 'shield',
+  'car', 'house', 'plane', 'book', 'chat', 'bulb',
+  'note', 'folder', 'phone', 'building', 'heart', 'compass',
+];
 
 /** The mark for a module, keyed the way the rest of the app keys modules. */
 export const MODULE_GLYPH: Record<ModuleId, () => React.ReactNode> = {

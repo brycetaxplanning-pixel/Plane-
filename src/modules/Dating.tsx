@@ -176,7 +176,7 @@ export function Dating() {
                         toast('Removed');
                       }}
                     >
-                      ✕
+                      <span className="btn-glyph" aria-hidden>{Icons.close()}</span>
                     </button>
                   </div>
                 ))}

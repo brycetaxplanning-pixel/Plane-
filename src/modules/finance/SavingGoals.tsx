@@ -14,7 +14,8 @@ import { EmptyState, Field, SectionHead } from '../../components/ui/Field';
 import { AIError, askJSON, isAIConfigured } from '../../lib/ai';
 import { DictateInput } from '../../components/ui/Dictation';
 import { StatTile } from '../../components/charts/StatTile';
-import { Icons } from '../../components/layout/Icons';
+import { Icons, type IconName } from '../../components/layout/Icons';
+import { MarkPicker } from '../../components/ui/MarkPicker';
 
 const ACCENT = 'var(--mod-finance)';
 
@@ -189,7 +190,7 @@ function GoalCard({
   return (
     <section className="card" style={{ ['--mod' as string]: ACCENT }}>
       <div className="row-2" style={{ alignItems: 'flex-start' }}>
-        <span className="goal-emoji" aria-hidden>{g.emoji}</span>
+        <span className="goal-emoji" aria-hidden>{Icons[g.icon ?? 'bank']()}</span>
         <div className="grow" style={{ minWidth: 0 }}>
           <h3 className="t-md t-bold">{g.name}</h3>
           <p className="t-xs t-muted">
@@ -283,7 +284,7 @@ function PresetPicker({ onClose, onPick }: { onClose: () => void; onPick: (g: Sa
   const fromPreset = (p: GoalPreset): SavingGoal => ({
     id: uid('sgoal'),
     name: p.id === 'custom' ? '' : p.name,
-    emoji: p.emoji,
+    icon: p.icon,
     target: p.suggest?.(state) ?? 0,
     monthly: 0,
     targetDate: addMonths(todayKey(), p.months ?? 12),
@@ -299,7 +300,7 @@ function PresetPicker({ onClose, onPick }: { onClose: () => void; onPick: (g: Sa
           const suggested = p.suggest?.(state) ?? null;
           return (
             <button key={p.id} className="rowitem" style={{ textAlign: 'left', cursor: 'pointer' }} onClick={() => onPick(fromPreset(p))}>
-              <span className="goal-emoji" aria-hidden>{p.emoji}</span>
+              <span className="goal-emoji" aria-hidden>{Icons[p.icon]()}</span>
               <span className="grow" style={{ minWidth: 0 }}>
                 <span className="t-sm t-bold" style={{ display: 'block' }}>{p.name}</span>
                 <span className="t-xs t-muted">
@@ -323,7 +324,7 @@ function PresetPicker({ onClose, onPick }: { onClose: () => void; onPick: (g: Sa
                   onPick({
                     id: uid('sgoal'),
                     name: g.title,
-                    emoji: g.emoji,
+                    icon: g.icon,
                     target: g.cost ?? 0,
                     monthly: 0,
                     targetDate: addMonths(todayKey(), 12),
@@ -334,7 +335,7 @@ function PresetPicker({ onClose, onPick }: { onClose: () => void; onPick: (g: Sa
                   })
                 }
               >
-                <span className="goal-emoji" aria-hidden>{g.emoji}</span>
+                <span className="goal-emoji" aria-hidden>{Icons[g.icon ?? 'bank']()}</span>
                 <span className="grow" style={{ minWidth: 0 }}>
                   <span className="t-sm t-bold" style={{ display: 'block' }}>{g.title}</span>
                   <span className="t-xs t-muted">{fmtMoney(g.cost ?? 0, cur)} — from Goals</span>
@@ -362,7 +363,7 @@ function GoalForm({
   const cur = state.settings.currency;
   const preset = presetById(goal.preset);
   const [name, setName] = useState(goal.name);
-  const [emoji, setEmoji] = useState(goal.emoji);
+  const [icon, setIcon] = useState<IconName | undefined>(goal.icon);
   const [target, setTarget] = useState(String(goal.target || ''));
   const [monthly, setMonthly] = useState(String(goal.monthly || ''));
   const [date, setDate] = useState(goal.targetDate ?? '');
@@ -372,7 +373,7 @@ function GoalForm({
   const draft: SavingGoal = {
     ...goal,
     name: name.trim() || preset?.name || 'Saving goal',
-    emoji: emoji.trim() || '🎯',
+    icon,
     target: Number(target) || 0,
     monthly: Number(monthly) || 0,
     targetDate: date || undefined,
@@ -382,7 +383,7 @@ function GoalForm({
 
   return (
     <Modal
-      title={preset ? `${preset.emoji} ${preset.name}` : 'Saving goal'}
+      title={preset ? preset.name : 'Saving goal'}
       onClose={onClose}
       footer={
         <>
@@ -407,14 +408,8 @@ function GoalForm({
       }
     >
       <div className="stack-2">
-        <div className="row-2">
-          <div style={{ width: 76 }}>
-            <Field label="Icon"><input className="input" value={emoji} onChange={(e) => setEmoji(e.target.value)} maxLength={4} /></Field>
-          </div>
-          <div className="grow">
-            <DictateInput label="Name" value={name} onChange={setName} placeholder="What you're saving for" autoFocus={!name} />
-          </div>
-        </div>
+        <DictateInput label="Name" value={name} onChange={setName} placeholder="What you're saving for" autoFocus={!name} />
+        <MarkPicker value={icon} onChange={setIcon} />
 
         <Field label={`What it costs (${cur})`} hint={preset?.basis && goal.target > 0 ? preset.basis : 'The full price, including the parts that are easy to forget.'}>
           <input className="input" inputMode="decimal" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="0" />
@@ -556,7 +551,7 @@ Give three more questions, specific to these numbers, that are worth answering b
 
   return (
     <Modal
-      title={`${goal.emoji} ${goal.name} — the questions`}
+      title={`${goal.name} — the questions`}
       onClose={onClose}
       footer={
         <>

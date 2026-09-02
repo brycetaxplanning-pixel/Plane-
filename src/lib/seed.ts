@@ -67,8 +67,8 @@ export function sampleState(): AppState {
     })));
 
   s.planning.businesses = [
-    { id: 'biz_primary', name: 'Bryce Tax Planning', emoji: '🎯', weeklyTarget: 50, notes: 'S-corp elections and planning retainers.', createdAt: addDays(today, -200) },
-    { id: 'biz_flax', name: 'Flaxseed gel', emoji: '🧴', weeklyTarget: 0, notes: 'Product line — no outreach target, tracked for the pipeline and ideas.', createdAt: addDays(today, -60) },
+    { id: 'biz_primary', name: 'Bryce Tax Planning', icon: 'target' as const, weeklyTarget: 50, notes: 'S-corp elections and planning retainers.', createdAt: addDays(today, -200) },
+    { id: 'biz_flax', name: 'Flaxseed gel', icon: 'briefcase' as const, weeklyTarget: 0, notes: 'Product line — no outreach target, tracked for the pipeline and ideas.', createdAt: addDays(today, -60) },
   ];
 
   s.planning.deals = [
@@ -202,26 +202,26 @@ export function sampleState(): AppState {
 
   s.goals.items = [
     {
-      id: uid('goal'), title: 'Own a used Tesla', kind: 'Purchase', emoji: '🚗',
+      id: uid('goal'), title: 'Own a used Tesla', kind: 'Purchase', icon: 'car' as const,
       cost: 24000, monthly: 400, costNote: '≈$3k down on a lease',
       current: 6500, target: 24000, unit: '$',
       plan: 'Make $400 more a month, or put every S-corp close toward it',
       module: 'finance', done: false, createdAt: addDays(today, -50),
     },
     {
-      id: uid('goal'), title: 'Move into a one-bedroom', kind: 'Recurring cost', emoji: '🏙️',
+      id: uid('goal'), title: 'Move into a one-bedroom', kind: 'Recurring cost', icon: 'house' as const,
       monthly: 2500, costNote: 'plus ~$5k deposit and first month',
       plan: 'Needs about $600/mo more than the current budget clears',
       module: 'finance', done: false, createdAt: addDays(today, -20),
     },
     {
-      id: uid('goal'), title: 'Run a half marathon', kind: 'Training', emoji: '🏃',
+      id: uid('goal'), title: 'Run a half marathon', kind: 'Training', icon: 'run' as const,
       weeks: 9, current: 3, target: 9, unit: 'weeks',
       plan: 'Four runs a week, long run up 10% each week, two-week taper',
       module: 'fitness', due: addDays(today, 63), done: false, createdAt: addDays(today, -30),
     },
     {
-      id: uid('goal'), title: 'Hold a 10-minute conversation in Spanish', kind: 'Custom', emoji: '🗣️',
+      id: uid('goal'), title: 'Hold a 10-minute conversation in Spanish', kind: 'Custom', icon: 'chat' as const,
       current: 4, target: 10, unit: 'minutes',
       plan: 'Twenty minutes a day, one italki lesson a week',
       module: 'spanish', done: false, createdAt: addDays(today, -40),
@@ -233,7 +233,7 @@ export function sampleState(): AppState {
   const tesla = s.goals.items.find((g) => g.title.startsWith('Own a used Tesla'));
   s.finance.savingGoals = [
     {
-      id: uid('sgoal'), name: 'Emergency fund', emoji: '\u{1F6DF}',
+      id: uid('sgoal'), name: 'Emergency fund', icon: 'shield' as const,
       target: 13500, monthly: 800, targetDate: addDays(today, 330),
       preset: 'emergency', createdAt: addDays(today, -120),
       note: 'Three months of spending, in the high-yield account.',
@@ -251,7 +251,7 @@ export function sampleState(): AppState {
       ],
     },
     {
-      id: uid('sgoal'), name: 'Tesla in cash', emoji: '\u{1F697}',
+      id: uid('sgoal'), name: 'Tesla in cash', icon: 'car' as const,
       target: 24000, monthly: 400, targetDate: addDays(today, 300),
       preset: 'car', goalId: tesla?.id, createdAt: addDays(today, -60),
       contributions: [
@@ -340,14 +340,14 @@ export function sampleState(): AppState {
   ];
 
   s.habits.items = [
-    { id: uid('hab'), title: 'Stretch',            emoji: '🧘', cadence: 'daily',  kind: 'amount', target: 15, unit: 'min', createdAt: addDays(today, -30) },
-    { id: uid('hab'), title: 'Pray',               emoji: '🙏', cadence: 'daily',  kind: 'check',  createdAt: addDays(today, -30) },
-    { id: uid('hab'), title: 'Hit protein',        emoji: '🥩', cadence: 'daily',  kind: 'amount', target: 180, unit: 'g', createdAt: addDays(today, -30) },
-    { id: uid('hab'), title: 'In bed by 11:30',    emoji: '😴', cadence: 'daily',  kind: 'before', targetTime: '23:30', createdAt: addDays(today, -30) },
-    { id: uid('hab'), title: 'Screen time',         emoji: '📱', cadence: 'daily',  kind: 'under',  target: 3, unit: 'h', createdAt: addDays(today, -30) },
-    { id: uid('hab'), title: 'Call five friends',  emoji: '📱', cadence: 'weekly', kind: 'check',  timesPerWeek: 5, createdAt: addDays(today, -30) },
-    { id: uid('hab'), title: 'Get some sun',       emoji: '🌞', cadence: 'weekly', kind: 'check',  timesPerWeek: 2, createdAt: addDays(today, -30) },
-    { id: uid('hab'), title: 'Spar',               emoji: '🥊', cadence: 'weekly', kind: 'check',  timesPerWeek: 1, createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'Stretch',            icon: 'spine' as const, cadence: 'daily',  kind: 'amount', target: 15, unit: 'min', createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'Pray',               icon: 'star' as const, cadence: 'daily',  kind: 'check',  createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'Hit protein',        icon: 'plate' as const, cadence: 'daily',  kind: 'amount', target: 180, unit: 'g', createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'In bed by 11:30',    icon: 'moon' as const, cadence: 'daily',  kind: 'before', targetTime: '23:30', createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'Screen time',         icon: 'clock' as const, cadence: 'daily',  kind: 'under',  target: 3, unit: 'h', createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'Call five friends',  icon: 'clock' as const, cadence: 'weekly', kind: 'check',  timesPerWeek: 5, createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'Get some sun',       icon: 'sprout' as const, cadence: 'weekly', kind: 'check',  timesPerWeek: 2, createdAt: addDays(today, -30) },
+    { id: uid('hab'), title: 'Spar',               icon: 'glove' as const, cadence: 'weekly', kind: 'check',  timesPerWeek: 1, createdAt: addDays(today, -30) },
   ];
 
   // A fortnight of history with deliberate gaps, so green, yellow and red all

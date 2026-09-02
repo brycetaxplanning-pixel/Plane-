@@ -108,7 +108,10 @@ console.log('\n4. A preset fills in what it can from your own spending');
   await picker.locator('button', { hasText: 'Business runway' }).first().click();
   await page.waitForTimeout(300);
   const form = page.getByRole('dialog');
-  const cost = await form.locator('input').nth(2).inputValue();
+  // By label, not by position. This read input #3 and broke the moment a
+  // field was removed from the form — which says nothing about whether the
+  // cost is pre-filled, which is the only thing it is here to check.
+  const cost = await form.getByLabel(/What it costs/).inputValue();
   Number(cost) > 0 ? ok('and the form opens pre-filled') : bad('prefill', `cost was "${cost}"`);
   await ctx.close();
 }

@@ -389,7 +389,7 @@ Use the marker names as printed. Where the report shows a range like "70-99", lo
                     aria-label={`Remove ${m.name || 'marker'}`}
                     onClick={() => setMarkers((ms) => ms.filter((x) => x.id !== m.id))}
                   >
-                    ✕
+                    <span className="btn-glyph" aria-hidden>{Icons.close()}</span>
                   </button>
                 </div>
                 <div className="grid grid-2" style={{ gap: 'var(--sp-3)' }}>
