@@ -1,6 +1,6 @@
 import type { IconName } from '../components/layout/Icons';
 import type { AppState } from './schema';
-import { addDays, inWeek, weekDays, weekStart, type DateKey } from './date';
+import { addDays, weekStart, type DateKey } from './date';
 
 export interface Award {
   id: string;
@@ -67,24 +67,3 @@ export function reconcileAwards(state: AppState): AppState {
   return { ...state, awards: { ...state.awards, enlightened: [...state.awards.enlightened, week] } };
 }
 
-/** Progress toward this week's award, for the nudge on the Habits screen. */
-export function thisWeekProgress(state: AppState): { met: number; total: number } {
-  const daily = state.habits.items.filter((h) => h.cadence === 'daily' && !h.archived);
-  const weekly = state.habits.items.filter((h) => h.cadence === 'weekly' && !h.archived);
-  const days = weekDays();
-
-  let met = 0;
-  let total = 0;
-  for (const h of daily) {
-    for (const d of days) {
-      total++;
-      if (state.habits.logs.some((l) => l.habitId === h.id && l.date === d && l.met)) met++;
-    }
-  }
-  for (const h of weekly) {
-    const target = Math.max(1, h.timesPerWeek ?? 1);
-    total += target;
-    met += Math.min(target, state.habits.logs.filter((l) => l.habitId === h.id && l.met && inWeek(l.date)).length);
-  }
-  return { met, total };
-}

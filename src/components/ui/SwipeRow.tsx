@@ -78,7 +78,7 @@ export function SwipeRow({
   const offset = dragging ? dx : open ? -ACTION_W : 0;
 
   return (
-    <div className={`swipe${open ? ' is-open' : ''}`}>
+    <div className={`swipe${open ? ' is-open' : ''}${dragging ? ' is-dragging' : ''}`}>
       <button
         className="swipe-delete"
         style={{ width: ACTION_W }}
