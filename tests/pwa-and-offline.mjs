@@ -50,7 +50,7 @@ console.log('\n2. Data written offline survives coming back online');
   await ctx.setOffline(true);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(800);
-  await page.getByRole('button', { name: /Write one|New note|\+ Note/ }).first().click();
+  await page.locator('.fab').click();
   const form = page.getByRole('dialog');
   await form.getByLabel(/Title/i).first().fill('Written on the subway');
   await form.getByRole('button', { name: /Save/ }).first().click();

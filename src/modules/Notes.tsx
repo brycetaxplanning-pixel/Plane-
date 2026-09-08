@@ -5,9 +5,10 @@ import { fmtDate, todayKey } from '../lib/date';
 import { uid } from '../lib/id';
 import { useApp } from '../state/context';
 import { Modal } from '../components/ui/Modal';
-import { EmptyState, Field, SectionHead } from '../components/ui/Field';
-import { DictateInput, VoiceCapture } from '../components/ui/Dictation';
+import { EmptyState, Field } from '../components/ui/Field';
+import { DictateInput } from '../components/ui/Dictation';
 import { Icons } from '../components/layout/Icons';
+import { Fab } from '../components/ui/Fab';
 
 const ACCENT = 'var(--mod-notes)';
 
@@ -27,7 +28,6 @@ const LIST_SEED: Record<string, string[]> = {
 export function Notes() {
   const { state, update, reward, toast } = useApp();
   const [editing, setEditing] = useState<Note | 'new' | null>(null);
-  const [talking, setTalking] = useState(false);
   const [query, setQuery] = useState('');
   const [kindFilter, setKindFilter] = useState<NoteKind | 'All'>('All');
 
@@ -52,54 +52,23 @@ export function Notes() {
     setEditing(null);
   };
 
-  /** A spoken capture becomes a note with the first sentence as its title. */
-  const saveSpoken = (text: string) => {
-    const firstStop = text.search(/[.!?]\s/);
-    const rawTitle = (firstStop > 0 && firstStop < 70 ? text.slice(0, firstStop) : text.slice(0, 70)).trim();
-    reward('notes', XP.note, 'Captured a thought', (s) => ({
-      ...s,
-      notes: {
-        items: [{
-          id: uid('note'),
-          kind: 'Note' as NoteKind,
-          title: rawTitle || 'Untitled',
-          body: text,
-          tags: [],
-          pinned: false,
-          createdAt: todayKey(),
-          updatedAt: Date.now(),
-        }, ...s.notes.items],
-      },
-    }));
-    setTalking(false);
-  };
 
   return (
-    <div className="stack">
-      <section className="card" style={{ ['--mod' as string]: ACCENT }}>
-        <SectionHead title="Get it out of your head" sub="Talk it in — no typing needed" />
-        {talking ? (
-          <VoiceCapture onDone={saveSpoken} placeholder="Start talking, or type here…">
-            <button className="link-btn" onClick={() => setTalking(false)}>Cancel</button>
-          </VoiceCapture>
-        ) : (
-          <div className="row-2 wrap">
-            <button className="btn btn-primary btn-lg grow" onClick={() => setTalking(true)}>
-              <span className="btn-glyph" aria-hidden>{Icons.mic()}</span> Talk a note
-            </button>
-            <button className="btn btn-lg" onClick={() => setEditing('new')}>Write one</button>
-          </div>
-        )}
-      </section>
+    <div className="stack todo-page" style={{ ['--mod' as string]: ACCENT }}>
+      {/* Search and the kind filter only once there is enough here to need
+          them. Four notes are all on screen already; a search box over them
+          is furniture. */}
+      {state.notes.items.length > 4 && (
+        <div className="row-2 wrap">
+          <input className="input grow" placeholder="Search notes" value={query} onChange={(e) => setQuery(e.target.value)} />
+          {(['All', ...NOTE_KINDS] as const).map((k) => (
+            <button key={k} className="chip" aria-pressed={kindFilter === k} onClick={() => setKindFilter(k)}>{k}</button>
+          ))}
+        </div>
+      )}
 
       {state.notes.items.length > 0 && (
         <>
-          <div className="row-2 wrap">
-            <input className="input grow" placeholder="Search notes" value={query} onChange={(e) => setQuery(e.target.value)} />
-            {(['All', ...NOTE_KINDS] as const).map((k) => (
-              <button key={k} className="chip" aria-pressed={kindFilter === k} onClick={() => setKindFilter(k)}>{k}</button>
-            ))}
-          </div>
 
           {notes.length === 0 ? (
             <EmptyState icon={Icons.search()} title="Nothing matches" hint="Try a different word, or clear the filter." />
@@ -131,13 +100,16 @@ export function Notes() {
         </>
       )}
 
-      {state.notes.items.length === 0 && !talking && (
-        <EmptyState
-          icon={Icons.note()}
-          title="Nothing written yet"
-          hint="To-do lists, content ideas, a journal — whatever you'd otherwise put in your phone's notes app."
-        />
+      {state.notes.items.length === 0 && (
+        <p className="todo-empty">
+          Nothing written yet.<br />
+          <span className="t-muted">Press the plus and start typing.</span>
+        </p>
       )}
+
+      <Fab onClick={() => setEditing('new')} label="Write a note" color={ACCENT}>
+        {Icons.plus()}
+      </Fab>
 
       {editing && (
         <NoteForm
@@ -216,6 +188,13 @@ function NoteForm({
   const [items, setItems] = useState(note?.items ?? []);
   const [newItem, setNewItem] = useState('');
 
+  // Kind, tags and list items are all real and none of them are the reason
+  // you opened this. An existing note that already uses them opens with the
+  // fold up, so editing never hides what is set.
+  const [open, setOpen] = useState(Boolean(
+    note && (note.kind !== 'Note' || note.tags.length > 0 || (note.items?.length ?? 0) > 0),
+  ));
+
   const seed = LIST_SEED[title.trim().toLowerCase()];
 
   return (
@@ -232,7 +211,7 @@ function NoteForm({
             onClick={() => onSave({
               id: note?.id ?? uid('note'),
               kind,
-              title: title.trim() || body.trim().slice(0, 60),
+              title: title.trim() || firstSentence(body) || 'Untitled',
               body,
               tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
               pinned: note?.pinned ?? false,
@@ -247,6 +226,41 @@ function NoteForm({
       }
     >
       <div className="stack-3">
+        {/* Title then body, the way a page of paper works. Neither is
+            required: leave the title blank and the first sentence of what you
+            wrote becomes it. */}
+        <input
+          className="input note-titleline"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Title"
+          aria-label="Title"
+          autoComplete="off"
+          autoFocus
+        />
+
+        {kind !== 'List' && (
+          <DictateInput
+            value={body}
+            onChange={setBody}
+            textarea
+            rows={9}
+            placeholder="Start typing, or press the microphone and talk"
+          />
+        )}
+
+        <button
+          type="button"
+          className="disclose"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span className={`disclose-mark${open ? ' is-open' : ''}`} aria-hidden>{Icons.chevron()}</span>
+          {open ? 'Less detail' : 'Add more detail'}
+        </button>
+
+        {open && (
+        <div className="stack-3">
         <Field label="Kind">
           <div className="row-2 wrap">
             {NOTE_KINDS.map((k) => (
@@ -255,14 +269,15 @@ function NoteForm({
           </div>
         </Field>
 
-        <DictateInput
-          label="Title"
-          value={title}
-          onChange={setTitle}
-          placeholder="What is this about"
-          suggestions={TITLE_SUGGESTIONS[kind]}
-          autoFocus
-        />
+        {title.trim() === '' && TITLE_SUGGESTIONS[kind].length > 0 && (
+          <Field label="Or start from one of these">
+            <div className="row-2 wrap">
+              {TITLE_SUGGESTIONS[kind].map((t) => (
+                <button key={t} type="button" className="chip" onClick={() => setTitle(t)}>{t}</button>
+              ))}
+            </div>
+          </Field>
+        )}
 
         {kind === 'List' ? (
           <Field label="Items">
@@ -301,21 +316,22 @@ function NoteForm({
               </button>
             </div>
           </Field>
-        ) : (
-          <DictateInput
-            label={kind === 'Journal' ? 'Entry' : 'Body'}
-            value={body}
-            onChange={setBody}
-            textarea
-            rows={7}
-            placeholder="Talk or type…"
-          />
-        )}
+        ) : null}
 
         <Field label="Tags" hint="Comma separated.">
           <input className="input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="taxes, content, flaxseed" />
         </Field>
+        </div>
+        )}
       </div>
     </Modal>
   );
+}
+
+/** The first sentence, for a note that was written without a title — which is
+ *  most of them when the point is to get a thought down and move on. Falls
+ *  back to a clean truncation when nothing has been punctuated yet. */
+function firstSentence(text: string): string {
+  const stop = text.search(/[.!?](\s|$)/);
+  return (stop > 0 && stop < 70 ? text.slice(0, stop) : text.slice(0, 70)).trim();
 }

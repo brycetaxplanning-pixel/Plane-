@@ -45,6 +45,7 @@ import './styles/charts.css';
 import './styles/launcher.css';
 import './styles/effects.css';
 import { ModuleHero } from './components/layout/ModuleHero';
+import { ModuleTodos } from './components/layout/ModuleTodos';
 
 export default function App() {
   return (
@@ -154,6 +155,11 @@ function Shell() {
         {route === 'health' && <Health />}
         {route === 'dating' && <Dating />}
         {route === 'settings' && <Settings />}
+        {/* Every module carries its own slice of the one to-do list, at the
+            foot where it reads as "and here is what is still open" rather
+            than competing with the module's own work. The To Do module is
+            excluded: it is already the whole list. */}
+        {module && module.id !== 'reminders' && <ModuleTodos id={module.id} />}
         </Suspense>
       </main>
 

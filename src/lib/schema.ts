@@ -1010,5 +1010,13 @@ export const MODULES: { id: ModuleId; num: number; name: string; blurb: string; 
   { id: 'dating',   num: 11, name: 'Dating',          blurb: 'Who you are seeing and what it costs',    color: 'var(--mod-dating)' },
   // Shares Habits' hue. Both are things you owe and tick off, and the
   // eight categorical slots were spent long before this one existed.
-  { id: 'reminders', num: 12, name: 'Reminders',      blurb: 'Anything you need to do, dated or not',   color: 'var(--mod-reminders)' },
+  //
+  // The id stays `reminders` while the name reads To Do. A reminder and a
+  // to-do were the same record all along — a thing you have not done, with an
+  // optional date and an optional module — and keeping two of them meant
+  // deciding which box a thought went in every time you had one. Renaming the
+  // id would strand every saved reference to it (a to-do's own module tag, the
+  // XP ledger, stored notifications) for a word nobody sees, which is the same
+  // trade this codebase already took when `emoji` became `icon`.
+  { id: 'reminders', num: 12, name: 'To Do',          blurb: 'Everything you owe yourself, from every module', color: 'var(--mod-reminders)' },
 ];

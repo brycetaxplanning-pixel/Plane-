@@ -17,19 +17,20 @@ console.log(`\n(this browser reports speech recognition: ${speech})`);
 
 console.log('\n1. Dictation degrades instead of breaking');
 await page.goto(BASE + '#/notes', { waitUntil: 'networkidle' });
-await page.getByRole('button', { name: /Talk a note/ }).click();
+await page.waitForTimeout(400);
+// A plus and then the note itself. There is no talk-or-write question to
+// answer first, and no second button inside the answer that also says talk.
+await page.locator('.fab').click();
 await page.waitForTimeout(300);
-const talkBtn = await page.getByRole('button', { name: /Hold the thought/ }).count();
+const mic = await page.locator('.modal-body .mic').count();
 if (speech) {
-  talkBtn > 0 ? ok('press-to-talk offered where speech is available') : bad('talk button', 'supported but missing');
+  mic > 0 ? ok('a microphone sits on the field where speech is available') : bad('mic', 'supported but missing');
 } else {
-  talkBtn === 0 ? ok('no talk button where speech is unavailable') : bad('talk button', 'offered anyway');
-  (await page.getByText(/can't do speech recognition/).count()) > 0
-    ? ok('says so plainly and still offers typing') : bad('fallback copy', 'missing');
+  mic === 0 ? ok('no microphone where speech is unavailable') : bad('mic', 'offered anyway');
 }
-// The same panel must always accept typing, whichever branch applied.
-(await page.locator('.capture textarea').count()) > 0 ? ok('typing works either way') : bad('textarea', 'missing');
-await page.locator('.capture textarea').fill('Idea for the tax content series');
+// The field must always accept typing, whichever branch applied.
+(await page.locator('.modal-body textarea').count()) > 0 ? ok('typing works either way') : bad('textarea', 'missing');
+await page.locator('.modal-body textarea').fill('Idea for the tax content series');
 await page.getByRole('button', { name: 'Save' }).click();
 await page.waitForTimeout(400);
 let s = await read();
@@ -37,9 +38,12 @@ let s = await read();
 s.notes.items[0].title === 'Idea for the tax content series' ? ok('first sentence becomes the title') : bad('title', s.notes.items[0].title);
 
 console.log('\n2. A list note keeps tickable items');
-await page.getByRole('button', { name: 'Write one' }).click();
+await page.locator('.fab').click();
+await page.waitForTimeout(300);
+// Kind lives behind the fold now: the note comes first, what it is comes second.
+await page.getByRole('button', { name: /Add more detail/ }).click();
 await page.locator('.modal-body').getByRole('button', { name: 'List', exact: true }).click();
-await page.getByPlaceholder('What is this about').fill('To do');
+await page.getByPlaceholder('Title').fill('To do');
 await page.waitForTimeout(200);
 const seeded = await page.locator('.modal-body').getByRole('button', { name: /^\+ / }).count();
 seeded > 0 ? ok(`typing a known list title offers ${seeded} starter items`) : bad('list suggestions', 'none offered');

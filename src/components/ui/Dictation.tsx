@@ -4,14 +4,27 @@ import { Icons } from '../layout/Icons';
 
 /** A microphone that dictates into whatever field it is attached to. */
 export function MicButton({
-  onPhrase, title = 'Dictate', continuous = true, size = 'sm',
+  onPhrase, onDone, title = 'Dictate', continuous = true, size = 'sm',
 }: {
   onPhrase: (phrase: string) => void;
+  /** Fired once when a spell of listening ends, whether it was stopped by
+   *  hand or ran out on its own. Lets a caller work on the finished sentence
+   *  instead of guessing which phrase was the last one. */
+  onDone?: () => void;
   title?: string;
   continuous?: boolean;
   size?: 'sm' | 'lg';
 }) {
   const { supported, listening, interim, error, toggle } = useDictation({ onText: (t, final) => { if (final) onPhrase(t); }, continuous });
+
+  const wasListening = useRef(false);
+  const doneRef = useRef(onDone);
+  doneRef.current = onDone;
+  useEffect(() => {
+    if (wasListening.current && !listening) doneRef.current?.();
+    wasListening.current = listening;
+  }, [listening]);
+
   if (!supported) return null;
 
   return (
@@ -116,9 +129,17 @@ export function VoiceCapture({
   const textRef = useRef('');
   textRef.current = text;
 
-  const { supported, listening, interim, error, toggle, stop } = useDictation({
+  const { supported, listening, interim, error, toggle, start, stop } = useDictation({
     onText: (t, final) => { if (final) setText((prev) => appendPhrase(prev, t)); },
   });
+
+  // Listening starts the moment this appears. You asked for the microphone by
+  // opening it; being shown a second button that also says "talk" is the same
+  // question twice, and it is the reason talking took two presses.
+  const began = useRef(false);
+  useEffect(() => {
+    if (supported && !began.current) { began.current = true; start(); }
+  }, [supported, start]);
 
   useEffect(() => () => stop(), [stop]);
 
@@ -148,7 +169,7 @@ export function VoiceCapture({
             className={`btn btn-lg${listening ? ' btn-danger' : ''}`}
             onClick={toggle}
           >
-            {listening ? '■ Stop' : <><span className="btn-glyph" aria-hidden>{Icons.mic()}</span> Hold the thought — talk</>}
+            {listening ? '■ Stop' : <><span className="btn-glyph" aria-hidden>{Icons.mic()}</span> Talk again</>}
           </button>
         )}
         <button

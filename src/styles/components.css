@@ -1422,6 +1422,67 @@
    never the one you cannot reach. */
 .todo-page { padding-bottom: 76px; }
 
+/* ---------- where a to-do came from ---------- */
+
+/* One row of filters, scrolling sideways rather than wrapping into a block —
+   the counts are meant to be read at a glance, and a four-line wall of chips
+   is the sort of thing this screen was rebuilt to get rid of. */
+.todo-filters {
+  display: flex; gap: var(--sp-2);
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.todo-filters::-webkit-scrollbar { display: none; }
+
+.todo-chip {
+  flex: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  font-size: 12.5px; font-weight: 600;
+  white-space: nowrap; cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+.todo-chip b {
+  font-variant-numeric: tabular-nums; font-weight: 700;
+  color: var(--text-muted);
+}
+.todo-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--chip, var(--text-muted)); }
+.todo-chip[aria-pressed='true'] {
+  color: var(--text-primary);
+  border-color: color-mix(in srgb, var(--chip, var(--series-1)) 60%, var(--border));
+  background: color-mix(in srgb, var(--chip, var(--series-1)) 14%, var(--surface-1));
+}
+.todo-chip[aria-pressed='true'] b { color: var(--text-secondary); }
+
+/* The second line of a row: where it came from, then when it is wanted. */
+.todo-sub { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.todo-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; font-weight: 600;
+  color: var(--text-secondary);
+}
+.todo-tag i { width: 6px; height: 6px; border-radius: 50%; background: var(--chip, var(--text-muted)); }
+
+/* The title line of a note. Bigger and quieter than a form field, because it
+   is the top of a page rather than a question being asked. */
+.note-titleline {
+  font-size: 19px; font-weight: 650;
+  padding-left: 0; padding-right: 0;
+  border: 0; border-radius: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+}
+.note-titleline:focus-visible { outline: none; border-bottom-color: var(--mod, var(--series-1)); }
+
+/* A module's own slice, at the foot of its screen. */
+.modtodo .todo { margin-top: var(--sp-3); }
+.modtodo .todo-row { background: var(--surface-2); }
+
 /* ---------- the plus ---------- */
 
 /* Bottom right, above the nav and clear of the toast, which is centred.
@@ -1466,9 +1527,12 @@
 .disclose-mark.is-open { transform: rotate(0deg); }
 .disclose-mark svg { width: 16px; height: 16px; }
 
-/* The one line the sheet opens on. 16px because anything smaller makes iOS
-   zoom the whole page when the field takes focus. */
-.askline-input { font-size: 16px; }
+/* The one line the sheet opens on, with the microphone sitting on it. 16px
+   because anything smaller makes iOS zoom the whole page on focus. */
+.askline { display: flex; flex-wrap: nowrap; gap: var(--sp-2); align-items: center; }
+/* .input carries width: 100%, which as a flex-basis leaves nothing for the
+   mic beside it — hence the zero basis. */
+.askline-input { flex: 1 1 0; min-width: 0; width: auto; font-size: 16px; }
 
 /* The two folds under it, side by side and quiet. */
 .askfolds { display: flex; flex-wrap: wrap; gap: var(--sp-4); }

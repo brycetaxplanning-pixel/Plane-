@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { MODULES, REPEATS, type ModuleId, type Reminder, type Repeat } from '../../lib/schema';
 import { AIError, askJSON, isAIConfigured } from '../../lib/ai';
 import { todayKey } from '../../lib/date';
@@ -6,7 +6,8 @@ import { uid } from '../../lib/id';
 import { useApp } from '../../state/context';
 import { Modal } from '../../components/ui/Modal';
 import { Field } from '../../components/ui/Field';
-import { VoiceCapture } from '../../components/ui/Dictation';
+import { MicButton } from '../../components/ui/Dictation';
+import { appendPhrase } from '../../lib/speech';
 import { Icons } from '../../components/layout/Icons';
 
 interface Parsed {
@@ -27,19 +28,27 @@ interface Parsed {
  * real and all still here — they are just folded behind one press, so they
  * cost nothing to ignore.
  *
- * Talking is folded the same way. It used to be a card of its own on the
- * screen, offering "talk" or "write" before you had decided you wanted either.
- * Saying a whole sentence and having the date read out of it is worth keeping;
- * being asked about it every time you open the list is not.
+ * There is one field and a microphone on it, and that is the whole of the
+ * talking story. It used to be a card offering "talk" or "write" before you
+ * had decided you wanted either, and then a second button inside that to
+ * actually start listening — two presses and a choice to answer a question
+ * you had already answered.
+ *
+ * Speaking a sentence is itself the request to have it understood, so when a
+ * spell of dictation ends the sentence is taken apart into fields and the fold
+ * opens on the result. Typing stays literal: what you type is the title.
  *
  * An existing reminder that already carries detail opens with the fold already
  * open, so editing never hides what is set.
  */
 export function AddSheet({
-  reminder, onClose, onSave, onDelete,
+  reminder, defaultModule, onClose, onSave, onDelete,
 }: {
   /** null for a new one. */
   reminder: Reminder | null;
+  /** Which module a new one belongs to — set when it is being added from
+   *  inside that module, or while the list is filtered to it. */
+  defaultModule?: ModuleId;
   onClose: () => void;
   onSave: (r: Reminder) => void;
   onDelete?: () => void;
@@ -51,15 +60,20 @@ export function AddSheet({
   const [date, setDate] = useState(reminder?.date ?? '');
   const [time, setTime] = useState(reminder?.time ?? '');
   const [everyDays, setEveryDays] = useState(String(reminder?.everyDays ?? 21));
-  const [module, setModule] = useState<ModuleId | ''>(reminder?.module ?? '');
+  const [module, setModule] = useState<ModuleId | ''>(reminder?.module ?? defaultModule ?? '');
 
   const carriesDetail = Boolean(
     reminder && (reminder.date || reminder.time || reminder.notes || reminder.module || reminder.repeat !== 'Once'),
   );
   const [open, setOpen] = useState(carriesDetail);
-  const [saying, setSaying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /** Whether the current text arrived by voice. Only a spoken sentence gets
+   *  taken apart — typing what you want is not a request to reinterpret it. */
+  const spoken = useRef(false);
+  const titleRef = useRef(title);
+  titleRef.current = title;
 
   const interval = repeat === 'Every N days';
 
@@ -75,9 +89,9 @@ export function AddSheet({
    *  in the form with the fold open rather than saved behind your back — it is
    *  a first draft of the reminder, not a decision. */
   async function parseSpoken(text: string) {
-    setSaying(false);
-    setTitle(text.slice(0, 80));
-    if (!isAIConfigured(state.settings)) return;
+    // Two words is a title, not a sentence with a date hidden in it. Sending
+    // "call mum" to be parsed spends a request to be told it is "call mum".
+    if (!isAIConfigured(state.settings) || text.trim().split(/\s+/).length < 4) return;
 
     setBusy(true);
     setError(null);
@@ -132,44 +146,38 @@ They said: ${text}`,
       title={reminder ? 'Reminder' : 'Add a reminder'}
       onClose={onClose}
       footer={
-        // While it is listening, the capture's own Save is the only action
-        // that makes sense — two primary buttons would be two answers to the
-        // same question.
-        saying ? (
-          <button className="btn" onClick={() => setSaying(false)}>Cancel</button>
-        ) : (
-          <>
-            {onDelete && <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={onDelete}>Delete</button>}
-            <button className="btn" onClick={onClose}>Cancel</button>
-            <button className="btn btn-primary" disabled={!title.trim() || busy} onClick={submit}>Save</button>
-          </>
-        )
+        <>
+          {onDelete && <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={onDelete}>Delete</button>}
+          <button className="btn" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" disabled={!title.trim() || busy} onClick={submit}>Save</button>
+        </>
       }
     >
-      {saying ? (
-        <VoiceCapture
-          onDone={(t) => void parseSpoken(t)}
-          placeholder="Call the client at 6:30 on Thursday…"
-        />
-      ) : (
+      {(
         <div className="stack-3">
-          <input
-            className="input askline-input"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } }}
-            placeholder="Cancel the subscription"
-            aria-label="What you need to do"
-            enterKeyHint="done"
-            autoComplete="off"
-            autoFocus
-          />
+          <div className="askline">
+            <input
+              className="input askline-input"
+              value={title}
+              onChange={(e) => { setTitle(e.target.value); spoken.current = false; }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } }}
+              placeholder="Type what you need to do"
+              aria-label="What you need to do"
+              enterKeyHint="done"
+              autoComplete="off"
+              autoFocus
+            />
+            {/* Renders nothing at all where speech is unavailable, so there is
+                no dead button and no hole where one would have been. */}
+            <MicButton
+              size="lg"
+              title="Talk instead of typing"
+              onPhrase={(p) => { spoken.current = true; setTitle((t) => appendPhrase(t, p)); }}
+              onDone={() => { if (spoken.current) void parseSpoken(titleRef.current); }}
+            />
+          </div>
 
           <div className="askfolds">
-            <button type="button" className="disclose" onClick={() => { setError(null); setSaying(true); }}>
-              <span className="disclose-icon" aria-hidden>{Icons.mic()}</span>
-              Say it instead
-            </button>
             <button type="button" className="disclose" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
               <span className={`disclose-mark${open ? ' is-open' : ''}`} aria-hidden>{Icons.chevron()}</span>
               {open ? 'Less detail' : 'Add more detail'}

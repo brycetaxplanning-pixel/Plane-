@@ -199,7 +199,7 @@ console.log('\n8. Reminders is a module you can dump things into');
 
   await page.goto(BASE + '#/', { waitUntil: 'networkidle' });
   await page.waitForTimeout(700);
-  const card = page.locator('.mtile').filter({ hasText: 'REMINDERS' }).first();
+  const card = page.locator('.mtile').filter({ hasText: 'TO DO' }).first();
   (await card.count()) === 1 ? ok('it has a launcher card of its own') : bad('card', 'not on the launcher');
   // read after the add, so the new to-do is already counted.
   const open = after.reminders.items.filter((r) => !r.done).length;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Reminder } from '../lib/schema';
+import { MODULES, type ModuleId, type Reminder } from '../lib/schema';
 import { dueList, toICS, type DueReminder } from '../lib/reminders';
 import { fmtDate, todayKey } from '../lib/date';
 import { downloadFile } from '../lib/storage';
@@ -10,24 +10,33 @@ import { Fab } from '../components/ui/Fab';
 import { AddSheet } from './reminders/AddSheet';
 
 /**
- * A list of things you have to do, and one button to add to it.
+ * Everything you owe yourself, from every module, on one list.
  *
- * This screen was five stacked cards — a capture box, a "talk or write" pair,
- * and a titled panel per bucket — plus a paragraph explaining Apple's calendar
- * policy, before you reached a single to-do. All of it was real, and all of it
- * was in the way. The list is now the page: the buckets are thin labels rather
- * than panels, and everything you might do to a reminder lives on the reminder
- * or behind the plus.
+ * A reminder and a to-do were never two things — both are something you have
+ * not done, with a date if it has one and a module if it belongs to one — so
+ * there is one list rather than two places to look and a decision to make
+ * every time you think of something.
+ *
+ * Which module a to-do belongs to has been in the record all along and was
+ * never shown. It is a tag on the row and a filter along the top now, so
+ * "how much of this is work" is answered by looking.
  */
 export function Reminders() {
   const { state, update, toast } = useApp();
   const [editing, setEditing] = useState<Reminder | 'new' | null>(null);
+  const [only, setOnly] = useState<ModuleId | 'all'>('all');
 
-  const due = dueList(state);
+  const all = dueList(state);
   const today = todayKey();
 
-  /* Four buckets, in the order they deserve attention. Empty ones do not
-     appear at all — a heading over nothing is just noise. */
+  /* One chip per module that actually has something open, in module order, so
+     the row stays short and never offers a filter that would empty the list. */
+  const counts = MODULES
+    .map((m) => ({ module: m, n: all.filter((d) => d.reminder.module === m.id).length }))
+    .filter((c) => c.n > 0);
+
+  const due = only === 'all' ? all : all.filter((d) => d.reminder.module === only);
+
   const groups: { label: string; items: DueReminder[] }[] = [
     { label: 'Overdue', items: due.filter((d) => d.overdue) },
     { label: 'Today', items: due.filter((d) => !d.undated && !d.overdue && d.due === today) },
@@ -48,8 +57,12 @@ export function Reminders() {
     toast('Saved');
   };
 
-  /** Ticking it off. A repeating one rolls forward rather than vanishing. */
+  /** Ticking it off. A repeating one rolls forward rather than vanishing.
+   *
+   *  Always undoable: something you finished by mis-tapping is worse than one
+   *  you never wrote down, because it leaves the list looking done. */
   const complete = (r: Reminder) => {
+    const before = state.reminders.items;
     update((s) => ({
       ...s,
       reminders: {
@@ -59,29 +72,42 @@ export function Reminders() {
         }),
       },
     }));
-    toast(r.repeat === 'Once' ? 'Done' : 'Done — the clock resets');
+    toast(r.repeat === 'Once' ? 'Done' : 'Done — the clock resets', undefined, {
+      label: 'Undo',
+      run: () => update((s) => ({ ...s, reminders: { items: before } })),
+    });
   };
 
   const remove = (r: Reminder) => {
-    const keep = state.reminders.items;
+    const before = state.reminders.items;
     update((s) => ({ ...s, reminders: { items: s.reminders.items.filter((x) => x.id !== r.id) } }));
     setEditing(null);
     toast('Deleted', undefined, {
       label: 'Undo',
-      run: () => update((s) => ({ ...s, reminders: { items: keep } })),
+      run: () => update((s) => ({ ...s, reminders: { items: before } })),
     });
   };
 
-  /* Everything with a real next date — which includes interval reminders, whose
-     date is computed from the last time rather than stored. Filtering on
-     `r.date` here quietly dropped every "every N days" one from the export. */
-  const dated = due.filter((d) => !d.undated).map((d) => d.reminder);
+  /* Everything with a real next date — which includes interval reminders,
+     whose date is worked out from the last time rather than stored. */
+  const dated = all.filter((d) => !d.undated).map((d) => d.reminder);
 
   return (
     <div className="stack todo-page">
+      {counts.length > 0 && (
+        <div className="todo-filters" role="group" aria-label="Show one module only">
+          <FilterChip on={only === 'all'} onClick={() => setOnly('all')} n={all.length}>All</FilterChip>
+          {counts.map(({ module, n }) => (
+            <FilterChip key={module.id} on={only === module.id} onClick={() => setOnly(module.id)} n={n} color={module.color}>
+              {module.name}
+            </FilterChip>
+          ))}
+        </div>
+      )}
+
       {groups.length === 0 ? (
         <p className="todo-empty">
-          Nothing to do.<br />
+          {only === 'all' ? 'Nothing to do.' : `Nothing left in ${MODULES.find((m) => m.id === only)?.name}.`}<br />
           <span className="t-muted">Press the plus to write something down.</span>
         </p>
       ) : (
@@ -116,13 +142,15 @@ export function Reminders() {
         </button>
       )}
 
-      <Fab onClick={() => setEditing('new')} label="Add a reminder" color="var(--mod-reminders)">
+      <Fab onClick={() => setEditing('new')} label="Add a to-do" color="var(--mod-reminders)">
         {Icons.plus()}
       </Fab>
 
       {editing && (
         <AddSheet
           reminder={editing === 'new' ? null : editing}
+          // Adding while a module is filtered means adding to that module.
+          defaultModule={only === 'all' ? undefined : only}
           onClose={() => setEditing(null)}
           onSave={save}
           onDelete={editing === 'new' ? undefined : () => remove(editing)}
@@ -132,10 +160,39 @@ export function Reminders() {
   );
 }
 
+function FilterChip({
+  on, onClick, n, color, children,
+}: {
+  on: boolean; onClick: () => void; n: number; color?: string; children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      className="todo-chip"
+      aria-pressed={on}
+      onClick={onClick}
+      style={color ? { ['--chip' as string]: color } : undefined}
+    >
+      {color && <i className="todo-chip-dot" aria-hidden />}
+      {children}
+      <b>{n}</b>
+    </button>
+  );
+}
+
 /** Title, a circle to tick it off, and a second line only when there is
  *  something to say on it. */
-function TodoRow({ due, onTick, onOpen }: { due: DueReminder; onTick: () => void; onOpen: () => void }) {
+export function TodoRow({
+  due, onTick, onOpen, showModule = true,
+}: {
+  due: DueReminder;
+  onTick: () => void;
+  onOpen: () => void;
+  /** Off inside a module's own section, where every row would say the same. */
+  showModule?: boolean;
+}) {
   const { reminder: r } = due;
+  const module = showModule ? MODULES.find((m) => m.id === r.module) : undefined;
 
   /* An interval reminder is answering "how long has it been", so it says that
      rather than a date — "27 days ago · every 21" tells you you are overdue
@@ -163,7 +220,16 @@ function TodoRow({ due, onTick, onOpen }: { due: DueReminder; onTick: () => void
       </button>
       <button className="todo-open" onClick={onOpen}>
         <span className="todo-title">{r.title}</span>
-        {meta && <span className="todo-meta">{meta}</span>}
+        {(module || meta) && (
+          <span className="todo-sub">
+            {module && (
+              <span className="todo-tag" style={{ ['--chip' as string]: module.color }}>
+                <i aria-hidden />{module.name}
+              </span>
+            )}
+            {meta && <span className="todo-meta">{meta}</span>}
+          </span>
+        )}
       </button>
     </div>
   );
