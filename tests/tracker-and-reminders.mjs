@@ -120,14 +120,40 @@ console.log('\n6. Spoken reminders are parsed into structure');
   await page.goto(BASE + '#/settings', { waitUntil: 'networkidle' });
   await page.getByPlaceholder('sk-ant-…').fill('sk-ant-test');
   await page.waitForTimeout(400);
+  // Speech is the only way in now — the sheet is one field with a microphone
+  // on it, and a spoken sentence is what asks to be taken apart. So stand a
+  // recogniser up in place of the browser's and drive the real path, rather
+  // than testing a typed shortcut that no longer ships.
+  await page.addInitScript(() => {
+    class FakeRecognition {
+      start() {
+        setTimeout(() => {
+          this.onstart?.();
+          setTimeout(() => {
+            const said = window.__said ?? '';
+            const result = [{ transcript: said }];
+            result.isFinal = true;
+            this.onresult?.({ resultIndex: 0, results: [result] });
+          }, 40);
+        }, 10);
+      }
+      stop() { setTimeout(() => this.onend?.(), 10); }
+      abort() {}
+    }
+    window.SpeechRecognition = FakeRecognition;
+  });
   await page.goto(BASE + '#/reminders', { waitUntil: 'networkidle' });
-  // Talking is folded into the add sheet now: the plus, then "say it instead".
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(400);
+
   await page.locator('.fab').click();
   await page.waitForTimeout(300);
-  await page.getByRole('button', { name: /Say it instead/ }).click();
-  await page.locator('.capture textarea').fill('remind me to call the client at 6:30 on Thursday');
-  await page.getByRole('button', { name: 'Save' }).click();
-  await page.waitForTimeout(2000);
+  await page.evaluate(() => { window.__said = 'remind me to call the client at 6:30 on Thursday'; });
+  const micBtn = page.locator('.modal-body .mic');
+  await micBtn.click();                 // starts listening, and the phrase lands
+  await page.waitForTimeout(400);
+  await micBtn.click();                 // ends the spell, which is what parses it
+  await page.waitForTimeout(2500);
   if (!sent) bad('parse', 'no request sent');
   else {
     /Turn a spoken sentence into a reminder/.test(sent.system) ? ok('a parsing brief is sent') : bad('brief', 'missing');
@@ -135,10 +161,12 @@ console.log('\n6. Spoken reminders are parsed into structure');
     /do not invent one/.test(sent.system) ? ok('it is told not to invent a time') : bad('brief', 'guard missing');
     /Today is \d{4}-\d{2}-\d{2}/.test(sent.messages[0].content) ? ok('today is given so relative dates resolve') : bad('context', 'no date');
   }
-  const title = await page.getByPlaceholder('Cancel the subscription').inputValue();
+  const title = await page.getByPlaceholder('Type what you need to do').inputValue();
   title === 'Call the client' ? ok('the parsed title lands in the form') : bad('title', title);
+  // The fold opens on the result, so what it decided is visible rather than
+  // saved behind your back.
   const time = await page.locator('.modal-body input[type="time"]').inputValue();
-  time === '18:30' ? ok('and the parsed time') : bad('time', time);
+  time === '18:30' ? ok('and the parsed time, with the fold opened on it') : bad('time', time);
   await ctx.close();
 }
 
@@ -199,7 +227,10 @@ console.log('\n8. Reminders is a module you can dump things into');
 
   await page.goto(BASE + '#/', { waitUntil: 'networkidle' });
   await page.waitForTimeout(700);
-  const card = page.locator('.mtile').filter({ hasText: 'TO DO' }).first();
+  // Match the tile's own name element, not any text anywhere in the tile: the
+  // seed carries a note called "To do", so a loose text match on the launcher
+  // finds the Notes card first.
+  const card = page.locator('.mtile').filter({ has: page.locator('.mtile-name', { hasText: /^To Do$/ }) }).first();
   (await card.count()) === 1 ? ok('it has a launcher card of its own') : bad('card', 'not on the launcher');
   // read after the add, so the new to-do is already counted.
   const open = after.reminders.items.filter((r) => !r.done).length;

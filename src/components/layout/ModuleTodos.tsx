@@ -69,8 +69,11 @@ export function ModuleTodos({ id }: { id: ModuleId }) {
     <section className="card modtodo">
       <div className="card-head">
         <h3>To do</h3>
+        {/* Named, not just "Add": a module screen usually has an Add of its
+            own — Finance has one — and two buttons with the same word on one
+            screen is a guess for anyone reading it out or driving it. */}
         <button className="btn btn-sm" onClick={() => setEditing('new')}>
-          <span className="btn-glyph" aria-hidden>{Icons.plus()}</span> Add
+          <span className="btn-glyph" aria-hidden>{Icons.plus()}</span> Add to-do
         </button>
       </div>
 

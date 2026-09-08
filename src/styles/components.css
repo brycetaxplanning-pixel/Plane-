@@ -1489,7 +1489,7 @@
    Everything you add starts here, so it is the one thing on the screen
    allowed to carry the module's colour at full strength. */
 .fab {
-  position: fixed; z-index: 40;
+  position: fixed; z-index: 56;
   right: max(var(--sp-4), env(safe-area-inset-right, 0px));
   bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom, 0px));
   width: 56px; height: 56px; padding: 0;
