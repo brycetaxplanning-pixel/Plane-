@@ -101,14 +101,18 @@ console.log('\n6. An older save is migrated into the new shape');
   const page = await ctx.newPage();
   page.on('pageerror', (e) => problems.push('pageerror: ' + e.message));
   await page.goto(BASE, { waitUntil: 'networkidle' });
-  await page.evaluate(() => localStorage.setItem('plane.state.v1', JSON.stringify({
+  // The outreach log renders the current week, so a literal date silently
+  // stops being visible the moment the week rolls over — this asserted
+  // 2026-08-31 and passed until Sep 7. Today is always in this week.
+  const thisWeek = new Date().toISOString().slice(0, 10);
+  await page.evaluate((date) => localStorage.setItem('plane.state.v1', JSON.stringify({
     version: 1,
     planning: {
       weeklyTarget: 40,
-      outreach: [{ id: 'o1', date: '2026-08-31', name: 'Old contact', channel: 'Call', outcome: 'Conversation' }],
+      outreach: [{ id: 'o1', date, name: 'Old contact', channel: 'Call', outcome: 'Conversation' }],
       deals: [{ id: 'd1', name: 'Old deal', stage: 'Lead', value: 1000, createdAt: '2026-08-01' }],
     },
-  })));
+  })), thisWeek);
   await page.goto(BASE + '#/planning', { waitUntil: 'networkidle' });
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForTimeout(700);

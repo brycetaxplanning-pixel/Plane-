@@ -15,7 +15,7 @@ console.log('\n1. Launcher is the root and drills into a module');
 await page.goto(BASE, { waitUntil: 'networkidle' });
 const moduleTiles = await page.locator('.mtile:not(.mtile-alt)').count();
 const allTiles = await page.locator('.mtile').count();
-moduleTiles === 11 && allTiles === 14 ? ok('eleven module buttons plus Tracker, Progress and Settings') : bad('launcher tiles', `${moduleTiles} modules / ${allTiles} total`);
+moduleTiles === 12 && allTiles === 15 ? ok('twelve module buttons plus Tracker, Progress and Settings') : bad('launcher tiles', `${moduleTiles} modules / ${allTiles} total`);
 await page.locator('.mtile', { hasText: 'Habits' }).click();
 await page.waitForTimeout(400);
 (await page.getByRole('heading', { name: 'Habits' }).count()) > 0 ? ok('pressing a tile opens the module') : bad('drill in', 'Habits heading not found');

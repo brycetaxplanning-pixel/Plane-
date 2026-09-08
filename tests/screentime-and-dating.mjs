@@ -161,13 +161,13 @@ console.log('\n6. An older save with no dating data still loads');
   await ctx.close();
 }
 
-console.log('\n7. Eleven modules on the launcher');
+console.log('\n7. Twelve modules on the launcher');
 {
   const { ctx, page } = await open();
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.waitForTimeout(500);
   const tiles = await page.locator('.mtile:not(.mtile-alt)').count();
-  tiles === 11 ? ok('every module has a button') : bad('tiles', String(tiles));
+  tiles === 12 ? ok('every module has a button') : bad('tiles', String(tiles));
   await page.locator('.mtile', { hasText: 'Dating' }).click();
   await page.waitForTimeout(500);
   /#\/dating/.test(page.url()) ? ok('and the new one opens') : bad('route', page.url());

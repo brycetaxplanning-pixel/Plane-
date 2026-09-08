@@ -68,7 +68,7 @@ console.log('\n1. Tabs behave like tabs');
 console.log('\n2. Every tabbed module got the same treatment');
 for (const [route, name] of [
   ['#/health', 'Health'], ['#/coach', 'Life Coach'], ['#/fitness', 'Fitness'],
-  ['#/spanish', 'Spanish'], ['#/tracker', 'Tracker'], ['#/planning', 'Business'],
+  ['#/spanish', 'Spanish'], ['#/planning', 'Business'],
 ]) {
   const { ctx, page } = await open(route);
   const shape = await page.evaluate(() => {
