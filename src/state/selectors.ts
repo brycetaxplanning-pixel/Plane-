@@ -373,10 +373,16 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
     reminders: {
       id: 'reminders',
       // A to-do list has no weekly quota, so the rank reads what is actually
-      // being asked: an empty list is clear, and a list with things on it is
+      // being asked: a cleared list is done, and a list with things on it is
       // however far through them you are. Undated items count — they are the
       // whole point of the module — but they never read as overdue.
-      progress: rem.open === 0 ? 1 : rem.doneThisWeek / (rem.doneThisWeek + rem.open),
+      //
+      // An untouched list is not a cleared one. Without the first case a brand
+      // new user opened this on a gold medallion and a full bar for having
+      // never written anything down, which is a reward for nothing.
+      progress: rem.open === 0 && rem.doneThisWeek === 0 ? 0
+        : rem.open === 0 ? 1
+          : rem.doneThisWeek / (rem.doneThisWeek + rem.open),
       headline: `${rem.open}`,
       caption: 'to do',
       // Worst news first, and never a line that says zero of something.

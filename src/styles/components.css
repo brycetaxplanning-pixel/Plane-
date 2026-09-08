@@ -1341,18 +1341,135 @@
   color: var(--success-text);
 }
 
-/* ---------- fast capture ---------- */
+/* ---------- to-do list ---------- */
 
-/* One box, one button, nothing else. This is the first thing on the Reminders
-   screen because the module exists to make writing something down a single
-   action rather than a form. */
-/* Named quickadd, not capture: .capture was already taken by the dictation
-   sheet, which stacks its children in a column — so the button sat under the
-   box no matter what this rule said about wrapping.
+/* The list is the page. No panel around it, no titled card per bucket: a
+   to-do list that needs five containers to hold four items is not a list,
+   it is a filing cabinet. What is left is a hairline, a title and a circle. */
 
-   The zero flex-basis matters too: .input carries width: 100%, and as a
-   flex-basis that leaves no room for anything beside it. */
-.quickadd { display: flex; flex-wrap: nowrap; gap: var(--sp-2); align-items: stretch; }
-.quickadd-input { flex: 1 1 0; min-width: 0; width: auto; font-size: 16px; }
-.quickadd-add { flex: none; width: 48px; padding: 0; }
-.quickadd-add .btn-glyph { width: 20px; height: 20px; }
+.todo-group {
+  display: flex; align-items: center; gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+  font-size: 11px; font-weight: 650;
+  letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+/* The count sits in its own quiet pill so the label stays a label. */
+.todo-group span {
+  font-size: 10.5px; letter-spacing: 0.02em;
+  padding: 1px 7px; border-radius: var(--r-pill);
+  background: var(--surface-2); color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+/* A rule running out to the edge, so the eye has a line to follow. */
+.todo-group::after {
+  content: ''; flex: 1 1 auto; height: 1px;
+  background: linear-gradient(90deg, var(--border), transparent);
+}
+
+.todo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+
+.todo-row {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  /* The same card stock as everything else, lifted a shade so a row reads as
+     an object you can pick up rather than a band of the page. */
+  background: linear-gradient(180deg, var(--surface-1), var(--card-stock-lo));
+}
+/* Late work gets a coloured edge rather than red text: it marks the row
+   without shouting the title in a colour that is harder to read. */
+.todo-row.is-late { border-left: 3px solid var(--status-critical); padding-left: calc(var(--sp-3) - 2px); }
+
+/* The circle. Empty until pressed — the tick inside is invisible and only
+   fades up on hover, so the target is obvious without ever looking ticked. */
+.todo-tick {
+  flex: none; width: 26px; height: 26px; padding: 0;
+  border: 2px solid var(--border-strong); border-radius: 50%;
+  background: transparent; cursor: pointer;
+  display: grid; place-content: center;
+  color: var(--mod-reminders);
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+.todo-tick svg { width: 15px; height: 15px; opacity: 0; transition: opacity 140ms ease; }
+.todo-tick:hover { border-color: var(--mod-reminders); }
+.todo-tick:hover svg { opacity: 0.55; }
+.todo-tick:active { transform: scale(0.9); }
+
+.todo-open {
+  flex: 1 1 auto; min-width: 0;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 0; border: 0; background: none;
+  text-align: left; cursor: pointer;
+}
+.todo-title { font-size: 15px; font-weight: 550; color: var(--text-primary); line-height: 1.35; }
+.todo-meta {
+  font-size: 12px; color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.todo-row.is-late .todo-meta { color: var(--crit-text); }
+
+.todo-empty {
+  padding: var(--sp-7) var(--sp-4);
+  text-align: center; font-size: 15px; line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.todo-export { align-self: center; margin-top: var(--sp-2); color: var(--text-muted); font-weight: 500; }
+
+/* Room under the list for the button that floats over it, so the last row is
+   never the one you cannot reach. */
+.todo-page { padding-bottom: 76px; }
+
+/* ---------- the plus ---------- */
+
+/* Bottom right, above the nav and clear of the toast, which is centred.
+   Everything you add starts here, so it is the one thing on the screen
+   allowed to carry the module's colour at full strength. */
+.fab {
+  position: fixed; z-index: 40;
+  right: max(var(--sp-4), env(safe-area-inset-right, 0px));
+  bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom, 0px));
+  width: 56px; height: 56px; padding: 0;
+  border: 0; border-radius: 50%;
+  background: var(--fab, var(--series-1));
+  color: #0a0910;
+  display: grid; place-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 20px -4px color-mix(in srgb, var(--fab, var(--series-1)) 55%, transparent), var(--shadow-2);
+  transition: transform 140ms cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 140ms ease;
+}
+.fab svg { width: 26px; height: 26px; stroke-width: 2.1; }
+.fab:hover { transform: translateY(-2px); box-shadow: 0 10px 26px -4px color-mix(in srgb, var(--fab, var(--series-1)) 65%, transparent), var(--shadow-2); }
+.fab:active { transform: scale(0.94); }
+/* The sidebar replaces the bottom bar on a wide screen, so the offset goes. */
+@media (min-width: 900px) { .fab { bottom: 24px; right: 24px; } }
+
+/* ---------- progressive disclosure ---------- */
+
+/* One press between "write it down" and "fill in a form". */
+.disclose {
+  display: flex; align-items: center; gap: var(--sp-2);
+  align-self: flex-start;
+  padding: 0; border: 0; background: none;
+  color: var(--text-secondary);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+.disclose:hover { color: var(--text-primary); }
+/* Only the chevron turns. A mark that means something on its own — the mic —
+   uses .disclose-icon, or it ends up lying on its side. */
+.disclose-icon { display: grid; place-content: center; }
+.disclose-icon svg { width: 16px; height: 16px; }
+.disclose-mark { display: grid; place-content: center; transition: transform 160ms ease; transform: rotate(-90deg); }
+.disclose-mark.is-open { transform: rotate(0deg); }
+.disclose-mark svg { width: 16px; height: 16px; }
+
+/* The one line the sheet opens on. 16px because anything smaller makes iOS
+   zoom the whole page when the field takes focus. */
+.askline-input { font-size: 16px; }
+
+/* The two folds under it, side by side and quiet. */
+.askfolds { display: flex; flex-wrap: wrap; gap: var(--sp-4); }
+.askfolds .disclose-mark svg, .askfolds .disclose-icon svg { width: 15px; height: 15px; }

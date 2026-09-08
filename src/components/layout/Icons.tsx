@@ -77,6 +77,8 @@ export const Icons = {
   bell: () => wrap(<><path d="M6 9.5a6 6 0 0 1 12 0c0 3 .7 4.6 1.6 5.6.4.5.1 1.4-.6 1.4H5c-.7 0-1-.9-.6-1.4C5.3 14.1 6 12.5 6 9.5Z" /><path d="M10 19.5a2.2 2.2 0 0 0 4 0" /></>),
   grid: () => wrap(<><rect x="3.5" y="3.5" width="7" height="7" rx="2" /><rect x="13.5" y="3.5" width="7" height="7" rx="2" /><rect x="3.5" y="13.5" width="7" height="7" rx="2" /><rect x="13.5" y="13.5" width="7" height="7" rx="2" /></>),
   back: () => wrap(<path d="M15 5.5 8.5 12l6.5 6.5" />),
+  /** Disclosure. Points down when a fold is shut; rotated open by CSS. */
+  chevron: () => wrap(<path d="M5.5 9 12 15.5 18.5 9" />),
   plus: () => wrap(<><path d="M12 5.5v13M5.5 12h13" /></>),
   /** Progress — bars with the trend drawn over them. */
   chart: () => wrap(<><path d="M3.4 20.4h17.2" /><path d="M6.6 20.4v-5.6M11 20.4v-9.2M15.4 20.4v-6.4M19.8 20.4v-12" /></>),

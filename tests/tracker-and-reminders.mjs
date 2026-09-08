@@ -53,12 +53,12 @@ console.log('\n3. Interval reminders count from the last time, not a fixed date'
   const { ctx, page } = await seeded();
   await page.goto(BASE + '#/reminders', { waitUntil: 'networkidle' });
   await page.waitForTimeout(600);
-  const haircut = page.locator('.rowitem', { hasText: 'Get a haircut' });
+  const haircut = page.locator('.todo-row', { hasText: 'Get a haircut' });
   const text = await haircut.innerText();
-  /27 days since the last one/.test(text) ? ok('it reports days since the last one') : bad('interval label', text.replace(/\n/g, ' | '));
-  /due every 21/.test(text) ? ok('and the interval it is meant to run on') : bad('interval', text.replace(/\n/g, ' | '));
+  /27 days ago/.test(text) ? ok('it reports days since the last one') : bad('interval label', text.replace(/\n/g, ' | '));
+  /every 21 days/.test(text) ? ok('and the interval it is meant to run on') : bad('interval', text.replace(/\n/g, ' | '));
 
-  await haircut.getByRole('button', { name: 'Done' }).click();
+  await haircut.getByRole('button', { name: /Mark .* done/ }).click();
   await page.waitForTimeout(500);
   const st = await read(page);
   const r = st.reminders.items.find((x) => x.title === 'Get a haircut');
@@ -66,8 +66,8 @@ console.log('\n3. Interval reminders count from the last time, not a fixed date'
   r.lastDone === today && r.done === false
     ? ok('marking it done resets the clock instead of deleting it') : bad('reset', JSON.stringify(r));
   await page.waitForTimeout(300);
-  const after = await page.locator('.rowitem', { hasText: 'Get a haircut' }).innerText();
-  /next in 21/.test(after) ? ok('and it schedules the next one 21 days out') : bad('reschedule', after.replace(/\n/g, ' | '));
+  const after = await page.locator('.todo-row', { hasText: 'Get a haircut' }).innerText();
+  /0 days ago[\s\S]*every 21 days/.test(after) ? ok('and the clock restarts from today') : bad('reschedule', after.replace(/\n/g, ' | '));
   await ctx.close();
 }
 
@@ -76,12 +76,12 @@ console.log('\n4. A one-off completes and leaves the list');
   const { ctx, page } = await seeded();
   await page.goto(BASE + '#/reminders', { waitUntil: 'networkidle' });
   await page.waitForTimeout(600);
-  await page.locator('.rowitem', { hasText: 'Client call with Halvorsen' }).getByRole('button', { name: 'Done' }).click();
+  await page.locator('.todo-row', { hasText: 'Client call with Halvorsen' }).getByRole('button', { name: /Mark .* done/ }).click();
   await page.waitForTimeout(500);
   const st = await read(page);
   st.reminders.items.find((x) => x.title.startsWith('Client call')).done === true
     ? ok('a one-off is marked done') : bad('once', 'not completed');
-  (await page.locator('.rowitem', { hasText: 'Client call with Halvorsen' }).count()) === 0
+  (await page.locator('.todo-row', { hasText: 'Client call with Halvorsen' }).count()) === 0
     ? ok('and disappears from the list') : bad('once', 'still listed');
   await ctx.close();
 }
@@ -92,7 +92,7 @@ console.log('\n5. Calendar export produces a valid .ics');
   await page.goto(BASE + '#/reminders', { waitUntil: 'networkidle' });
   await page.waitForTimeout(600);
   const dl = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Add to calendar' }).click();
+  await page.getByRole('button', { name: /Add the dated ones to a calendar/ }).click();
   const file = await dl;
   const text = await (await import('node:fs/promises')).readFile(await file.path(), 'utf8');
   /^BEGIN:VCALENDAR/.test(text) && /END:VCALENDAR\s*$/.test(text) ? ok('the file is a well-formed calendar') : bad('ics', text.slice(0, 120));
@@ -121,7 +121,10 @@ console.log('\n6. Spoken reminders are parsed into structure');
   await page.getByPlaceholder('sk-ant-…').fill('sk-ant-test');
   await page.waitForTimeout(400);
   await page.goto(BASE + '#/reminders', { waitUntil: 'networkidle' });
-  await page.getByRole('button', { name: /Talk a reminder/ }).click();
+  // Talking is folded into the add sheet now: the plus, then "say it instead".
+  await page.locator('.fab').click();
+  await page.waitForTimeout(300);
+  await page.getByRole('button', { name: /Say it instead/ }).click();
   await page.locator('.capture textarea').fill('remind me to call the client at 6:30 on Thursday');
   await page.getByRole('button', { name: 'Save' }).click();
   await page.waitForTimeout(2000);
@@ -132,7 +135,7 @@ console.log('\n6. Spoken reminders are parsed into structure');
     /do not invent one/.test(sent.system) ? ok('it is told not to invent a time') : bad('brief', 'guard missing');
     /Today is \d{4}-\d{2}-\d{2}/.test(sent.messages[0].content) ? ok('today is given so relative dates resolve') : bad('context', 'no date');
   }
-  const title = await page.getByPlaceholder('Get a haircut').inputValue();
+  const title = await page.getByPlaceholder('Cancel the subscription').inputValue();
   title === 'Call the client' ? ok('the parsed title lands in the form') : bad('title', title);
   const time = await page.locator('.modal-body input[type="time"]').inputValue();
   time === '18:30' ? ok('and the parsed time') : bad('time', time);
@@ -158,10 +161,12 @@ console.log('\n8. Reminders is a module you can dump things into');
   await page.goto(BASE + '#/reminders', { waitUntil: 'networkidle' });
   await page.waitForTimeout(600);
 
-  // One box, one button, no form and no date. This is the whole reason the
-  // module exists — it used to be a tab inside Tracker.
-  await page.locator('.quickadd-input').fill('Return the loaner monitor');
-  await page.locator('.quickadd-add').click();
+  // A plus in the corner, one line, Save. No form and no date unless you ask
+  // for one — this is the whole reason the module exists.
+  await page.locator('.fab').click();
+  await page.waitForTimeout(300);
+  await page.locator('.askline-input').fill('Return the loaner monitor');
+  await page.getByRole('button', { name: 'Save' }).click();
   await page.waitForTimeout(400);
 
   const st = await read(page);
@@ -173,9 +178,15 @@ console.log('\n8. Reminders is a module you can dump things into');
   // dueList reports today for an undated reminder, so without the split these
   // showed under "Coming up" stamped with today's date — a deadline it never had.
   const body = await page.locator('main').innerText();
-  /NO DATE/i.test(body) ? ok('undated ones get a section of their own') : bad('section', body.slice(0, 160));
-  /Coming up[\s\S]{0,200}Return the loaner monitor/i.test(body)
-    ? bad('misfiled', 'an undated to-do was listed as scheduled') : ok('and are not listed as due today');
+  /ANYTIME/i.test(body) ? ok('undated ones get a group of their own') : bad('group', body.slice(0, 160));
+  // Ask which group it actually landed in rather than pattern-matching the
+  // whole page: "Today" appears as a row's own date too, so a loose regex
+  // across the body proves nothing.
+  const group = await page.locator('section:has(> .todo-group)')
+    .filter({ hasText: 'Return the loaner monitor' })
+    .locator('.todo-group').innerText();
+  /^ANYTIME/i.test(group.trim())
+    ? ok('and are not listed as due today') : bad('misfiled', `filed under ${group.replace(/\n/g, ' ')}`);
 
   // It has no deadline, so nothing may invent one for it. dueList reports
   // today for these, which used to reach the notification log as "— today"
