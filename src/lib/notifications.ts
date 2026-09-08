@@ -231,6 +231,9 @@ export function candidates(state: AppState): Candidate[] {
 
   /* Reminders that have arrived or gone past. */
   for (const d of dueList(state)) {
+    // No date, nothing to be late for. It sits on the list and on the module
+    // card; it does not get to raise a notification every morning.
+    if (d.undated) continue;
     const late = -d.daysAway;
     // Rung 0 is "it has arrived"; the rest escalate as it is left undone.
     const rung = passedRung(late, [0, 3, 7, 14, 30]);
@@ -243,8 +246,7 @@ export function candidates(state: AppState): Candidate[] {
         ? `${d.reminder.title} — today`
         : `${d.reminder.title} — ${late} day${late === 1 ? '' : 's'} past`,
       body: dueLabel(d),
-      to: 'tracker',
-      tab: 'reminders',
+      to: 'reminders',
     });
   }
 

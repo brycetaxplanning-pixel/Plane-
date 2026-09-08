@@ -1,27 +1,17 @@
-import { useTabParam } from '../lib/router';
 import { Timeline } from './tracker/Timeline';
-import { Reminders } from './tracker/Reminders';
-import { Tabs, panelProps } from '../components/ui/Tabs';
 
-/** Cross-module, so it has no data of its own and no identity colour —
- *  it sits with Progress and Settings rather than in the numbered modules. */
+/**
+ * Everything with a date on it, from every module, on one line.
+ *
+ * It used to carry a Reminders tab as well. Reminders are a module of their
+ * own now — a to-do you cannot find is a to-do you do not write down — and
+ * dated ones still appear on the timeline below, which is the one view that
+ * is genuinely about dates rather than about a list.
+ */
 export function Tracker() {
-  const [tab, setTab] = useTabParam(['timeline', 'reminders'] as const, 'timeline');
-
   return (
     <div className="stack">
-      <Tabs
-        idBase="tracker"
-        label="Tracker sections"
-        active={tab}
-        onChange={setTab}
-        tabs={[{ id: 'timeline', label: 'Timeline' }, { id: 'reminders', label: 'Reminders' }]}
-      />
-
-      <div className="stack" {...panelProps('tracker', tab)}>
-        {tab === 'timeline' && <Timeline />}
-        {tab === 'reminders' && <Reminders />}
-      </div>
+      <Timeline />
     </div>
   );
 }

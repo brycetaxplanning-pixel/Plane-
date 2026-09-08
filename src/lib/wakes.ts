@@ -53,6 +53,10 @@ export function wakePlan(state: AppState, now = Date.now()): Wake[] {
   for (const d of dueList(state)) {
     const r = d.reminder;
     if (r.done) continue;
+    // Undated ones borrow today from dueList to sort by. Pushing that would
+    // announce a deadline the reminder never had — and the morning-after chase
+    // would then say it was due yesterday.
+    if (d.undated) continue;
     const when = r.time ? atTime(d.due, r.time) : at(d.due, MORNING_HOUR);
     if (when > now && when < horizon) {
       wakes.push({
@@ -60,8 +64,7 @@ export function wakePlan(state: AppState, now = Date.now()): Wake[] {
         tag: `reminder:${r.id}:${d.due}`,
         title: r.title,
         body: r.time ? `Due at ${r.time}.` : 'Due today.',
-        to: 'tracker',
-        tab: 'reminders',
+        to: 'reminders',
       });
     }
     // And once more the morning after, if it is still not done.
@@ -72,8 +75,7 @@ export function wakePlan(state: AppState, now = Date.now()): Wake[] {
         tag: `reminder-late:${r.id}:${d.due}`,
         title: `${r.title} — still not done`,
         body: 'It was due yesterday.',
-        to: 'tracker',
-        tab: 'reminders',
+        to: 'reminders',
       });
     }
   }

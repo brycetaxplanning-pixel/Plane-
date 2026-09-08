@@ -1,5 +1,5 @@
 import type { AppState, Reminder } from './schema';
-import { addDays, diffDays, fmtDate, fromKey, todayKey, type DateKey } from './date';
+import { addDays, diffDays, fmtDate, fromKey, inWeek, todayKey, type DateKey } from './date';
 
 export interface DueReminder {
   reminder: Reminder;
@@ -10,6 +10,14 @@ export interface DueReminder {
   overdue: boolean;
   /** For interval reminders: how long since it was last done. */
   sinceLast: number | null;
+  /**
+   * It has no date at all. `due` falls back to today for these so the list can
+   * still sort, but that date is a placeholder and nothing may present it as a
+   * deadline: an undated to-do is something to do, not something you are late
+   * for. Anything that nags — the notification log, the push schedule — skips
+   * these entirely.
+   */
+  undated: boolean;
 }
 
 /** When a reminder next wants your attention. */
@@ -44,13 +52,15 @@ export function dueList(state: AppState): DueReminder[] {
   return state.reminders.items
     .filter((r) => !r.done)
     .map((r) => {
-      const due = nextDue(r) ?? today;
+      const next = nextDue(r);
+      const due = next ?? today;
       return {
         reminder: r,
         due,
         daysAway: diffDays(due, today),
-        overdue: due < today,
+        overdue: next !== null && due < today,
         sinceLast: r.lastDone ? diffDays(today, r.lastDone) : null,
+        undated: next === null,
       };
     })
     .sort((a, b) => a.due.localeCompare(b.due));
@@ -153,4 +163,21 @@ export function googleCalendarUrl(r: Reminder): string {
     ...(r.notes ? { details: r.notes } : {}),
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+/** The module card's read on the list: how much is owed, and how much of it
+ *  is late. Undated items are counted as open but never as overdue — an
+ *  undated reminder is something to do, not something you have missed. */
+export function reminderStats(state: AppState): {
+  open: number; overdue: number; dueToday: number; undated: number; doneThisWeek: number;
+} {
+  const today = todayKey();
+  const open = dueList(state);
+  return {
+    open: open.length,
+    overdue: open.filter((d) => d.overdue).length,
+    dueToday: open.filter((d) => !d.undated && d.due === today).length,
+    undated: open.filter((d) => d.undated).length,
+    doneThisWeek: state.reminders.items.filter((r) => r.done && inWeek(r.lastDone ?? r.createdAt)).length,
+  };
 }

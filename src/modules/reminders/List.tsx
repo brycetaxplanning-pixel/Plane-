@@ -28,7 +28,7 @@ interface Parsed {
   notes?: string;
 }
 
-export function Reminders() {
+export function ReminderList() {
   const { state, update, toast } = useApp();
   const due = dueList(state);
   const [editing, setEditing] = useState<Reminder | 'new' | null>(null);
@@ -36,8 +36,13 @@ export function Reminders() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const overdue = due.filter((d) => d.overdue);
-  const soon = due.filter((d) => !d.overdue);
+  // An undated reminder is a thing to do, not a thing you have missed.
+  // dueList falls back to today when there is no date, which put "Change the
+  // car oil" under Coming up marked "today" — pressure it never earned.
+  const undated = due.filter((d) => d.undated);
+  const dated = due.filter((d) => !d.undated);
+  const overdue = dated.filter((d) => d.overdue);
+  const soon = dated.filter((d) => !d.overdue);
 
   const save = (r: Reminder) => {
     update((s) => ({
@@ -133,6 +138,17 @@ They said: ${text}`,
         {error && <p className="t-xs t-crit" style={{ marginTop: 'var(--sp-2)' }}>{error}</p>}
       </section>
 
+      {undated.length > 0 && (
+        <section className="card">
+          <SectionHead title="No date" sub={`${undated.length} to do, whenever`} />
+          <div className="stack-2">
+            {undated.map((d) => (
+              <ReminderRow key={d.reminder.id} due={d} onDone={() => complete(d.reminder)} onEdit={() => setEditing(d.reminder)} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {overdue.length > 0 && (
         <section className="card">
           <SectionHead title="Overdue" sub={`${overdue.length} waiting`} />
@@ -163,7 +179,7 @@ They said: ${text}`,
           }
         />
         {soon.length === 0 ? (
-          <EmptyState icon="⏰" title="Nothing scheduled" hint="Haircuts, oil changes, the things you forget until they are overdue." />
+          <EmptyState icon={Icons.clock()} title="Nothing scheduled" hint="Haircuts, oil changes, the things you forget until they are overdue." />
         ) : (
           <div className="stack-2">
             {soon.map((d) => (
@@ -204,16 +220,19 @@ function ReminderRow({
   onEdit: () => void;
   overdue?: boolean;
 }) {
+  // dueList reports today for an undated reminder so the list can sort;
+  // printing it would invent a deadline the reminder never had.
+  const { undated } = due;
   const module = MODULES.find((m) => m.id === due.reminder.module);
   return (
     <div className="rowitem" style={overdue ? { borderLeft: '3px solid var(--status-critical)' } : undefined}>
       <button className="grow" style={{ background: 'none', border: 0, textAlign: 'left', cursor: 'pointer', minWidth: 0 }} onClick={onEdit}>
         <span className="t-sm t-bold truncate" style={{ display: 'block' }}>{due.reminder.title}</span>
         <span className={overdue ? 't-xs t-crit' : 't-xs t-muted'}>
-          {dueLabel(due)}{module ? ` · ${module.name}` : ''}
+          {undated ? 'No date' : dueLabel(due)}{module ? ` · ${module.name}` : ''}
         </span>
       </button>
-      <a
+      {!undated && <a
         className="btn btn-sm btn-ghost"
         href={googleCalendarUrl(due.reminder)}
         target="_blank"
@@ -221,7 +240,7 @@ function ReminderRow({
         title="Add to Google Calendar"
       >
         <span className="btn-glyph" aria-hidden>{Icons.calendar()}</span>
-      </a>
+      </a>}
       <button className="btn btn-sm" onClick={onDone}>Done</button>
     </div>
   );

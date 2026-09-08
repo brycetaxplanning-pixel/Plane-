@@ -115,6 +115,35 @@ console.log('\n3. The schedule is built from real data');
   await ctx.close();
 }
 
+console.log('\n3b. A to-do with no date is not a thing to be woken for');
+{
+  const { ctx, page } = await open();
+  // Only undated reminders, and nothing else that could raise a wake. dueList
+  // reports today for these so the list can sort; scheduling on that date
+  // would push a deadline the reminder never had, and the morning-after chase
+  // would then say it was due yesterday.
+  await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('plane.state.v1'));
+    s.reminders.items = [
+      { id: 'rem_a', title: 'Return the loaner monitor', repeat: 'Once', done: false, createdAt: '2026-01-01' },
+      { id: 'rem_b', title: 'Ask about the parking permit', repeat: 'Once', done: false, createdAt: '2026-01-01' },
+    ];
+    s.work.projects = [];
+    s.fitness.race = { name: 'x', distanceKm: 5 };
+    s.habits.items = [];
+    s.habits.logs = [];
+    localStorage.setItem('plane.state.v1', JSON.stringify(s));
+  });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(600);
+  const n = await page.evaluate(() => {
+    const el = [...document.querySelectorAll('section.card')].find((c) => /app closed/.test(c.textContent));
+    return /(\d+) things? would be scheduled/.exec(el.textContent)?.[1];
+  });
+  n === '0' ? ok('two undated to-dos schedule nothing') : bad('undated wakes', String(n));
+  await ctx.close();
+}
+
 console.log('\n4. Turning it on talks to the server it is given');
 {
   const { ctx, page } = await open();

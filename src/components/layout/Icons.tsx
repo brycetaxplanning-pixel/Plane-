@@ -142,6 +142,11 @@ export const Icons = {
   dot: () => wrap(<circle cx="12" cy="12" r="7.4" />),
   /** Close. */
   close: () => wrap(<><path d="M6 6l12 12M18 6L6 18" /></>),
+  /** A list with things ticked off it. */
+  checklist: () => wrap(<>
+    <path d="m3.4 6.6 1.8 1.8 3-3.2" /><path d="m3.4 13.2 1.8 1.8 3-3.2" />
+    <path d="M3.6 19.8h2.6" /><path d="M11.4 7h9.2M11.4 13.6h9.2M11.4 19.8h9.2" />
+  </>),
   /** Delete. */
   trash: () => wrap(<>
     <path d="M4.2 6.6h15.6" /><path d="M9.4 6.6V4.8a1.4 1.4 0 0 1 1.4-1.4h2.4a1.4 1.4 0 0 1 1.4 1.4v1.8" />
@@ -279,7 +284,7 @@ export const MODULE_GLYPH: Record<ModuleId, () => React.ReactNode> = {
   work: Icons.folder, planning: Icons.target, spanish: Icons.chat,
   fitness: Icons.run, finance: Icons.wallet, habits: Icons.repeat,
   goals: Icons.flag, notes: Icons.note, coach: Icons.compass,
-  health: Icons.pulse, dating: Icons.heart,
+  health: Icons.pulse, dating: Icons.heart, reminders: Icons.checklist,
 };
 
 /** A module's mark at a given size, tinted by whatever `color` is in scope. */

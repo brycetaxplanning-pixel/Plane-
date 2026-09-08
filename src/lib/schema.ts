@@ -6,7 +6,7 @@ export const SCHEMA_VERSION = 1;
 
 export type ModuleId =
   | 'work' | 'planning' | 'spanish' | 'fitness' | 'finance'
-  | 'habits' | 'goals' | 'notes' | 'coach' | 'health' | 'dating';
+  | 'habits' | 'goals' | 'notes' | 'coach' | 'health' | 'dating' | 'reminders';
 
 /* ------------------------------------------------------------------ */
 /* Module 1 — Abitos Tax Prep (day job)                               */
@@ -1008,4 +1008,7 @@ export const MODULES: { id: ModuleId; num: number; name: string; blurb: string; 
   // eight categorical slots are spent, and these two sit in the same corner of
   // life. The name and number tell them apart.
   { id: 'dating',   num: 11, name: 'Dating',          blurb: 'Who you are seeing and what it costs',    color: 'var(--mod-dating)' },
+  // Shares Habits' hue. Both are things you owe and tick off, and the
+  // eight categorical slots were spent long before this one existed.
+  { id: 'reminders', num: 12, name: 'Reminders',      blurb: 'Anything you need to do, dated or not',   color: 'var(--mod-reminders)' },
 ];

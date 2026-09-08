@@ -1,6 +1,7 @@
 import { bucketOf, type AppState, type ModuleId } from '../lib/schema';
 import { inWeek, lastDays, lastWeeks, monthKey, todayKey, weekDays, weekStart, type DateKey } from '../lib/date';
 import { needsReview, spendByCategory } from '../lib/finance';
+import { reminderStats } from '../lib/reminders';
 import { allRows, attention, dailyCompletion, type HabitRow } from '../lib/habits';
 import { startingTotal } from '../lib/invest';
 import { goalRows } from '../lib/budgetGoals';
@@ -254,6 +255,7 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
   const coach = coachStats(s);
   const hl = healthSummary(s);
   const dat = datingStats(s);
+  const rem = reminderStats(s);
 
   return {
     work: {
@@ -367,6 +369,26 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
       nudge: coach.checkedInToday
         ? `${coach.openGoals.length} open goal${coach.openGoals.length === 1 ? '' : 's'}`
         : 'no check-in yet today',
+    },
+    reminders: {
+      id: 'reminders',
+      // A to-do list has no weekly quota, so the rank reads what is actually
+      // being asked: an empty list is clear, and a list with things on it is
+      // however far through them you are. Undated items count — they are the
+      // whole point of the module — but they never read as overdue.
+      progress: rem.open === 0 ? 1 : rem.doneThisWeek / (rem.doneThisWeek + rem.open),
+      headline: `${rem.open}`,
+      caption: 'to do',
+      // Worst news first, and never a line that says zero of something.
+      nudge: rem.overdue > 0
+        ? `${rem.overdue} past due`
+        : rem.dueToday > 0
+          ? `${rem.dueToday} due today`
+          : rem.undated > 0
+            ? `${rem.undated} with no date`
+            : rem.doneThisWeek > 0
+              ? `${rem.doneThisWeek} done this week`
+              : undefined,
     },
   };
 }

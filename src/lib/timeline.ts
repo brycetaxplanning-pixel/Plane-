@@ -63,7 +63,7 @@ export function timelineItems(state: AppState): TimelineItem[] {
     const due = nextDue(r);
     if (!due) continue;
     out.push({
-      id: `rem-${r.id}`, date: due, kind: 'reminder', module: r.module, to: 'tracker',
+      id: `rem-${r.id}`, date: due, kind: 'reminder', module: r.module, to: 'reminders',
       title: r.title,
       detail: r.time ? `at ${r.time}` : r.repeat !== 'Once' ? r.repeat.toLowerCase() : undefined,
     });
