@@ -7,6 +7,7 @@ import { uid } from '../lib/id';
 import { useApp } from '../state/context';
 import { fitnessStats } from '../state/selectors';
 import { Modal } from '../components/ui/Modal';
+import { NumberInput } from '../components/ui/NumberInput';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { BarChart } from '../components/charts/BarChart';
 import { Ring } from '../components/charts/Ring';
@@ -254,9 +255,9 @@ function RacePanel() {
             />
           </Field>
           <Field label="Distance (km)">
-            <input
-              className="input" type="number" min={1} step={0.1} value={race.distanceKm}
-              onChange={(e) => update((s) => ({ ...s, fitness: { ...s.fitness, race: { ...s.fitness.race, distanceKm: Number(e.target.value) || 21.1 } } }))}
+            <NumberInput
+              min={1} step={0.1} value={race.distanceKm}
+              onChange={(n) => update((s) => ({ ...s, fitness: { ...s.fitness, race: { ...s.fitness.race, distanceKm: n } } }))}
             />
           </Field>
           <Field label="Target time">

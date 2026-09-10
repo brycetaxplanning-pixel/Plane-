@@ -21,6 +21,7 @@ import { BudgetBars, type BudgetRow } from '../components/charts/BudgetBars';
 import { BarChart } from '../components/charts/BarChart';
 import { StatTile } from '../components/charts/StatTile';
 import { Icons } from '../components/layout/Icons';
+import { NumberInput } from '../components/ui/NumberInput';
 
 const ACCENT = 'var(--mod-finance)';
 
@@ -368,13 +369,11 @@ The user says it was: ${describe.trim()}`,
               <select className="select grow" value={s.category} onChange={(e) => setSplit(s.id, { category: e.target.value })}>
                 {state.finance.categories.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
-              <input
-                className="input"
+              <NumberInput
                 style={{ maxWidth: 100 }}
-                type="number"
                 step="0.01"
                 value={s.amount}
-                onChange={(e) => setSplit(s.id, { amount: Number(e.target.value) || 0 })}
+                onChange={(amount) => setSplit(s.id, { amount })}
               />
               {splits.length > 1 && (
                 <button className="btn btn-ghost btn-icon" aria-label="Remove line" onClick={() => setSplits((l) => l.filter((x) => x.id !== s.id))}><span className="btn-glyph" aria-hidden>{Icons.close()}</span></button>

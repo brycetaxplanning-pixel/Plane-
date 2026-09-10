@@ -13,6 +13,7 @@ import { Modal } from '../../components/ui/Modal';
 import { EmptyState, Field, SectionHead } from '../../components/ui/Field';
 import { DictateInput } from '../../components/ui/Dictation';
 import { Icons } from '../../components/layout/Icons';
+import { NumberInput } from '../../components/ui/NumberInput';
 
 const ACCENT = 'var(--mod-health)';
 
@@ -394,7 +395,7 @@ Use the marker names as printed. Where the report shows a range like "70-99", lo
                 </div>
                 <div className="grid grid-2" style={{ gap: 'var(--sp-3)' }}>
                   <Field label="Result">
-                    <input className="input" inputMode="decimal" value={String(m.value)} onChange={(e) => patch(m.id, { value: Number(e.target.value) || 0 })} />
+                    <NumberInput inputMode="decimal" step="any" value={m.value} onChange={(value) => patch(m.id, { value })} />
                   </Field>
                   <Field label="Unit">
                     <input className="input" value={m.unit} onChange={(e) => patch(m.id, { unit: e.target.value })} placeholder="mg/dL" />

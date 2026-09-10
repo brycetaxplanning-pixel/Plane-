@@ -6,6 +6,7 @@ import { XP } from '../../lib/gamification';
 import { uid } from '../../lib/id';
 import { useApp } from '../../state/context';
 import { Modal } from '../../components/ui/Modal';
+import { NumberInput } from '../../components/ui/NumberInput';
 import { Field, SectionHead } from '../../components/ui/Field';
 import { Icons } from '../../components/layout/Icons';
 import { SwipeRow } from '../../components/ui/SwipeRow';
@@ -128,14 +129,12 @@ export function Plan() {
           sub="Start with what you know you're doing. Everything else fills in as you go."
         />
         <Field label="How many sessions a week?" hint="Anything that counts as training — a class, a lift, a run, a game of basketball.">
-          <input
-            className="input"
+          <NumberInput
             style={{ maxWidth: 120 }}
-            type="number"
             min={1}
             max={30}
             value={state.fitness.targets.total}
-            onChange={(e) => setTotal(Math.max(1, Number(e.target.value) || 1))}
+            onChange={setTotal}
           />
         </Field>
 
@@ -286,14 +285,12 @@ export function Plan() {
       <section className="card">
         <SectionHead title="Weekly total" />
         <Field label="Sessions a week" hint="Anything that counts as training. The plan above splits this up.">
-          <input
-            className="input"
+          <NumberInput
             style={{ maxWidth: 120 }}
-            type="number"
             min={1}
             max={30}
             value={state.fitness.targets.total}
-            onChange={(e) => setTotal(Math.max(1, Number(e.target.value) || 1))}
+            onChange={setTotal}
           />
         </Field>
       </section>

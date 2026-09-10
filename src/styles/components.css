@@ -1537,3 +1537,30 @@
 /* The two folds under it, side by side and quiet. */
 .askfolds { display: flex; flex-wrap: wrap; gap: var(--sp-4); }
 .askfolds .disclose-mark svg, .askfolds .disclose-icon svg { width: 15px; height: 15px; }
+
+
+/* ---------- the long view on outreach ---------- */
+
+/* A number this large is the whole point of keeping the log: one line that
+   answers "how much of this have I actually done", over years rather than
+   this week. */
+.lifetime { margin-top: var(--sp-3); }
+.lifetime-big { display: flex; align-items: baseline; gap: var(--sp-3); flex-wrap: wrap; }
+.lifetime-big b {
+  font-size: 40px; font-weight: 700; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--mod, var(--series-1));
+}
+.lifetime-big span { font-size: 13px; color: var(--text-secondary); }
+.lifetime-row { display: flex; gap: var(--sp-5); flex-wrap: wrap; margin-top: var(--sp-3); }
+.lifetime-row span { font-size: 13px; color: var(--text-secondary); }
+.lifetime-row b { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.lifetime-row i { font-style: normal; color: var(--text-muted); }
+
+/* One industry per line: name, how many, how many answered. */
+.indrow { display: flex; align-items: center; gap: var(--sp-3); font-size: 13px; }
+.indrow-name { flex: 0 0 33%; color: var(--text-secondary); }
+.indrow-bar { flex: 1 1 auto; height: 6px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
+.indrow-bar i { display: block; height: 100%; border-radius: inherit; background: var(--mod, var(--series-1)); }
+.indrow-n { flex: none; min-width: 3.5em; text-align: right; color: var(--text-primary); }
+.indrow-rate { flex: none; min-width: 3em; text-align: right; color: var(--text-muted); }

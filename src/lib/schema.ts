@@ -69,6 +69,12 @@ export interface Business {
   /** Contacts a week for this business. Zero means it is not an outreach
    *  business at all — a product line, say — and the counter is hidden. */
   weeklyTarget: number;
+  /** The ways this business actually reaches people. A business that only
+   *  does one — all of it over LinkedIn, say — should not be asked to pick
+   *  from six every time it logs a contact, so a single entry here removes
+   *  the question and answers it. Undefined means all of them, which is what
+   *  every business saved before this field existed means. */
+  channels?: Channel[];
   notes?: string;
   archived?: boolean;
   createdAt: DateKey;
@@ -82,6 +88,18 @@ export interface Outreach {
   channel: Channel;
   outcome: Outcome;
   notes?: string;
+  /** Where they work and what they do. Both optional and both absent from
+   *  anything typed in by hand — they exist so an export from a tool that
+   *  already knows them has somewhere to land, and so the log can be read by
+   *  industry rather than only by name. */
+  company?: string;
+  industry?: string;
+  /** Their job title, same reasoning. */
+  role?: string;
+  /** The row's identity in whatever produced it — a LinkedIn profile URL, an
+   *  export's own id. Used to recognise a contact already logged, so dropping
+   *  in an overlapping export does not count the same person twice. */
+  externalId?: string;
 }
 
 export const IDEA_STAGES = ['Spark', 'Exploring', 'Building', 'Live', 'Parked'] as const;

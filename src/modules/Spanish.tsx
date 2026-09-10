@@ -8,6 +8,7 @@ import { useApp } from '../state/context';
 import { spanishStats } from '../state/selectors';
 import { Tutor } from './spanish/Tutor';
 import { Modal } from '../components/ui/Modal';
+import { NumberInput } from '../components/ui/NumberInput';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { BarChart } from '../components/charts/BarChart';
 import { Ring } from '../components/charts/Ring';
@@ -164,17 +165,17 @@ export function Spanish() {
         <SectionHead title="Goals and links" />
         <div className="grid grid-2" style={{ gap: 'var(--sp-3)' }}>
           <Field label="Daily goal (minutes)">
-            <input
-              className="input" type="number" min={0}
+            <NumberInput
+              min={0}
               value={state.spanish.dailyGoalMinutes}
-              onChange={(e) => update((s) => ({ ...s, spanish: { ...s.spanish, dailyGoalMinutes: Math.max(0, Number(e.target.value) || 0) } }))}
+              onChange={(n) => update((s) => ({ ...s, spanish: { ...s.spanish, dailyGoalMinutes: n } }))}
             />
           </Field>
           <Field label="Weekly goal (minutes)">
-            <input
-              className="input" type="number" min={0}
+            <NumberInput
+              min={0}
               value={state.spanish.weeklyGoalMinutes}
-              onChange={(e) => update((s) => ({ ...s, spanish: { ...s.spanish, weeklyGoalMinutes: Math.max(0, Number(e.target.value) || 0) } }))}
+              onChange={(n) => update((s) => ({ ...s, spanish: { ...s.spanish, weeklyGoalMinutes: n } }))}
             />
           </Field>
         </div>
@@ -222,6 +223,7 @@ export function Spanish() {
 function Timer({ onLog }: { onLog: (minutes: number) => void }) {
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     if (startedAt === null) return;
@@ -259,11 +261,38 @@ function Timer({ onLog }: { onLog: (minutes: number) => void }) {
               >
                 Stop &amp; log
               </button>
-              <button className="btn btn-ghost" onClick={() => { setStartedAt(null); setElapsed(0); }}>Discard</button>
+              {/* Asks first. It sits a thumb's width from "Stop & log", and
+                  the two do opposite things: one keeps the session, the other
+                  throws away time you have actually spent and cannot get back
+                  by any other route. */}
+              <button className="btn btn-ghost" onClick={() => setConfirming(true)}>Discard</button>
             </>
           )}
         </div>
       </div>
+
+      {confirming && (
+        <Modal
+          title="Discard this session?"
+          onClose={() => setConfirming(false)}
+          footer={
+            <>
+              <button className="btn" onClick={() => setConfirming(false)}>Keep it</button>
+              <button
+                className="btn btn-danger"
+                onClick={() => { setConfirming(false); setStartedAt(null); setElapsed(0); }}
+              >
+                Discard
+              </button>
+            </>
+          }
+        >
+          <p className="t-sm">
+            {mm}:{ss} on the clock. Discarding does not log it, and there is no
+            way back to it — use <b>Stop &amp; log</b> if you studied.
+          </p>
+        </Modal>
+      )}
     </section>
   );
 }

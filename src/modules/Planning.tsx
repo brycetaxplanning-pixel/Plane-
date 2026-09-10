@@ -10,6 +10,7 @@ import { planningStats } from '../state/selectors';
 import { DictateInput } from '../components/ui/Dictation';
 import { Ideas } from './business/Ideas';
 import { Modal } from '../components/ui/Modal';
+import { ImportOutreach } from './business/ImportOutreach';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { BarChart } from '../components/charts/BarChart';
 import { Ring } from '../components/charts/Ring';
@@ -17,6 +18,7 @@ import { StatTile } from '../components/charts/StatTile';
 import { Tabs, panelProps } from '../components/ui/Tabs';
 import { Icons, type IconName } from '../components/layout/Icons';
 import { MarkPicker } from '../components/ui/MarkPicker';
+import { NumberInput } from '../components/ui/NumberInput';
 
 const ACCENT = 'var(--mod-planning)';
 
@@ -277,15 +279,12 @@ export function Planning() {
         />
         <div className="row-2 wrap">
           <Field label="Weekly outreach target" hint="Set it to zero for a business that does not do outreach.">
-            <input
-              className="input"
+            <NumberInput
               style={{ maxWidth: 120 }}
-              type="number"
               min={0}
               value={active?.weeklyTarget ?? 0}
-              onChange={(e) => {
+              onChange={(weeklyTarget) => {
                 if (!active) return;
-                const weeklyTarget = Math.max(0, Number(e.target.value) || 0);
                 update((s) => ({
                   ...s,
                   planning: {
@@ -330,7 +329,15 @@ export function Planning() {
         />
       )}
 
-      {logging && <OutreachForm onClose={() => setLogging(false)} onSave={logOutreach} />}
+      <ImportOutreach business={active} />
+
+      {logging && (
+        <OutreachForm
+          channels={active?.channels ?? [...CHANNELS]}
+          onClose={() => setLogging(false)}
+          onSave={logOutreach}
+        />
+      )}
 
       {dealOpen && (
         <DealForm
@@ -364,19 +371,24 @@ export function Planning() {
 }
 
 function OutreachForm({
-  onClose, onSave,
+  onClose, onSave, channels,
 }: {
   onClose: () => void;
   onSave: (name: string, channel: Channel, outcome: Outcome, notes: string) => void;
+  /** The ways this business actually reaches people. */
+  channels: Channel[];
 }) {
   const [name, setName] = useState('');
-  const [channel, setChannel] = useState<Channel>('Call');
+  // Where there is only one way this business reaches anyone, that is the
+  // answer, and the question is not worth asking.
+  const [channel, setChannel] = useState<Channel>(channels[0] ?? 'Call');
   const [outcome, setOutcome] = useState<Outcome>('No answer');
   const [notes, setNotes] = useState('');
+  const onlyOne = channels.length === 1;
 
   return (
     <Modal
-      title="Log outreach"
+      title={onlyOne ? `Log ${channels[0]} outreach` : 'Log outreach'}
       onClose={onClose}
       footer={
         <>
@@ -395,13 +407,15 @@ function OutreachForm({
         <Field label="Who">
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Name or business" autoFocus />
         </Field>
-        <Field label="Channel">
-          <div className="row-2 wrap">
-            {CHANNELS.map((c) => (
-              <button key={c} type="button" className="chip" aria-pressed={channel === c} onClick={() => setChannel(c)}>{c}</button>
-            ))}
-          </div>
-        </Field>
+        {!onlyOne && (
+          <Field label="Channel">
+            <div className="row-2 wrap">
+              {channels.map((c) => (
+                <button key={c} type="button" className="chip" aria-pressed={channel === c} onClick={() => setChannel(c)}>{c}</button>
+              ))}
+            </div>
+          </Field>
+        )}
         <Field label="Outcome">
           <div className="row-2 wrap">
             {OUTCOMES.map((o) => (
@@ -497,6 +511,9 @@ function BusinessForm({
   const [icon, setIcon] = useState<IconName | undefined>(business?.icon);
   const [weeklyTarget, setWeeklyTarget] = useState(String(business?.weeklyTarget ?? 50));
   const [notes, setNotes] = useState(business?.notes ?? '');
+  // Undefined means "never said", which is every business saved before this
+  // existed, and is treated as all of them.
+  const [channels, setChannels] = useState<Channel[]>(business?.channels ?? [...CHANNELS]);
 
   return (
     <Modal
@@ -515,6 +532,9 @@ function BusinessForm({
               name: name.trim(),
               icon,
               weeklyTarget: Math.max(0, Number(weeklyTarget) || 0),
+              // All of them is the same as not having an opinion, so it is
+              // stored as not having one rather than as a list to maintain.
+              channels: channels.length === 0 || channels.length === CHANNELS.length ? undefined : channels,
               notes: notes.trim() || undefined,
               createdAt: business?.createdAt ?? todayKey(),
             })}
@@ -533,6 +553,26 @@ function BusinessForm({
         </div>
         <Field label="Weekly outreach target" hint="Zero for a business that does not run outreach.">
           <input className="input" style={{ maxWidth: 120 }} type="number" min={0} value={weeklyTarget} onChange={(e) => setWeeklyTarget(e.target.value)} />
+        </Field>
+        <Field
+          label="How it reaches people"
+          hint={channels.length === 1
+            ? `Every contact is logged as ${channels[0]} without asking.`
+            : 'Leave one selected and logging stops asking which it was.'}
+        >
+          <div className="row-2 wrap">
+            {CHANNELS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className="chip"
+                aria-pressed={channels.includes(c)}
+                onClick={() => setChannels((l) => (l.includes(c) ? l.filter((x) => x !== c) : [...l, c]))}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
         </Field>
         <DictateInput label="Notes" value={notes} onChange={setNotes} textarea rows={3} placeholder="What it is, who it is for" />
       </div>
