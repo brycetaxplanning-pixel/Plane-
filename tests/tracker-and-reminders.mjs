@@ -157,7 +157,13 @@ console.log('\n6. Spoken reminders are parsed into structure');
   if (!sent) bad('parse', 'no request sent');
   else {
     /Turn a spoken sentence into a reminder/.test(sent.system) ? ok('a parsing brief is sent') : bad('brief', 'missing');
-    /Every N days/.test(sent.system) ? ok('the interval shape is offered to it') : bad('brief', 'interval option missing');
+    // A to-do happens once, so the brief no longer offers a repeat at all and
+    // says to disregard anything spoken about frequency — otherwise "call him
+    // every Tuesday" comes back as a recurring to-do the form cannot express.
+    /Ignore anything about how often/.test(sent.system)
+      ? ok('it is told a to-do happens once') : bad('brief', 'the one-time instruction is missing');
+    /Every N days/.test(sent.system)
+      ? bad('brief', 'still offers a repeating shape') : ok('and is offered no repeating shape');
     /do not invent one/.test(sent.system) ? ok('it is told not to invent a time') : bad('brief', 'guard missing');
     /Today is \d{4}-\d{2}-\d{2}/.test(sent.messages[0].content) ? ok('today is given so relative dates resolve') : bad('context', 'no date');
   }
