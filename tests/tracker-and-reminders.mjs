@@ -183,6 +183,72 @@ console.log('\n7. Reminders reach the notification log');
   await ctx.close();
 }
 
+console.log('\n9. A to-do is one-time, and says how often to nudge');
+{
+  const { ctx, page } = await seeded();
+  await page.goto(BASE + '#/reminders', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(600);
+  await page.locator('.fab').click();
+  await page.waitForTimeout(300);
+  await page.locator('.askline-input').fill('Send the engagement letter');
+  await page.getByRole('button', { name: /Add more detail/ }).click();
+  await page.waitForTimeout(300);
+
+  // A thing that comes round again is a habit, so the fold does not ask how
+  // often the to-do itself happens — only how often to be nudged about it.
+  const fold = await page.locator('.modal-body').innerText();
+  /How often/i.test(fold) ? bad('frequency', 'still asks how often the to-do repeats') : ok('it does not ask how often the to-do repeats');
+  /Complete by/i.test(fold) ? ok('it asks when it must be done by') : bad('complete by', fold.slice(0, 160));
+  /Remind me/i.test(fold) ? ok('and how often to nudge') : bad('remind', fold.slice(0, 160));
+
+  await page.getByRole('button', { name: /^(On|Off)$/ }).click();
+  await page.waitForTimeout(250);
+  await page.getByLabel('How many').fill('30');
+  await page.getByLabel('Minutes, hours or days').selectOption('minutes');
+  await page.getByLabel('Complete by date').fill('2026-09-15');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await page.waitForTimeout(600);
+
+  const made = (await read(page)).reminders.items.find((r) => r.title === 'Send the engagement letter');
+  made?.repeat === 'Once' ? ok('what it saves is a one-time to-do') : bad('repeat', made?.repeat);
+  made?.date === '2026-09-15' ? ok('with the date it must be done by') : bad('date', made?.date);
+  JSON.stringify(made?.remindEvery) === '{"n":30,"unit":"minutes"}'
+    ? ok('and a nudge every 30 minutes') : bad('remindEvery', JSON.stringify(made?.remindEvery));
+
+  const row = await page.locator('.todo-row', { hasText: 'Send the engagement letter' }).innerText();
+  /nudged every 30 minutes/.test(row) ? ok('the row says so out loud') : bad('row', row.replace(/\n/g, ' | '));
+  await ctx.close();
+}
+
+console.log('\n10. A minute-by-minute nudge cannot take the whole schedule');
+{
+  const { ctx, page } = await seeded();
+  await page.goto(BASE + '#/settings', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(400);
+  // Nothing but one impatient to-do. Over a fortnight a one-minute cadence is
+  // twenty thousand wakes, and the schedule holds a hundred in total — without
+  // a per-item cap this one would silence every other notification in the app.
+  await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('plane.state.v1'));
+    s.reminders.items = [{
+      id: 'rem_nag', title: 'Chase the K-1', repeat: 'Once', done: false,
+      createdAt: '2026-09-01', remindEvery: { n: 1, unit: 'minutes' },
+    }];
+    s.work.projects = []; s.habits.items = []; s.habits.logs = [];
+    s.fitness.race = { name: 'x', distanceKm: 5 };
+    localStorage.setItem('plane.state.v1', JSON.stringify(s));
+  });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(700);
+  const n = Number(await page.evaluate(() => {
+    const el = [...document.querySelectorAll('section.card')].find((c) => /app closed/.test(c.textContent));
+    return /(\d+) things? would be scheduled/.exec(el.textContent)?.[1];
+  }));
+  n > 0 ? ok(`an undated to-do asking to be nudged is scheduled (${n})`) : bad('nudge', 'nothing scheduled');
+  n <= 20 ? ok('and one to-do cannot flood the schedule') : bad('cap', `${n} wakes from one to-do`);
+  await ctx.close();
+}
+
 console.log('\n8. Reminders is a module you can dump things into');
 {
   const { ctx, page } = await seeded();

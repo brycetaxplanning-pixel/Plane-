@@ -513,8 +513,37 @@ export interface CheckIn {
 /* Shared                                                             */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Legacy. A to-do happens once by its nature — a thing that comes round again
+ * is a habit, and Habits is the module for it — so nothing new is created with
+ * anything but 'Once', and the form no longer asks. The values stay because
+ * to-dos saved before that decision still carry them and still roll forward;
+ * the edit sheet offers to make such a one single.
+ */
 export const REPEATS = ['Once', 'Daily', 'Weekly', 'Monthly', 'Every N days'] as const;
 export type Repeat = (typeof REPEATS)[number];
+
+export const REMIND_UNITS = ['minutes', 'hours', 'days'] as const;
+export type RemindUnit = (typeof REMIND_UNITS)[number];
+
+/**
+ * How often to be nudged about a to-do until it is done.
+ *
+ * Separate from the deadline on purpose: "finish by Friday" and "poke me every
+ * two hours" are different questions, and answering one has never implied the
+ * other. Nudging stops when the to-do is marked done, not when its date
+ * passes — a thing you are late on is the thing you most want reminded of.
+ */
+export interface RemindEvery {
+  n: number;
+  unit: RemindUnit;
+}
+
+/** Milliseconds between nudges, floored at a minute. */
+export const remindMs = (r: RemindEvery): number => {
+  const unit = r.unit === 'minutes' ? 60_000 : r.unit === 'hours' ? 3_600_000 : 86_400_000;
+  return Math.max(60_000, Math.max(1, Math.round(r.n)) * unit);
+};
 
 /**
  * Something to be reminded about.
@@ -534,6 +563,10 @@ export interface Reminder {
   /** 24h clock, optional — an all-day reminder has none. */
   time?: string;
   repeat: Repeat;
+  /** How often to be nudged until it is done. Absent means nudge on the
+   *  deadline and once the morning after, which is what every to-do did
+   *  before this was askable. */
+  remindEvery?: RemindEvery;
   /** For "Every N days", and for interval reminders. */
   everyDays?: number;
   /** Interval reminders count from here rather than from a fixed date. */

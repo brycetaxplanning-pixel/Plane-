@@ -208,9 +208,14 @@ export function TodoRow({
   const meta = [
     when,
     r.repeat === 'Every N days' ? null : r.time || null,
+    // A legacy repeat, still shown so a to-do that rolls forward never does it
+    // silently. Nothing new can be given one.
     r.repeat === 'Once' ? null
       : r.repeat === 'Every N days' ? `every ${Math.max(1, r.everyDays ?? 7)} days`
         : r.repeat.toLowerCase(),
+    r.remindEvery
+      ? `nudged every ${r.remindEvery.n} ${r.remindEvery.n === 1 ? r.remindEvery.unit.replace(/s$/, '') : r.remindEvery.unit}`
+      : null,
   ].filter(Boolean).join(' · ');
 
   return (

@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react';
-import { MODULES, REPEATS, type ModuleId, type Reminder, type Repeat } from '../../lib/schema';
+import { MODULES, REMIND_UNITS, type ModuleId, type Reminder, type RemindUnit, type Repeat } from '../../lib/schema';
 import { AIError, askJSON, isAIConfigured } from '../../lib/ai';
 import { todayKey } from '../../lib/date';
 import { uid } from '../../lib/id';
 import { useApp } from '../../state/context';
 import { Modal } from '../../components/ui/Modal';
 import { Field } from '../../components/ui/Field';
+import { NumberInput } from '../../components/ui/NumberInput';
 import { MicButton } from '../../components/ui/Dictation';
 import { appendPhrase } from '../../lib/speech';
 import { Icons } from '../../components/layout/Icons';
@@ -14,8 +15,6 @@ interface Parsed {
   title?: string;
   date?: string;
   time?: string;
-  repeat?: Repeat;
-  everyDays?: number;
   notes?: string;
 }
 
@@ -59,11 +58,17 @@ export function AddSheet({
   const [repeat, setRepeat] = useState<Repeat>(reminder?.repeat ?? 'Once');
   const [date, setDate] = useState(reminder?.date ?? '');
   const [time, setTime] = useState(reminder?.time ?? '');
-  const [everyDays, setEveryDays] = useState(String(reminder?.everyDays ?? 21));
+  // Read only: nothing new sets an interval, but one saved before still shows
+  // its cadence in the note offering to end it.
+  const everyDays = String(reminder?.everyDays ?? 21);
   const [module, setModule] = useState<ModuleId | ''>(reminder?.module ?? defaultModule ?? '');
+  const [remindOn, setRemindOn] = useState(Boolean(reminder?.remindEvery));
+  const [remindN, setRemindN] = useState(reminder?.remindEvery?.n ?? 1);
+  const [remindUnit, setRemindUnit] = useState<RemindUnit>(reminder?.remindEvery?.unit ?? 'days');
 
   const carriesDetail = Boolean(
-    reminder && (reminder.date || reminder.time || reminder.notes || reminder.module || reminder.repeat !== 'Once'),
+    reminder && (reminder.date || reminder.time || reminder.notes || reminder.module
+      || reminder.remindEvery || reminder.repeat !== 'Once'),
   );
   const [open, setOpen] = useState(carriesDetail);
   const [busy, setBusy] = useState(false);
@@ -76,14 +81,6 @@ export function AddSheet({
   titleRef.current = title;
 
   const interval = repeat === 'Every N days';
-
-  /** A recurring reminder counts from a date, so choosing one without a date
-   *  would produce a repeat that never comes due. Today is the honest default
-   *  and is the one they can see and change. */
-  const pickRepeat = (r: Repeat) => {
-    setRepeat(r);
-    if (r !== 'Once' && r !== 'Every N days' && !date) setDate(todayKey());
-  };
 
   /** A spoken sentence, taken apart into fields. Whatever it works out is put
    *  in the form with the fold open rather than saved behind your back — it is
@@ -99,21 +96,20 @@ export function AddSheet({
       const parsed = await askJSON<Parsed>(
         state.settings,
         `Turn a spoken sentence into a reminder.
-Return {"title": string, "date": "YYYY-MM-DD" | null, "time": "HH:MM" 24-hour | null, "repeat": "Once"|"Daily"|"Weekly"|"Monthly"|"Every N days", "everyDays": number | null, "notes": string | null}.
+Return {"title": string, "date": "YYYY-MM-DD" | null, "time": "HH:MM" 24-hour | null, "notes": string | null}.
 The title is short and imperative — "Call the client", not "I need to call the client".
-Resolve relative dates against today. If they describe a gap since the last time rather than a date — "every three weeks", "it has been a month since" — use "Every N days" with everyDays set, and leave date null.
-If no date is mentioned, leave date null; a reminder is allowed to have no date.
-If no time is mentioned, leave time null; do not invent one.`,
+Resolve relative dates against today.
+If no date is mentioned, leave date null; a to-do is allowed to have no date.
+If no time is mentioned, leave time null; do not invent one.
+Ignore anything about how often — a to-do happens once.`,
         `Today is ${todayKey()} (${new Date().toLocaleDateString(undefined, { weekday: 'long' })}).
 They said: ${text}`,
       );
 
       if (parsed.title?.trim()) setTitle(parsed.title.trim());
       if (parsed.notes) setNotes(parsed.notes);
-      if (parsed.repeat && REPEATS.includes(parsed.repeat)) setRepeat(parsed.repeat);
       if (parsed.date) setDate(parsed.date);
       if (parsed.time) setTime(parsed.time);
-      if (parsed.everyDays) setEveryDays(String(parsed.everyDays));
       setOpen(true);
     } catch (err) {
       setError(err instanceof AIError ? [err.message, err.hint].filter(Boolean).join(' ') : 'Could not read that.');
@@ -134,6 +130,7 @@ They said: ${text}`,
       date: interval ? undefined : (date || undefined),
       time: interval ? undefined : (time || undefined),
       everyDays: interval ? Math.max(1, Number(everyDays) || 1) : undefined,
+      remindEvery: remindOn ? { n: Math.max(1, Math.round(remindN)), unit: remindUnit } : undefined,
       lastDone: reminder?.lastDone,
       module: module || undefined,
       done: false,
@@ -143,7 +140,7 @@ They said: ${text}`,
 
   return (
     <Modal
-      title={reminder ? 'Reminder' : 'Add a reminder'}
+      title={reminder ? 'To-do' : 'Add a to-do'}
       onClose={onClose}
       footer={
         <>
@@ -189,37 +186,81 @@ They said: ${text}`,
 
           {open && (
             <div className="stack-3">
-              <Field label="How often">
+              {/* Made before to-dos became one-time things. Rather than let it
+                  keep rolling forward invisibly with no way to say so, it says
+                  so, and offers the one button that ends it. */}
+              {repeat !== 'Once' && (
+                <div className="legacyrepeat">
+                  <p className="t-sm">
+                    This one repeats <b>{repeat === 'Every N days' ? `every ${Math.max(1, Number(everyDays) || 1)} days` : repeat.toLowerCase()}</b>.
+                    To-dos are one-time now — a thing that comes round again belongs in Habits.
+                  </p>
+                  <button type="button" className="btn btn-sm" onClick={() => setRepeat('Once')}>Make it one-time</button>
+                </div>
+              )}
+
+              <Field label="Complete by" hint="Both optional. Leave them blank and it just sits on the list.">
                 <div className="row-2 wrap">
-                  {REPEATS.map((r) => (
-                    <button key={r} type="button" className="chip" aria-pressed={repeat === r} onClick={() => pickRepeat(r)}>{r}</button>
-                  ))}
+                  <input className="input" style={{ maxWidth: 170 }} type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Complete by date" />
+                  <input className="input" style={{ maxWidth: 130 }} type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="Complete by time" />
+                  {(date || time) && (
+                    <button type="button" className="link-btn" onClick={() => { setDate(''); setTime(''); }}>Clear</button>
+                  )}
                 </div>
               </Field>
 
-              {interval ? (
-                <Field label="Every how many days" hint="Counts from the last time you marked it done, not from a fixed date.">
-                  <input className="input" style={{ maxWidth: 110 }} type="number" min={1} value={everyDays} onChange={(e) => setEveryDays(e.target.value)} />
-                </Field>
-              ) : (
-                <div className="grid grid-2" style={{ gap: 'var(--sp-3)' }}>
-                  <Field label="Date" hint="Leave blank and it just sits on the list.">
-                    <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-                  </Field>
-                  <Field label="Time" hint="Leave blank for all day.">
-                    <input className="input" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
-                  </Field>
+              <Field
+                label="Remind me"
+                hint={remindOn
+                  ? 'Every so often until you mark it done — being late is when you most want telling.'
+                  : 'Off. You will still be nudged on the day it is due.'}
+              >
+                <div className="row-2 wrap">
+                  <button
+                    type="button"
+                    className="chip"
+                    aria-pressed={remindOn}
+                    onClick={() => setRemindOn((v) => !v)}
+                  >
+                    {remindOn ? 'On' : 'Off'}
+                  </button>
+                  {remindOn && (
+                    <>
+                      <span className="t-sm t-muted">every</span>
+                      <NumberInput
+                        style={{ maxWidth: 90 }}
+                        min={1}
+                        max={999}
+                        value={remindN}
+                        onChange={setRemindN}
+                        aria-label="How many"
+                      />
+                      <select
+                        className="select"
+                        style={{ maxWidth: 130 }}
+                        value={remindUnit}
+                        onChange={(e) => setRemindUnit(e.target.value as RemindUnit)}
+                        aria-label="Minutes, hours or days"
+                      >
+                        {REMIND_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                      </select>
+                    </>
+                  )}
                 </div>
-              )}
+              </Field>
 
               <Field label="Notes">
                 <textarea className="input" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything worth remembering with it" />
               </Field>
 
-              <Field label="Module">
+              <Field label="Module" hint="Which part of your life it belongs to. Already set when you add from inside a module.">
                 <select className="select" value={module} onChange={(e) => setModule(e.target.value as ModuleId | '')}>
                   <option value="">None</option>
-                  {MODULES.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                  {/* Every module but this one. A to-do belonging to the
+                      to-do list says nothing — the list is already all of them. */}
+                  {MODULES.filter((m) => m.id !== 'reminders').map((m) => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
                 </select>
               </Field>
             </div>

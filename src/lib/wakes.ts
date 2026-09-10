@@ -8,7 +8,7 @@
  * something was due, and nothing else.
  */
 
-import type { AppState } from './schema';
+import { remindMs, type AppState } from './schema';
 import { addDays, fromKey, todayKey, type DateKey } from './date';
 import { dueList } from './reminders';
 import { allRows } from './habits';
@@ -29,6 +29,15 @@ export interface Wake {
 export const MORNING_HOUR = 8;
 export const EVENING_HOUR = 20;
 
+/**
+ * The most nudges one to-do may claim out of a fortnight's schedule.
+ *
+ * "Remind me every ten minutes" over fourteen days is two thousand wakes, and
+ * the whole schedule is capped at a hundred — so without a per-item cap one
+ * impatient to-do would take every slot and silence everything else in the app.
+ */
+const NUDGE_CAP = 12;
+
 const at = (key: DateKey, hour: number, minute = 0): number => {
   const d = fromKey(key);
   d.setHours(hour, minute, 0, 0);
@@ -48,6 +57,29 @@ const atTime = (key: DateKey, time: string): number => {
 export function wakePlan(state: AppState, now = Date.now()): Wake[] {
   const wakes: Wake[] = [];
   const horizon = now + 14 * 86_400_000;
+
+  /* To-dos asking to be nudged on their own cadence, whether or not they have
+     a deadline. This is the one case where an undated one is pushed: you asked
+     to be reminded every N, so being reminded is the whole point, and nothing
+     here claims a due date it does not have. */
+  for (const d of dueList(state)) {
+    const r = d.reminder;
+    if (r.done || !r.remindEvery) continue;
+    const gap = remindMs(r.remindEvery);
+    // From now rather than from when it was written: a to-do made a fortnight
+    // ago on a ten-minute cadence should not arrive as a thousand backdated
+    // nudges the moment the schedule is built.
+    let at = now + gap;
+    for (let i = 0; i < NUDGE_CAP && at < horizon; i += 1, at += gap) {
+      wakes.push({
+        at,
+        tag: `todo-nudge:${r.id}:${at}`,
+        title: r.title,
+        body: d.undated ? 'Still on your list.' : `Due ${d.due}${r.time ? ` at ${r.time}` : ''}.`,
+        to: 'reminders',
+      });
+    }
+  }
 
   /* Reminders: at their own time when they have one, first thing otherwise. */
   for (const d of dueList(state)) {
