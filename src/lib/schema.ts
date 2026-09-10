@@ -873,7 +873,7 @@ export function migrate(raw: unknown): AppState {
       chat: s.fitness?.chat ?? [],
       measurements: s.fitness?.measurements ?? [],
       physique: s.fitness?.physique ?? [],
-      plan: s.fitness?.plan ?? [],
+      plan: dedupePlan(s.fitness?.plan ?? []),
     },
     finance: {
       ...base.finance,
@@ -988,6 +988,37 @@ function liftLegacyGoals(raw: unknown): Goal[] {
    one stroke weight, so eleven modules read as one family. It used to be an
    emoji per module, which is drawn by the platform at the platform's weight
    in the platform's palette, and no two of them agree with each other. */
+/**
+ * One line per activity, always.
+ *
+ * Two plan lines with the same name cannot be told apart by anything that
+ * matters: a logged session records the activity, not which line it was meant
+ * for, so both lines count the same sessions and both show them ticked. One
+ * press logs one session and two boxes fill — the screen reports work that was
+ * never done, and the duplicated line's sessions are also counted twice toward
+ * the weekly commitment.
+ *
+ * Duplicates are folded together rather than dropped: the largest count wins,
+ * and locked beats one-off, so nothing you had asked for goes missing. Run
+ * from migrate, so a plan that already went wrong is repaired on load, and
+ * from activePlan, so the invariant holds however the state got there.
+ */
+export function dedupePlan(plan: PlanItem[]): PlanItem[] {
+  const byActivity = new Map<string, PlanItem>();
+  for (const item of plan) {
+    const seen = byActivity.get(item.activity);
+    if (!seen) { byActivity.set(item.activity, item); continue; }
+    const locked = seen.locked || item.locked;
+    byActivity.set(item.activity, {
+      ...seen,
+      perWeek: Math.max(seen.perWeek, item.perWeek),
+      locked,
+      week: locked ? undefined : seen.week,
+    });
+  }
+  return [...byActivity.values()];
+}
+
 export const MODULES: { id: ModuleId; num: number; name: string; blurb: string; color: string }[] = [
   { id: 'work',     num: 1, name: 'Abitos Tax Prep', blurb: 'Client projects and what has to ship',   color: 'var(--mod-work)' },
   { id: 'planning', num: 2, name: 'Business',          blurb: 'Outreach, pipeline and the idea list',  color: 'var(--mod-planning)' },

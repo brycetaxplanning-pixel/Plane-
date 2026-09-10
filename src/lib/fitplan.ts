@@ -1,10 +1,13 @@
-import { ACTIVITY_TYPES, bucketOf, type Activity, type AppState, type PlanItem } from './schema';
+import { ACTIVITY_TYPES, bucketOf, type Activity, type AppState, type PlanItem, dedupePlan } from './schema';
 import { inWeek, weekStart, type DateKey } from './date';
 
 /** The lines in force for the current week: every locked line, plus the
  *  unlocked ones added this week. */
 export function activePlan(state: AppState, week: DateKey = weekStart()): PlanItem[] {
-  return state.fitness.plan.filter((p) => p.locked || p.week === week);
+  // Deduped on the way out as well as on the way in: a row's progress is
+  // counted by activity name, so two rows sharing one would each claim the
+  // same sessions and the screen would report work nobody did.
+  return dedupePlan(state.fitness.plan.filter((p) => p.locked || p.week === week));
 }
 
 export interface PlanRow {

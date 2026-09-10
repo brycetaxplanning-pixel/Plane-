@@ -200,6 +200,85 @@ console.log('\n7. Coach modes change the brief that is sent');
   await ctx.close();
 }
 
+console.log('\n8. One plan line per activity, and a way to take one off');
+{
+  const { ctx, page } = await fresh();
+  await page.goto(BASE + '#/settings', { waitUntil: 'networkidle' });
+
+  // A plan that already went wrong: the same activity on two lines. A logged
+  // session records the activity and not the line, so both lines counted it
+  // and the screen showed two ticks for one session actually done.
+  await page.evaluate(() => {
+    const d = new Date();
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    localStorage.setItem('plane.state.v1', JSON.stringify({
+      version: 1,
+      fitness: {
+        targets: { mma: 0, strength: 0, total: 12 },
+        plan: [
+          { id: 'p1', activity: 'Weightlifting', perWeek: 4, locked: true, createdAt: iso },
+          { id: 'p2', activity: 'Weightlifting', perWeek: 4, locked: true, createdAt: iso },
+          { id: 'p3', activity: 'Boxing', perWeek: 1, locked: true, createdAt: iso },
+        ],
+        activities: [{ id: 'a1', date: iso, type: 'Weightlifting', minutes: 60 }],
+      },
+    }));
+  });
+  await page.goto(BASE + '#/fitness', { waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+
+  const names = await page.locator('.tickrow-name').allInnerTexts();
+  const lifts = names.filter((n) => /Weightlifting/i.test(n)).length;
+  lifts === 1 ? ok('a plan saved with the activity twice is repaired to one line') : bad('dedupe', `${lifts} lines: ${JSON.stringify(names)}`);
+
+  // Folded, not halved: the largest count survives so nothing asked for is lost.
+  const counts = await page.locator('.tickrow-count').allInnerTexts();
+  counts[0] === '1/4' ? ok('and keeps the count, showing the one session once') : bad('count', JSON.stringify(counts));
+
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('plane.state.v1')).fitness.plan.length);
+  stored === 2 ? ok('the duplicate is gone from storage, not just hidden') : bad('storage', `${stored} lines still saved`);
+
+  // One tap, one box, one session.
+  const before = await page.locator('.tick.is-done').count();
+  await page.locator('.tickrow').first().locator('.tick').nth(1).click();
+  await page.waitForTimeout(700);
+  const after = await page.locator('.tick.is-done').count();
+  after === before + 1 ? ok('ticking a box fills exactly that box') : bad('tick', `${before} -> ${after}`);
+  const acts = await page.evaluate(() => JSON.parse(localStorage.getItem('plane.state.v1')).fitness.activities.length);
+  acts === 2 ? ok('and logs exactly one session') : bad('sessions', String(acts));
+
+  // Adding an activity already on the plan must not make a second line.
+  await page.getByRole('button', { name: '+ Add' }).click();
+  await page.waitForTimeout(400);
+  await page.locator('.modal-body').getByRole('button', { name: 'Weightlifting', exact: true }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
+  await page.waitForTimeout(700);
+  const after2 = (await page.locator('.tickrow-name').allInnerTexts()).filter((n) => /Weightlifting/i.test(n)).length;
+  after2 === 1 ? ok('adding it again does not make a second line') : bad('re-add', `${after2} lines`);
+
+  // Taking a line off, by the gesture rather than a button at the foot of a sheet.
+  const box = await page.locator('.tickrow-name').first().boundingBox();
+  const y = box.y + box.height / 2;
+  await page.mouse.move(box.x + box.width - 5, y);
+  await page.mouse.down();
+  for (let x = 0; x <= 110; x += 10) await page.mouse.move(box.x + box.width - 5 - x, y);
+  await page.mouse.up();
+  await page.waitForTimeout(400);
+  const del = page.getByRole('button', { name: /Delete Weightlifting/i });
+  if ((await del.count()) === 0) bad('swipe', 'no delete revealed');
+  else {
+    ok('swiping a line left reveals Delete');
+    await del.click();
+    await page.waitForTimeout(600);
+    const left = await page.evaluate(() => JSON.parse(localStorage.getItem('plane.state.v1')).fitness.plan.map((p) => p.activity));
+    left.includes('Weightlifting') ? bad('remove', JSON.stringify(left)) : ok('and removes it');
+    (await page.getByRole('button', { name: 'Undo' }).count()) > 0
+      ? ok('with an undo, in case it was the wrong one') : bad('undo', 'not offered');
+  }
+  await ctx.close();
+}
+
 await browser.close();
 console.log(problems.length ? `\n${problems.length} PROBLEM(S):\n` + problems.join('\n') : '\nAll checks passed.');
 process.exit(problems.length ? 1 : 0);

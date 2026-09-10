@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ACTIVITY_TYPES, type PlanItem } from '../../lib/schema';
+import { ACTIVITY_TYPES, dedupePlan, type PlanItem } from '../../lib/schema';
 import { PLAN_PRESETS, suggestions, weekPlan } from '../../lib/fitplan';
 import { todayKey, weekStart } from '../../lib/date';
 import { XP } from '../../lib/gamification';
@@ -8,6 +8,7 @@ import { useApp } from '../../state/context';
 import { Modal } from '../../components/ui/Modal';
 import { Field, SectionHead } from '../../components/ui/Field';
 import { Icons } from '../../components/layout/Icons';
+import { SwipeRow } from '../../components/ui/SwipeRow';
 
 const ACCENT = 'var(--mod-fitness)';
 
@@ -25,6 +26,16 @@ export function Plan() {
   const [adding, setAdding] = useState<PlanItem | 'new' | null>(null);
 
   const addItem = (activity: string, perWeek: number, locked: boolean) => {
+    // Pressing a preset twice used to make a second line with the same name,
+    // and there is no such thing: both lines then counted the same sessions.
+    // The second press opens the line you already have, so the count is
+    // changed where it lives rather than doubled behind your back.
+    const already = state.fitness.plan.find((p) => p.activity === activity);
+    if (already) {
+      setAdding(already);
+      toast(`${activity} is already in the plan`);
+      return;
+    }
     update((s) => ({
       ...s,
       fitness: {
@@ -40,21 +51,27 @@ export function Plan() {
   };
 
   const save = (item: PlanItem) => {
-    update((s) => ({
-      ...s,
-      fitness: {
-        ...s.fitness,
-        plan: s.fitness.plan.some((p) => p.id === item.id)
-          ? s.fitness.plan.map((p) => (p.id === item.id ? item : p))
-          : [...s.fitness.plan, item],
-      },
-    }));
+    update((s) => {
+      const isEdit = s.fitness.plan.some((p) => p.id === item.id);
+      const next = isEdit
+        ? s.fitness.plan.map((p) => (p.id === item.id ? item : p))
+        : [...s.fitness.plan, item];
+      // The form can name an activity another line already uses — by adding a
+      // second Weightlifting, or by renaming one onto another. Folding them
+      // here keeps the one-line-per-activity rule true at every entry point.
+      return { ...s, fitness: { ...s.fitness, plan: dedupePlan(next) } };
+    });
     setAdding(null);
   };
 
   const remove = (id: string) => {
+    const before = state.fitness.plan;
+    const gone = before.find((p) => p.id === id);
     update((s) => ({ ...s, fitness: { ...s.fitness, plan: s.fitness.plan.filter((p) => p.id !== id) } }));
-    toast('Removed from the plan');
+    toast(gone ? `${gone.activity} removed` : 'Removed from the plan', undefined, {
+      label: 'Undo',
+      run: () => update((s) => ({ ...s, fitness: { ...s.fitness, plan: before } })),
+    });
   };
 
   /** One tap = one session of this activity, logged today. */
@@ -183,7 +200,12 @@ export function Plan() {
             tapping a filled one takes the last one back. */}
         <div className="ticks">
           {plan.rows.map((r) => (
-            <div className={`tickrow${r.met ? ' is-met' : ''}`} key={r.item.id}>
+            // Swipe to take a line off the plan. Removing one lived behind
+            // tapping its name and finding a button at the foot of a sheet,
+            // which is where you look last — the same place deleting a habit
+            // used to hide.
+            <SwipeRow key={r.item.id} onDelete={() => remove(r.item.id)} label={r.item.activity}>
+            <div className={`tickrow${r.met ? ' is-met' : ''}`}>
               <button
                 className="tickrow-name"
                 onClick={() => setAdding(r.item)}
@@ -212,6 +234,7 @@ export function Plan() {
 
               <span className="tickrow-count t-num">{Math.min(r.done, r.item.perWeek)}/{r.item.perWeek}</span>
             </div>
+            </SwipeRow>
           ))}
 
           {plan.open > 0 && (
