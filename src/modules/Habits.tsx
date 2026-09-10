@@ -15,6 +15,7 @@ import { hoursAs, sinkTotals } from '../lib/insights';
 import { Icons, type IconName } from '../components/layout/Icons';
 import { MarkPicker } from '../components/ui/MarkPicker';
 import { SwipeRow } from '../components/ui/SwipeRow';
+import { SortableList } from '../components/ui/SortableList';
 
 const ACCENT = 'var(--mod-habits)';
 
@@ -43,6 +44,34 @@ export function Habits() {
 
   /** Removes the habit and its logs, and offers the whole lot straight back —
    *  a swipe is easy to do by accident and a habit carries its history. */
+  /**
+   * Puts one cadence group in a new order without disturbing the other.
+   *
+   * Daily and weekly habits share a single array, and the screen shows them as
+   * two lists. Reordering the daily ones must leave every weekly one exactly
+   * where it was, so the array is walked in place and each slot that held a
+   * habit from the reordered group takes the next id from the new order.
+   * Archived habits are in there too and are not shown at all, which is the
+   * other reason this cannot just be a concatenation.
+   */
+  const reorder = (ids: string[]) => {
+    update((s) => {
+      const moving = new Set(ids);
+      let next = 0;
+      return {
+        ...s,
+        habits: {
+          ...s.habits,
+          items: s.habits.items.map((h) => {
+            if (!moving.has(h.id)) return h;
+            const id = ids[next]; next += 1;
+            return s.habits.items.find((x) => x.id === id) ?? h;
+          }),
+        },
+      };
+    });
+  };
+
   const removeHabit = (habit: Habit) => {
     const logs = state.habits.logs.filter((l) => l.habitId === habit.id);
     update((s) => ({
@@ -158,26 +187,34 @@ export function Habits() {
       {stats.daily.length > 0 && (
         <section className="card">
           <SectionHead title="Every day" sub={`${stats.todayDone} of ${stats.todayTotal} done today`} />
-          <div className="stack-2">
+          <SortableList
+            ids={stats.daily.map((r) => r.habit.id)}
+            labelOf={(id) => stats.rows.find((r) => r.habit.id === id)?.habit.title ?? 'habit'}
+            onReorder={reorder}
+          >
             {stats.daily.map((row) => (
               <SwipeRow key={row.habit.id} label={row.habit.title} onDelete={() => removeHabit(row.habit)}>
                 <HabitRowView row={row} onLog={() => quickLog(row)} onUndo={() => undoToday(row.habit)} onEdit={() => setEditing(row.habit)} />
               </SwipeRow>
             ))}
-          </div>
+          </SortableList>
         </section>
       )}
 
       {stats.weekly.length > 0 && (
         <section className="card">
           <SectionHead title="Every week" sub="Counts reset on Monday" />
-          <div className="stack-2">
+          <SortableList
+            ids={stats.weekly.map((r) => r.habit.id)}
+            labelOf={(id) => stats.rows.find((r) => r.habit.id === id)?.habit.title ?? 'habit'}
+            onReorder={reorder}
+          >
             {stats.weekly.map((row) => (
               <SwipeRow key={row.habit.id} label={row.habit.title} onDelete={() => removeHabit(row.habit)}>
                 <HabitRowView row={row} onLog={() => quickLog(row)} onUndo={() => undoToday(row.habit)} onEdit={() => setEditing(row.habit)} />
               </SwipeRow>
             ))}
-          </div>
+          </SortableList>
         </section>
       )}
 

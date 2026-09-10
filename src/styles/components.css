@@ -1564,3 +1564,63 @@
 .indrow-bar i { display: block; height: 100%; border-radius: inherit; background: var(--mod, var(--series-1)); }
 .indrow-n { flex: none; min-width: 3.5em; text-align: right; color: var(--text-primary); }
 .indrow-rate { flex: none; min-width: 3em; text-align: right; color: var(--text-muted); }
+
+
+/* ---------- rows you can put in your own order ---------- */
+
+.sortable { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+
+.sortable-item {
+  position: relative;
+  /* Vertical panning stays with the page so the list still scrolls; a hold
+     that turns into a reorder captures the pointer and takes over from there. */
+  touch-action: pan-y;
+}
+
+/* Lifted off the page while it is being carried. */
+.sortable-item.is-held {
+  position: relative;
+  box-shadow: var(--shadow-2);
+  border-radius: var(--r-md);
+  opacity: 0.97;
+  cursor: grabbing;
+}
+.sortable-item.is-held > *:first-child { transform: scale(1.015); transition: transform 140ms ease; }
+
+/* Nothing else on the list should react to a pointer that is carrying a row. */
+.sortable.is-sorting .sortable-item:not(.is-held) { pointer-events: none; }
+
+/* The grip is for a mouse and a keyboard. A phone holds the row itself, so it
+   stays out of the way until something that can hover or focus arrives. */
+.grip {
+  position: absolute;
+  right: 2px; top: 50%; transform: translateY(-50%);
+  width: 28px; height: 34px; padding: 0;
+  border: 0; background: none;
+  color: var(--text-muted);
+  display: grid; place-content: center;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 120ms ease, color 120ms ease;
+}
+.grip svg { width: 18px; height: 18px; }
+.sortable-item:hover .grip,
+.sortable-item:focus-within .grip,
+.grip:focus-visible { opacity: 1; }
+
+/* The grip gets its own strip rather than lying on top of the row.
+   Overlaid, it took the rightmost 28px of every row the moment the pointer
+   hovered — which is where a drag to reveal Delete naturally starts, so the
+   swipe landed on an invisible button and the row never moved. The space is
+   reserved permanently, not on hover, or the row would jump under the cursor
+   as it arrived. */
+@media (hover: hover) {
+  .sortable-item { padding-right: 32px; }
+}
+.grip:hover { color: var(--text-primary); }
+.grip:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; border-radius: var(--r-sm); }
+
+/* A row being carried by the keyboard should be visible as such. */
+@media (hover: none) {
+  .grip { display: none; }
+}

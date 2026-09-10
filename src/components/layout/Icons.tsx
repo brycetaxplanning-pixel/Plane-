@@ -79,6 +79,8 @@ export const Icons = {
   back: () => wrap(<path d="M15 5.5 8.5 12l6.5 6.5" />),
   /** Disclosure. Points down when a fold is shut; rotated open by CSS. */
   chevron: () => wrap(<path d="M5.5 9 12 15.5 18.5 9" />),
+  /** Somewhere to take hold of a row that can be reordered. */
+  grip: () => wrap(<><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h7" /></>),
   plus: () => wrap(<><path d="M12 5.5v13M5.5 12h13" /></>),
   /** Progress — bars with the trend drawn over them. */
   chart: () => wrap(<><path d="M3.4 20.4h17.2" /><path d="M6.6 20.4v-5.6M11 20.4v-9.2M15.4 20.4v-6.4M19.8 20.4v-12" /></>),

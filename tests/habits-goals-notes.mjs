@@ -123,6 +123,72 @@ console.log('\n6. A worsening habit escalates rather than repeating daily');
   await ctx.close();
 }
 
+console.log('\n12. Habits can be put in the order you want them');
+{
+  const { ctx, page } = await seeded(430);
+  await page.goto(BASE + '#/habits', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(800);
+  const pop = page.locator('.pop button').first();
+  if (await pop.count()) await pop.click().catch(() => {});
+  await page.waitForTimeout(400);
+
+  const daily = () => page.locator('.card', { hasText: 'Every day' });
+  const titles = async (which) => page.locator('.card', { hasText: which })
+    .locator('.sortable-item .habit-main .t-bold').allInnerTexts();
+
+  const before = await titles('Every day');
+  const weeklyBefore = await titles('Every week');
+  before.length >= 3 ? ok(`${before.length} daily habits to order`) : bad('setup', JSON.stringify(before));
+
+  const rows = daily().locator('.sortable-item');
+  const a = await rows.nth(0).boundingBox();
+  const c = await rows.nth(2).boundingBox();
+  const x = a.x + 40;
+  const y0 = a.y + a.height / 2;
+
+  // A flick is a scroll, not a reorder. Nothing may move before the hold lands.
+  await page.mouse.move(x, y0);
+  await page.mouse.down();
+  for (let d = 0; d <= 90; d += 15) await page.mouse.move(x, y0 + d);
+  await page.mouse.up();
+  await page.waitForTimeout(400);
+  JSON.stringify(await titles('Every day')) === JSON.stringify(before)
+    ? ok('a quick drag scrolls and leaves the order alone') : bad('flick', 'the list reordered on a scroll');
+
+  // Hold, then slide it down two places.
+  await page.mouse.move(x, y0);
+  await page.mouse.down();
+  await page.waitForTimeout(430);
+  const far = (c.y - a.y) + 20;
+  for (let d = 0; d <= far; d += 12) { await page.mouse.move(x, y0 + d); await page.waitForTimeout(10); }
+  await page.mouse.move(x, y0 + far);
+  await page.waitForTimeout(80);
+  await page.mouse.up();
+  await page.waitForTimeout(600);
+
+  const after = await titles('Every day');
+  after[2] === before[0] ? ok('holding a row and sliding it moves it where you put it') : bad('drag', JSON.stringify(after));
+
+  // Two lists share one array, so ordering one must not disturb the other.
+  JSON.stringify(await titles('Every week')) === JSON.stringify(weeklyBefore)
+    ? ok('and the weekly list is untouched') : bad('weekly', JSON.stringify(await titles('Every week')));
+
+  // A keyboard can do it without any pointer at all.
+  const grip = daily().locator('.grip').first();
+  await grip.focus();
+  const kbBefore = await titles('Every day');
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(450);
+  const kbAfter = await titles('Every day');
+  kbAfter[1] === kbBefore[0] ? ok('arrow keys move a row too') : bad('keyboard', JSON.stringify(kbAfter));
+
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+  JSON.stringify(await titles('Every day')) === JSON.stringify(kbAfter)
+    ? ok('and the order survives a reload') : bad('persist', JSON.stringify(await titles('Every day')));
+  await ctx.close();
+}
+
 console.log('\n9. A habit can be swiped away, and brought back');
 {
   const { ctx, page } = await seeded(390);
