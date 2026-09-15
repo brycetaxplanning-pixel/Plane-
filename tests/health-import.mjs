@@ -142,14 +142,34 @@ console.log('\n4. An Apple Health export');
 console.log('\n5. Food already logged by hand is left alone');
 {
   const { ctx, page } = await open();
+
+  // Put the meal there rather than hoping the sample data covers this day.
+  // The fixture is anchored in August 2026 and the seed fills the last
+  // fortnight from today, so any date pinned here is only in both for a few
+  // weeks — this asserted 2026-08-28 and stopped meaning anything the moment
+  // that fell out of the seeded window, then passed on an import that was
+  // doing exactly what it should.
+  const DAY = '2026-08-02';
+  await page.evaluate((date) => {
+    const s = JSON.parse(localStorage.getItem('plane.state.v1'));
+    s.health.meals = [
+      ...s.health.meals.filter((m) => m.date !== date),
+      { id: 'meal_typed', date, slot: 'Lunch', name: 'Chicken and rice', calories: 700, protein: 55 },
+    ];
+    localStorage.setItem('plane.state.v1', JSON.stringify(s));
+  }, DAY);
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(500);
+
   const form = await openImport(page);
   await form.getByRole('button', { name: 'Apple Health' }).click();
   await form.locator('input[type=file]').setInputFiles(FIX + 'apple.xml');
   await page.waitForTimeout(900);
-  const before = (await read(page)).health.meals.filter((m) => m.date === '2026-08-28').length;
+  const before = (await read(page)).health.meals.filter((m) => m.date === DAY).length;
+  before > 0 ? ok(`${before} meal typed in by hand on the day`) : bad('setup', 'no hand-typed meal to protect');
   await form.getByRole('button', { name: 'Import' }).click();
   await page.waitForTimeout(700);
-  const after = (await read(page)).health.meals.filter((m) => m.date === '2026-08-28');
+  const after = (await read(page)).health.meals.filter((m) => m.date === DAY);
   after.length === before && !after.some((m) => /Imported/.test(m.name))
     ? ok('a day with meals typed in is not doubled') : bad('double', JSON.stringify(after.map((m) => m.name)));
   const untouched = (await read(page)).health.meals.some((m) => /Imported from Apple Health/.test(m.name));
