@@ -41,7 +41,7 @@ interface Parsed {
  * open, so editing never hides what is set.
  */
 export function AddSheet({
-  reminder, defaultModule, onClose, onSave, onDelete,
+  reminder, defaultModule, onClose, onSave, onResolve, onDelete,
 }: {
   /** null for a new one. */
   reminder: Reminder | null;
@@ -50,6 +50,8 @@ export function AddSheet({
   defaultModule?: ModuleId;
   onClose: () => void;
   onSave: (r: Reminder) => void;
+  /** Present only for a follow-up: the one action that actually closes it. */
+  onResolve?: () => void;
   onDelete?: () => void;
 }) {
   const { state } = useApp();
@@ -65,10 +67,11 @@ export function AddSheet({
   const [remindOn, setRemindOn] = useState(Boolean(reminder?.remindEvery));
   const [remindN, setRemindN] = useState(reminder?.remindEvery?.n ?? 1);
   const [remindUnit, setRemindUnit] = useState<RemindUnit>(reminder?.remindEvery?.unit ?? 'days');
+  const [followUp, setFollowUp] = useState(Boolean(reminder?.followUp));
 
   const carriesDetail = Boolean(
     reminder && (reminder.date || reminder.time || reminder.notes || reminder.module
-      || reminder.remindEvery || reminder.repeat !== 'Once'),
+      || reminder.remindEvery || reminder.followUp || reminder.repeat !== 'Once'),
   );
   const [open, setOpen] = useState(carriesDetail);
   const [busy, setBusy] = useState(false);
@@ -131,6 +134,8 @@ They said: ${text}`,
       time: interval ? undefined : (time || undefined),
       everyDays: interval ? Math.max(1, Number(everyDays) || 1) : undefined,
       remindEvery: remindOn ? { n: Math.max(1, Math.round(remindN)), unit: remindUnit } : undefined,
+      followUp: followUp || undefined,
+      touches: reminder?.touches,
       lastDone: reminder?.lastDone,
       module: module || undefined,
       done: false,
@@ -145,6 +150,7 @@ They said: ${text}`,
       footer={
         <>
           {onDelete && <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={onDelete}>Delete</button>}
+          {onResolve && <button className="btn" onClick={onResolve}>Got a reply</button>}
           <button className="btn" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" disabled={!title.trim() || busy} onClick={submit}>Save</button>
         </>
@@ -247,6 +253,28 @@ They said: ${text}`,
                     </>
                   )}
                 </div>
+              </Field>
+
+              <Field
+                label="Waiting on someone"
+                hint={followUp
+                  ? 'Ticking it records the chase and brings it back. Only a reply closes it.'
+                  : 'For a to-do that is not finished until someone else answers.'}
+              >
+                <button
+                  type="button"
+                  className="chip"
+                  aria-pressed={followUp}
+                  onClick={() => setFollowUp((v) => !v)}
+                >
+                  {followUp ? 'Yes — chase until they reply' : 'No'}
+                </button>
+                {followUp && (reminder?.touches?.length ?? 0) > 0 && (
+                  <p className="t-xs t-muted" style={{ marginTop: 'var(--sp-2)' }}>
+                    Chased {reminder?.touches?.length} time{reminder?.touches?.length === 1 ? '' : 's'},
+                    last on {reminder?.touches?.[reminder.touches.length - 1]}.
+                  </p>
+                )}
               </Field>
 
               <Field label="Notes">

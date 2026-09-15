@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MODULES, type ModuleId, type Reminder } from '../lib/schema';
-import { dueList, toICS, type DueReminder } from '../lib/reminders';
+import { chased, dueList, toICS, type DueReminder } from '../lib/reminders';
 import { fmtDate, todayKey } from '../lib/date';
 import { downloadFile } from '../lib/storage';
 import { useApp } from '../state/context';
@@ -68,11 +68,31 @@ export function Reminders() {
       reminders: {
         items: s.reminders.items.map((x) => {
           if (x.id !== r.id) return x;
+          // Chasing someone is not finishing it. It goes back on the list with
+          // the chase recorded, and only a reply ends it.
+          if (x.followUp) return chased(x);
           return x.repeat === 'Once' ? { ...x, done: true } : { ...x, lastDone: todayKey() };
         }),
       },
     }));
-    toast(r.repeat === 'Once' ? 'Done' : 'Done — the clock resets', undefined, {
+    const n = (r.touches?.length ?? 0) + 1;
+    toast(
+      r.followUp ? `Chased — ${n} time${n === 1 ? '' : 's'} now`
+        : r.repeat === 'Once' ? 'Done' : 'Done — the clock resets',
+      undefined,
+      { label: 'Undo', run: () => update((s) => ({ ...s, reminders: { items: before } })) },
+    );
+  };
+
+  /** They answered. This is the only thing that closes a follow-up. */
+  const resolve = (r: Reminder) => {
+    const before = state.reminders.items;
+    update((s) => ({
+      ...s,
+      reminders: { items: s.reminders.items.map((x) => (x.id === r.id ? { ...x, done: true } : x)) },
+    }));
+    setEditing(null);
+    toast('Closed — they got back to you', undefined, {
       label: 'Undo',
       run: () => update((s) => ({ ...s, reminders: { items: before } })),
     });
@@ -153,6 +173,7 @@ export function Reminders() {
           defaultModule={only === 'all' ? undefined : only}
           onClose={() => setEditing(null)}
           onSave={save}
+          onResolve={editing !== 'new' && editing.followUp ? () => resolve(editing) : undefined}
           onDelete={editing === 'new' ? undefined : () => remove(editing)}
         />
       )}
@@ -206,6 +227,9 @@ export function TodoRow({
             : fmtDate(due.due);
 
   const meta = [
+    r.followUp && (r.touches?.length ?? 0) > 0
+      ? `chased ${r.touches?.length}\u00d7`
+      : null,
     when,
     r.repeat === 'Every N days' ? null : r.time || null,
     // A legacy repeat, still shown so a to-do that rolls forward never does it
@@ -220,8 +244,13 @@ export function TodoRow({
 
   return (
     <div className={`todo-row${due.overdue ? ' is-late' : ''}`}>
-      <button className="todo-tick" onClick={onTick} aria-label={`Mark ${r.title} done`}>
-        <span aria-hidden>{Icons.check()}</span>
+      <button
+        className={`todo-tick${r.followUp ? ' is-chase' : ''}`}
+        onClick={onTick}
+        aria-label={r.followUp ? `Chased ${r.title} again` : `Mark ${r.title} done`}
+        title={r.followUp ? 'Chased again — it comes back until they reply' : undefined}
+      >
+        <span aria-hidden>{r.followUp ? Icons.repeat() : Icons.check()}</span>
       </button>
       <button className="todo-open" onClick={onOpen}>
         <span className="todo-title">{r.title}</span>

@@ -1479,9 +1479,44 @@
 }
 .note-titleline:focus-visible { outline: none; border-bottom-color: var(--mod, var(--series-1)); }
 
-/* A module's own slice, at the foot of its screen. */
-.modtodo .todo { margin-top: var(--sp-3); }
-.modtodo .todo-row { background: var(--surface-2); }
+/* A module's to-do corner: the label, then the two things you came for. */
+.modtodo {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  margin-top: var(--sp-2);
+}
+.modtodo-label {
+  font-size: 11px; font-weight: 650;
+  letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+.modtodo-acts { display: flex; gap: var(--sp-2); }
+.modtodo-btn {
+  position: relative;
+  width: 40px; height: 40px; padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  display: grid; place-content: center;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease, transform 100ms ease;
+}
+.modtodo-btn svg { width: 20px; height: 20px; }
+.modtodo-btn:hover { border-color: var(--mod, var(--series-1)); color: var(--text-primary); }
+.modtodo-btn:active { transform: scale(0.94); }
+/* How many are waiting, on the button that shows them. */
+.modtodo-btn b {
+  position: absolute; top: -6px; right: -6px;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: var(--r-pill);
+  background: var(--mod, var(--series-1));
+  color: #0a0910;
+  font-size: 11px; font-weight: 700; line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Inside the popup the rows are the same ones the To Do module shows. */
+.modtodo-list .todo-row { background: var(--surface-2); }
 
 /* ---------- the plus ---------- */
 
@@ -1624,3 +1659,46 @@
 @media (hover: none) {
   .grip { display: none; }
 }
+
+
+/* ---------- a number you step ---------- */
+
+/* Minus, the number, plus. The number is the control as much as the buttons
+   are: forty done in one sitting is typed, not tapped forty times. */
+.counter { display: flex; align-items: stretch; gap: var(--sp-2); }
+.counter-step {
+  flex: none; width: 52px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  display: grid; place-content: center;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 100ms ease;
+}
+.counter-step svg { width: 22px; height: 22px; stroke-width: 2.1; }
+.counter-step:hover:not(:disabled) { border-color: var(--mod, var(--series-1)); background: var(--surface-1); }
+.counter-step:active:not(:disabled) { transform: scale(0.94); }
+.counter-step:disabled { opacity: 0.35; cursor: default; }
+
+.counter-value {
+  flex: 1 1 0; min-width: 0; width: auto;
+  text-align: center;
+  font-size: 34px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: var(--sp-2);
+  height: auto;
+}
+/* The spinner arrows are a third way to do what the buttons already do, and
+   they shrink the number to make room for themselves. */
+.counter-value::-webkit-inner-spin-button,
+.counter-value::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.counter-value { appearance: textfield; -moz-appearance: textfield; }
+
+.counter-split { margin-top: var(--sp-2); font-size: 12px; color: var(--text-muted); text-align: center; }
+
+
+/* A follow-up's circle carries the loop rather than a tick: pressing it is
+   another chase, not the end of one. */
+.todo-tick.is-chase svg { opacity: 0.6; }
+.todo-tick.is-chase:hover svg { opacity: 1; }

@@ -69,6 +69,17 @@ export interface Business {
   /** Contacts a week for this business. Zero means it is not an outreach
    *  business at all — a product line, say — and the counter is hidden. */
   weeklyTarget: number;
+  /**
+   * Outreach counted by hand, keyed by the Monday of the week it belongs to.
+   *
+   * Not every business wants a contact-by-contact log. When the names live
+   * somewhere else — a bot's own dashboard, a spreadsheet — what is wanted
+   * here is the number and the trend, so this is a tally you type or step up
+   * and down. It adds to whatever contacts are actually logged rather than
+   * replacing them, so a business can use either, or both, without one
+   * silently hiding the other.
+   */
+  countedOutreach?: Record<string, number>;
   /** The ways this business actually reaches people. A business that only
    *  does one — all of it over LinkedIn, say — should not be asked to pick
    *  from six every time it logs a contact, so a single entry here removes
@@ -567,6 +578,21 @@ export interface Reminder {
    *  deadline and once the morning after, which is what every to-do did
    *  before this was askable. */
   remindEvery?: RemindEvery;
+  /**
+   * A to-do that is not finished when you have done it.
+   *
+   * Chasing a client is the case: you send the email, and the to-do is not
+   * done — it is done *for now*, and it has to come back until they reply.
+   * Ticking one of these records the chase and pushes it forward instead of
+   * closing it, and only they can end it, which is what "Got a reply" is for.
+   *
+   * This is not the old repeat. A repeat is a thing that comes round forever
+   * on a calendar and belongs in Habits; this comes back because something
+   * outside your control has not happened yet, and stops the moment it does.
+   */
+  followUp?: boolean;
+  /** Every date this was chased, oldest first. Its length is how many times. */
+  touches?: DateKey[];
   /** For "Every N days", and for interval reminders. */
   everyDays?: number;
   /** Interval reminders count from here rather than from a fixed date. */

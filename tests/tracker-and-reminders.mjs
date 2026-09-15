@@ -312,6 +312,61 @@ console.log('\n8. Reminders is a module you can dump things into');
   await ctx.close();
 }
 
+console.log('\n11. A follow-up comes back until they answer');
+{
+  const { ctx, page } = await seeded();
+  await page.goto(BASE + '#/work', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(800);
+  const pop = page.locator('.pop button').first();
+  if (await pop.count()) await pop.click().catch(() => {});
+  await page.waitForTimeout(300);
+
+  // The module's to-do corner: a label, a plus, and a way to see the rest.
+  (await page.locator('.modtodo-label').innerText()).trim().toUpperCase() === 'TO DO'
+    ? ok('every module has a to-do corner') : bad('corner', 'missing');
+  (await page.locator('.modtodo-btn').count()) === 2
+    ? ok('with one button to add and one to show them') : bad('buttons', 'wrong number');
+
+  await page.getByLabel('Add a to-do here').click();
+  await page.waitForTimeout(400);
+  await page.locator('.askline-input').fill('Follow up with Halvorsen');
+  await page.getByRole('button', { name: /Add more detail/ }).click();
+  await page.waitForTimeout(300);
+  await page.locator('.modal-body').getByRole('button', { name: /^(No|Yes — chase)$/ }).click();
+  await page.waitForTimeout(250);
+  await page.getByRole('button', { name: 'Save' }).click();
+  await page.waitForTimeout(700);
+
+  const find = async () => (await read(page)).reminders.items.find((r) => r.title === 'Follow up with Halvorsen');
+  let r = await find();
+  r?.followUp === true ? ok('it can be marked as waiting on someone') : bad('followUp', JSON.stringify(r));
+
+  // The whole point: doing it does not finish it.
+  await page.getByLabel(/Show the .* to-do/).click();
+  await page.waitForTimeout(500);
+  await page.getByRole('button', { name: /Chased Follow up with Halvorsen again/ }).click();
+  await page.waitForTimeout(700);
+  r = await find();
+  r?.done === false ? ok('chasing it does not close it') : bad('closed', 'it was marked done');
+  (r?.touches ?? []).length === 1 ? ok('and the chase is counted') : bad('touches', JSON.stringify(r?.touches));
+  r?.date && r.date > todayISO() ? ok('and it comes back on its own') : bad('reschedule', String(r?.date));
+  (await page.getByRole('dialog').locator('.todo-row', { hasText: 'Follow up with Halvorsen' }).count()) > 0
+    ? ok('so it is still on the list') : bad('vanished', 'it left the list');
+
+  // Only a reply ends it.
+  await page.getByRole('dialog').locator('.todo-open', { hasText: 'Follow up with Halvorsen' }).click();
+  await page.waitForTimeout(500);
+  await page.getByRole('button', { name: 'Got a reply' }).click();
+  await page.waitForTimeout(700);
+  (await find())?.done === true ? ok('a reply is what closes it') : bad('resolve', 'still open');
+  await ctx.close();
+}
+
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 await browser.close();
 console.log(problems.length ? `\n${problems.length} PROBLEM(S):\n` + problems.join('\n') : '\nAll checks passed.');
 process.exit(problems.length ? 1 : 0);

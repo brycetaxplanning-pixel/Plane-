@@ -11,6 +11,7 @@ import { DictateInput } from '../components/ui/Dictation';
 import { Ideas } from './business/Ideas';
 import { Modal } from '../components/ui/Modal';
 import { ImportOutreach } from './business/ImportOutreach';
+import { OutreachCounter } from './business/OutreachCounter';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { BarChart } from '../components/charts/BarChart';
 import { Ring } from '../components/charts/Ring';
@@ -103,6 +104,7 @@ export function Planning() {
         label="Businesses and ideas"
         active={tab === 'ideas' ? 'ideas' : `biz-${active?.id ?? ''}`}
         onChange={(id) => {
+          if (id === 'add-business') { setEditingBiz('new'); return; }
           if (id === 'ideas') { setTab('ideas'); return; }
           setTab('planning');
           setActiveId(id.replace(/^biz-/, ''));
@@ -110,6 +112,10 @@ export function Planning() {
         tabs={[
           ...businesses.map((b) => ({ id: `biz-${b.id}`, label: b.name })),
           { id: 'ideas', label: `Ideas${state.planning.ideas.length ? ` (${state.planning.ideas.length})` : ''}` },
+          // Adding one belongs where the businesses are, not at the foot of a
+          // card below them — a second business is a thing you go looking for
+          // on the row that shows you the first.
+          { id: 'add-business', label: '+ Business' },
         ]}
       />
 
@@ -143,12 +149,17 @@ export function Planning() {
                   : `${stats.count} logged this week`
               }
             />
-            <button
-              className="btn btn-accent btn-lg btn-block"
-              style={{ ['--mod' as string]: ACCENT }}
-              onClick={() => setLogging(true)}
-            >
-              + Log outreach
+            {/* The number itself, changeable. Logging people one at a time is
+                still there below for a business that wants the names; this is
+                for the one whose names live somewhere else. */}
+            {active && <OutreachCounter business={active} logged={stats.logged} />}
+            {stats.logged > 0 && stats.counted > 0 && (
+              <p className="counter-split">
+                {stats.counted} counted by hand · {stats.logged} from logged contacts
+              </p>
+            )}
+            <button className="link-btn" style={{ alignSelf: 'center' }} onClick={() => setLogging(true)}>
+              Log a contact with their details
             </button>
           </div>
         </div>

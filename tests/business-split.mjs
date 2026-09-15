@@ -126,6 +126,63 @@ console.log('\n6. An older save is migrated into the new shape');
   await ctx.close();
 }
 
+console.log('\n8. The week is a number you can step, and each business keeps its own');
+{
+  const ctx = await browser.newContext({ viewport: { width: 430, height: 950 } });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => problems.push('pageerror: ' + e.message));
+  await page.goto(BASE + '#/settings', { waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: 'Load sample data' }).click();
+  await page.getByRole('button', { name: 'Load it' }).click();
+  await page.waitForTimeout(800);
+  await page.goto(BASE + '#/planning', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+  const pop = page.locator('.pop button').first();
+  if (await pop.count()) await pop.click().catch(() => {});
+  await page.waitForTimeout(300);
+
+  const val = page.getByLabel('Outreach this week');
+  const start = Number(await val.inputValue());
+
+  // The number shown is the week's number, not the hand-counted part of it —
+  // a counter reading 0 beside a ring reading 24 is two answers to one question.
+  const ringText = await page.locator('.card', { hasText: 'outreach' }).first().innerText();
+  new RegExp(`\\b${start}\\b`).test(ringText)
+    ? ok(`the counter and the ring agree (${start})`) : bad('agree', ringText.slice(0, 120));
+
+  await page.getByLabel('One more').click();
+  await page.waitForTimeout(350);
+  await page.getByLabel('One more').click();
+  await page.waitForTimeout(350);
+  Number(await val.inputValue()) === start + 2 ? ok('plus steps it up') : bad('plus', await val.inputValue());
+  await page.getByLabel('One fewer').click();
+  await page.waitForTimeout(350);
+  Number(await val.inputValue()) === start + 1 ? ok('minus steps it down') : bad('minus', await val.inputValue());
+
+  await val.fill(String(start + 96));
+  await val.blur();
+  await page.waitForTimeout(500);
+  Number(await val.inputValue()) === start + 96 ? ok('and a whole week can be typed in at once') : bad('type', await val.inputValue());
+
+  // Each business counts its own week.
+  const tabs = await page.locator('[role=tab]').allInnerTexts();
+  tabs.some((t) => /\+ Business/.test(t)) ? ok('adding a business sits with the businesses') : bad('add tab', tabs.join(' | '));
+  const other = page.getByRole('tab', { name: 'Flaxseed gel' });
+  if (await other.count()) {
+    await other.click();
+    await page.waitForTimeout(700);
+    const theirs = page.getByLabel('Outreach this week');
+    if (await theirs.count()) {
+      Number(await theirs.inputValue()) !== start + 96
+        ? ok('the other business has a count of its own') : bad('bleed', 'the count carried across');
+    } else ok('the other business runs no outreach, so it has no counter');
+  }
+
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(900);
+  await ctx.close();
+}
+
 await browser.close();
 console.log(problems.length ? `\n${problems.length} PROBLEM(S):\n` + problems.join('\n') : '\nAll checks passed.');
 process.exit(problems.length ? 1 : 0);

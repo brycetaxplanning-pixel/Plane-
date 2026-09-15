@@ -20,6 +20,25 @@ export interface DueReminder {
   undated: boolean;
 }
 
+/**
+ * Chasing something again: it is not done, it is done for now.
+ *
+ * The chase is recorded and the date pushed out by however often you asked to
+ * be nudged — a week if you never said — so it comes back on its own. What it
+ * does not do is close, because whether it is finished is not yours to decide;
+ * that is what resolving it is for.
+ */
+export function chased(r: Reminder, today: DateKey = todayKey()): Reminder {
+  const gap = r.remindEvery
+    ? Math.max(1, Math.round(
+      r.remindEvery.unit === 'days' ? r.remindEvery.n
+        : r.remindEvery.unit === 'hours' ? r.remindEvery.n / 24
+          : r.remindEvery.n / 1440,
+    ))
+    : 7;
+  return { ...r, touches: [...(r.touches ?? []), today], date: addDays(today, gap) };
+}
+
 /** When a reminder next wants your attention. */
 export function nextDue(r: Reminder): DateKey | null {
   if (r.repeat === 'Every N days') {

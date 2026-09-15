@@ -14,7 +14,9 @@ const readState = () => page.evaluate(() => JSON.parse(localStorage.getItem('pla
 
 console.log('\n1. Outreach logging + XP');
 await page.goto(BASE + '#/planning', { waitUntil: 'networkidle' });
-await page.getByRole('button', { name: '+ Log outreach' }).click();
+// Logging a contact with their details is the secondary path now; the
+// primary one is the counter, which records a number and no name.
+await page.getByRole('button', { name: /Log a contact with their details/ }).click();
 await page.getByPlaceholder('Name or business').fill('Test Prospect');
 await page.getByRole('button', { name: 'LinkedIn', exact: true }).click();
 await page.getByRole('button', { name: 'Meeting booked', exact: true }).click();

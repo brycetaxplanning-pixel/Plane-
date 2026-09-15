@@ -58,21 +58,33 @@ export function planningStats(s: AppState, businessId?: string) {
     ? s.planning.deals.filter((d) => d.businessId === businessId)
     : s.planning.deals;
 
+  // Counted by hand, for a business whose names live somewhere else. It adds
+  // to the logged contacts rather than replacing them, so using one does not
+  // quietly hide the other.
+  const counted = business?.countedOutreach ?? {};
+  const countedIn = (ws: string) => counted[ws] ?? 0;
+
   const thisWeek = mine.filter((o) => inWeek(o.date));
+  const countedThisWeek = countedIn(weekStart());
   const byDay = weekDays().map((d) => ({
     key: d,
     value: mine.filter((o) => o.date === d).length,
   }));
   const history = lastWeeks(8).map((ws) => ({
     key: ws,
-    value: mine.filter((o) => weekStart(o.date) === ws).length,
+    value: mine.filter((o) => weekStart(o.date) === ws).length + countedIn(ws),
   }));
   const meetings = thisWeek.filter((o) => o.outcome === 'Meeting booked').length;
   const daysLeft = Math.max(0, 7 - byDay.filter((d) => d.key <= todayKey()).length + 1);
-  const remaining = Math.max(0, target - thisWeek.length);
+  const count = thisWeek.length + countedThisWeek;
+  const remaining = Math.max(0, target - count);
   return {
     target,
-    count: thisWeek.length,
+    count,
+    /** The two halves of the week's number, for a screen that wants to show
+     *  its working when a business is using both. */
+    logged: thisWeek.length,
+    counted: countedThisWeek,
     remaining,
     meetings,
     byDay,
