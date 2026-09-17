@@ -96,7 +96,16 @@ console.log('\n5. Calendar export produces a valid .ics');
   const file = await dl;
   const text = await (await import('node:fs/promises')).readFile(await file.path(), 'utf8');
   /^BEGIN:VCALENDAR/.test(text) && /END:VCALENDAR\s*$/.test(text) ? ok('the file is a well-formed calendar') : bad('ics', text.slice(0, 120));
-  (text.match(/BEGIN:VEVENT/g) ?? []).length === 4 ? ok('one event per open reminder') : bad('events', `${(text.match(/BEGIN:VEVENT/g) ?? []).length}`);
+  // Counted off what is on the list rather than hardcoded: this read 4, and a
+  // to-do added to the sample log broke it while protecting nothing. The
+  // export is the dated ones, which is what the button says and what the page
+  // groups everything but Anytime into.
+  const events = (text.match(/BEGIN:VEVENT/g) ?? []).length;
+  const dated = await page.locator('.todo-group').evaluateAll((hs) => hs
+    .filter((h) => !/Anytime/.test(h.textContent ?? ''))
+    .reduce((n, h) => n + Number((h.querySelector('span')?.textContent ?? '0')), 0));
+  events > 0 && events === dated
+    ? ok(`one event per dated to-do (${events})`) : bad('events', `${events} events for ${dated} dated to-dos`);
   /RRULE:FREQ=DAILY;INTERVAL=21/.test(text) ? ok('the 21-day interval becomes a repeat rule') : bad('rrule', 'interval rule missing');
   /RRULE:FREQ=MONTHLY/.test(text) ? ok('a monthly reminder becomes a monthly rule') : bad('rrule', 'monthly rule missing');
   /DTSTART:\d{8}T183000/.test(text) ? ok('a timed reminder carries its time') : bad('dtstart', 'time missing');
