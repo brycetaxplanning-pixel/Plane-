@@ -1740,3 +1740,15 @@
   border-top: 1px solid var(--border);
   padding-top: var(--sp-3);
 }
+
+
+/* The note on a to-do made before they became one-time. A callout, not a bare
+   div: it was written with a class that had no CSS behind it at all. */
+.legacyrepeat {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--status-warning);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}

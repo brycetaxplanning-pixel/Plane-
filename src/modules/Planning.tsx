@@ -142,8 +142,13 @@ export function Planning() {
 
   return (
     <div className="stack">
-      <button className="link-btn backline" onClick={() => setPicked(false)}>
-        <span aria-hidden>{Icons.back()}</span> All businesses
+      {/* The same small back link the header uses to leave a module. It was
+          written as .link-btn.backline, and .backline had no CSS at all — an
+          inline SVG with nothing constraining it expands to fill its box, so
+          the chevron grew to the height of the screen. */}
+      <button className="backlink" style={{ alignSelf: 'flex-start' }} onClick={() => setPicked(false)}>
+        <span aria-hidden style={{ width: 15, height: 15, display: 'inline-flex' }}>{Icons.back()}</span>
+        All businesses
       </button>
 
       {tab === 'ideas' && <Ideas />}
