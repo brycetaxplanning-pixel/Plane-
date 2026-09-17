@@ -136,10 +136,22 @@ function Shell() {
         {route === 'launcher' && <Launcher />}
         <SubLevelProvider>
         {module && <ModuleHero id={module.id} />}
-        {/* One button, under the card rather than above it, and it steps out
-            one level: out of the business into the businesses, out of the
-            module into the modules. */}
-        {module && <BackButton />}
+        {/* The strip under the card: the way out on the left, and on the right
+            the two things you came to a module to do with its to-dos — put one
+            down, or see what is outstanding. The corner used to be at the foot
+            of the page, which is a scroll away from anywhere and was also
+            where the module's own work ended.
+
+            Back steps out one level: out of the business into the businesses,
+            out of the module into the modules. */}
+        {module && (
+          <div className="modbar">
+            <BackButton />
+            {/* Every module carries its own slice of the one to-do list. The
+                To Do module is excluded: it is already the whole list. */}
+            {module.id !== 'reminders' && <ModuleTodos id={module.id} />}
+          </div>
+        )}
         {/* A module's chunk arrives in a few hundred milliseconds on a bad
             connection and instantly once cached, so the fallback is a quiet
             placeholder rather than a spinner that flashes. */}
@@ -160,11 +172,6 @@ function Shell() {
         {route === 'health' && <Health />}
         {route === 'dating' && <Dating />}
         {route === 'settings' && <Settings />}
-        {/* Every module carries its own slice of the one to-do list, at the
-            foot where it reads as "and here is what is still open" rather
-            than competing with the module's own work. The To Do module is
-            excluded: it is already the whole list. */}
-        {module && module.id !== 'reminders' && <ModuleTodos id={module.id} />}
         </Suspense>
         </SubLevelProvider>
       </main>

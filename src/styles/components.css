@@ -1181,13 +1181,19 @@
   .hero-cap { font-size: 9px; }
 }
 
-/* The one back control, in the slot under the card. Nothing about it is
-   pinned: it scrolls with the page like everything else, and it sits next to
-   the screen it leaves rather than above the card that named it. */
-.modback {
+/* The strip under the card: out on the left, the to-do corner on the right,
+   both on one line so it costs a line of screen and not a card. */
+.modbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 34px;
   margin-bottom: var(--sp-4);
-  text-decoration: none;
 }
+
+/* The one back control. Nothing about it is pinned: it scrolls with the page
+   like everything else, and it sits next to the screen it leaves rather than
+   above the card that named it. */
+.modback { text-decoration: none; }
 .modback:hover { text-decoration: none; }
 
 /* ---------- panels, cut from the same stock ---------- */
@@ -1526,9 +1532,10 @@
 .note-titleline:focus-visible { outline: none; border-bottom-color: var(--mod, var(--series-1)); }
 
 /* A module's to-do corner: the label, then the two things you came for. */
+/* On one line with the back control, so the label sits beside the buttons
+   rather than over them. */
 .modtodo {
-  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
-  margin-top: var(--sp-2);
+  display: flex; align-items: center; gap: var(--sp-2);
 }
 .modtodo-label {
   font-size: 11px; font-weight: 650;
@@ -1538,7 +1545,7 @@
 .modtodo-acts { display: flex; gap: var(--sp-2); }
 .modtodo-btn {
   position: relative;
-  width: 40px; height: 40px; padding: 0;
+  width: 34px; height: 34px; padding: 0;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
   background: var(--surface-1);
@@ -1547,7 +1554,7 @@
   cursor: pointer;
   transition: border-color 120ms ease, color 120ms ease, transform 100ms ease;
 }
-.modtodo-btn svg { width: 20px; height: 20px; }
+.modtodo-btn svg { width: 18px; height: 18px; }
 .modtodo-btn:hover { border-color: var(--mod, var(--series-1)); color: var(--text-primary); }
 .modtodo-btn:active { transform: scale(0.94); }
 /* How many are waiting, on the button that shows them. */

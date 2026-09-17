@@ -336,6 +336,22 @@ console.log('\n11. A follow-up comes back until they answer');
   (await page.locator('.modtodo-btn').count()) === 2
     ? ok('with one button to add and one to show them') : bad('buttons', 'wrong number');
 
+  // On one line with the back control, directly under the card. It used to be
+  // at the foot of the page, a scroll away from anywhere.
+  const strip = await page.evaluate(() => {
+    const box = (sel) => document.querySelector(sel)?.getBoundingClientRect();
+    const hero = box('.hero'); const back = box('.modback'); const todo = box('.modtodo');
+    if (!hero || !back || !todo) return null;
+    return {
+      sameRow: Math.abs((back.top + back.height / 2) - (todo.top + todo.height / 2)) < 4,
+      backLeft: back.right <= todo.left,
+      underHero: todo.top - hero.bottom < 24,
+    };
+  });
+  strip?.sameRow ? ok('back and the to-do corner share one line') : bad('row', JSON.stringify(strip));
+  strip?.backLeft ? ok('back on the left, to-do on the right') : bad('order', JSON.stringify(strip));
+  strip?.underHero ? ok('and the line sits directly under the card') : bad('placement', JSON.stringify(strip));
+
   await page.getByLabel('Add a to-do here').click();
   await page.waitForTimeout(400);
   await page.locator('.askline-input').fill('Follow up with Halvorsen');
