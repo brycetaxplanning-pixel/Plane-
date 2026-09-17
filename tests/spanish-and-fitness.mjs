@@ -279,6 +279,52 @@ console.log('\n8. One plan line per activity, and a way to take one off');
   await ctx.close();
 }
 
+console.log('\n9. Ticking a run of sessions leaves one banner, and untick gives the XP back');
+{
+  const { ctx, page } = await fresh();
+  await page.goto(BASE + '#/fitness', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(600);
+  await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('plane.state.v1') || '{}');
+    s.fitness = {
+      ...(s.fitness || {}),
+      targets: { mma: 0, strength: 0, total: 12 },
+      plan: [{ id: 'p1', activity: 'Long run', perWeek: 4, locked: true, createdAt: '2026-09-01' }],
+      activities: [], race: { name: 'x', distanceKm: 5 }, chat: [], measurements: [], physique: [],
+    };
+    s.xp = [];
+    localStorage.setItem('plane.state.v1', JSON.stringify(s));
+  });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(800);
+  const pop = page.locator('.pop button').first();
+  if (await pop.count()) await pop.click().catch(() => {});
+  await page.waitForTimeout(300);
+
+  const xp = () => page.evaluate(() => JSON.parse(localStorage.getItem('plane.state.v1')).xp.reduce((n, e) => n + e.amount, 0));
+  const boxes = page.locator('.tickrow').first().locator('.tick');
+
+  for (let i = 0; i < 4; i += 1) { await boxes.nth(i).click(); await page.waitForTimeout(400); }
+  // Four taps used to raise eight banners — a reward and a second one saying
+  // the same thing — and they stacked until they covered the screen.
+  const showing = await page.locator('.toast').count();
+  showing === 1 ? ok('four sessions in a row leave one banner') : bad('stack', `${showing} banners`);
+  const earned = await xp();
+  earned === 60 ? ok('and four rewards were paid') : bad('xp', String(earned));
+
+  for (let i = 3; i >= 0; i -= 1) { await boxes.nth(i).click(); await page.waitForTimeout(400); }
+  const back = await xp();
+  // Undoing has to undo what it paid, or the level records how often a box was
+  // tapped rather than anything done.
+  back === 0 ? ok('unticking them all hands the XP back') : bad('farm', `${back} XP left after unticking everything`);
+  const left = await page.evaluate(() => JSON.parse(localStorage.getItem('plane.state.v1')).fitness.activities.length);
+  left === 0 ? ok('and the sessions are gone with it') : bad('sessions', String(left));
+
+  await page.waitForTimeout(3600);
+  (await page.locator('.toast').count()) === 0 ? ok('unticking raises no banner of its own') : bad('untick banner', 'one appeared');
+  await ctx.close();
+}
+
 await browser.close();
 console.log(problems.length ? `\n${problems.length} PROBLEM(S):\n` + problems.join('\n') : '\nAll checks passed.');
 process.exit(problems.length ? 1 : 0);

@@ -77,9 +77,6 @@ export function Plan() {
 
   /** One tap = one session of this activity, logged today. */
   const tick = (activity: string) => {
-    const done = state.fitness.activities.filter(
-      (a) => weekStart(a.date) === week && a.type === activity,
-    ).length;
     const target = state.fitness.targets.total;
     const totalNow = state.fitness.activities.filter((a) => weekStart(a.date) === week).length;
     const completesWeek = target > 0 && totalNow + 1 === target;
@@ -101,21 +98,40 @@ export function Plan() {
         },
       }),
     );
-    toast(`${activity} ${done + 1} logged`);
+    // No second banner. reward() already says what was logged and what it was
+    // worth; saying it again in different words was two notifications for one
+    // tap, and the box filling in front of you is the real confirmation.
   };
 
-  /** Tapping a filled box takes the most recent one back. */
+  /**
+   * Tapping a filled box takes the most recent one back — including the XP.
+   *
+   * It used to drop the session and leave the reward behind, so ticking a box
+   * and unticking it paid out every time round. Undoing something has to undo
+   * what it paid, or the level is a record of how often a box was tapped
+   * rather than of anything done.
+   */
   const untick = (activity: string) => {
     const mine = state.fitness.activities
       .filter((a) => weekStart(a.date) === week && a.type === activity)
       .sort((a, b) => a.date.localeCompare(b.date));
     const last = mine[mine.length - 1];
     if (!last) return;
-    update((s) => ({
-      ...s,
-      fitness: { ...s.fitness, activities: s.fitness.activities.filter((a) => a.id !== last.id) },
-    }));
-    toast(`${activity} unticked`);
+    update((s) => {
+      // The newest fitness award that this activity's tick could have written:
+      // its own line, or the week-complete bonus if that tick finished the week.
+      const wanted = `Logged ${activity}`;
+      let at = -1;
+      for (let i = s.xp.length - 1; i >= 0; i -= 1) {
+        const e = s.xp[i];
+        if (e.module === 'fitness' && (e.reason === wanted || e.reason.startsWith('Week complete'))) { at = i; break; }
+      }
+      return {
+        ...s,
+        xp: at === -1 ? s.xp : s.xp.filter((_, i) => i !== at),
+        fitness: { ...s.fitness, activities: s.fitness.activities.filter((a) => a.id !== last.id) },
+      };
+    });
   };
 
   const setTotal = (total: number) =>

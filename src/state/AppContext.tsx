@@ -69,8 +69,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const toast = useCallback((text: string, xp?: number, action?: { label: string; run: () => void }) => {
     const id = uid('toast');
-    setToasts((list) => [...list, { id, text, xp, action }]);
-    // A toast you can act on has to outlast a glance at the screen.
+    // One at a time, newest wins. They used to pile up, and ticking off a few
+    // sessions in a row buried the screen under nine banners — each one
+    // reporting something you had just watched happen anyway.
+    setToasts([{ id, text, xp, action }]);
+    // A toast you can act on has to outlast a glance at the screen. Filtering
+    // by id rather than clearing means a stale timer cannot take down the
+    // toast that replaced it.
     setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), action ? 6000 : 3200);
   }, []);
 
