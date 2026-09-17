@@ -96,9 +96,13 @@ await page.waitForTimeout(600);
 JSON.stringify(await readState()) === before ? ok('import restores byte-identical state') : bad('import', 'restored state differs');
 
 console.log('\n8. Reload persistence');
-await page.goto(BASE + '#/planning', { waitUntil: 'networkidle' });
-await page.waitForTimeout(400);
-(await page.getByText('Test Prospect').count()) > 0 ? ok('data survives a full reload') : bad('persistence', 'entry gone after reload');
+// This used to look for a contact logged by name. Outreach is a count now, so
+// what proves a full reload kept the data is the finance side of it — which is
+// what the rest of this suite has been building up anyway.
+await page.goto(BASE + '#/finance', { waitUntil: 'networkidle' });
+await page.waitForTimeout(500);
+const kept = (await readState()).finance?.transactions ?? [];
+kept.length > 0 ? ok(`data survives a full reload (${kept.length} transactions)`) : bad('persistence', 'nothing survived');
 
 console.log('\n9. Migration of an old payload');
 await page.evaluate(() => localStorage.setItem('plane.state.v1', JSON.stringify({ version: 0, planning: { outreach: [] } })));

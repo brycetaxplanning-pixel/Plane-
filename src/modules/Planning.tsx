@@ -28,7 +28,10 @@ export function Planning() {
   const [activeId, setActiveId] = useState(() => businesses[0]?.id ?? '');
   const [editingBiz, setEditingBiz] = useState<Business | 'new' | null>(null);
   const [dealOpen, setDealOpen] = useState<Deal | 'new' | null>(null);
-  const [picked, setPicked] = useState(false);
+  // A link that names a tab has already picked for you — notifications and
+  // the coach both deep-link straight into the ideas list, and landing on the
+  // picker instead would drop them at a grid with no idea why they were sent.
+  const [picked, setPicked] = useState(() => tab === 'ideas');
   const [chartOpen, setChartOpen] = useState(false);
 
   const active = businesses.find((b) => b.id === activeId) ?? businesses[0];
