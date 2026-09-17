@@ -93,7 +93,6 @@ function Shell() {
     : route === 'notifications' ? 'Notifications'
     : route === 'tracker' ? 'Tracker'
     : module?.name ?? 'Plane';
-  const sub = module ? `Module ${module.num} · ${module.blurb}` : undefined;
 
   return (
     <div className="app-shell">
@@ -116,17 +115,17 @@ function Shell() {
 
       <Nav route={route} />
 
-      {route !== 'launcher' && (
-        <Header title={title} sub={sub} showBack hero={Boolean(module)} route={route} />
-      )}
+      {/* A module states its own name, number and progress in the hero below,
+          in its own material. A bar above that repeating the date and the level
+          was half a screen spent telling you where you already knew you were. */}
+      {route !== 'launcher' && !module && <Header title={title} route={route} />}
 
       <main
         id="main"
         tabIndex={-1}
-        className={`container view ${direction}`}
+        className={`container view ${direction}${module || route === 'launcher' ? ' view-bare' : ''}`}
         key={route}
         style={{
-          paddingTop: route === 'launcher' ? 'var(--sp-4)' : 0,
           paddingBottom: 'var(--sp-7)',
           // Set once, here, so every panel, chart and control inside a module
           // inherits its hue instead of each screen having to pass its own.

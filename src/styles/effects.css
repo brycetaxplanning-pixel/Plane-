@@ -386,13 +386,13 @@
    settling on top of it. An insight is worth reading; it is not worth being
    the reason you cannot write something down until you have dismissed it.
    Both are fixed children of <body>, so :has can see one from the other. */
-body:has(.fab) .pop { bottom: calc(var(--nav-h) + 14px + 72px + env(safe-area-inset-bottom, 0px)); }
+body:has(.fab) .pop { bottom: calc(var(--nav-space) + 14px + 72px); }
 @media (min-width: 900px) { body:has(.fab) .pop { bottom: calc(20px + 72px); } }
 
 .pop {
   position: fixed; z-index: 55;
   left: var(--sp-4); right: var(--sp-4);
-  bottom: calc(var(--nav-h) + 14px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--nav-space) + 14px);
   padding: var(--sp-4);
   border-radius: var(--r-lg);
   background: var(--surface-1);

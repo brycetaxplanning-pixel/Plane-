@@ -9,16 +9,19 @@ import { isEnlightened } from '../../lib/awards';
 
 interface HeaderProps {
   title: string;
-  sub?: string;
-  /** Modules get a way back to the launcher; the launcher itself does not. */
-  showBack?: boolean;
-  /** A module screen states its own name in the hero below, in the module's
-   *  own material. Repeating it up here would be the same words twice. */
-  hero?: boolean;
   route: Route;
 }
 
-export function Header({ title, sub, showBack, hero, route }: HeaderProps) {
+/**
+ * The title block on the screens that are not modules.
+ *
+ * It is not a bar. It scrolls with the page, carries no ground of its own and
+ * draws no rule under itself, so the page behind it stays visible and what sits
+ * on the page reads as blocks laid on a background rather than content pinned
+ * under a fixture. A module never renders this at all — its hero says the same
+ * things in the module's own material.
+ */
+export function Header({ title, route }: HeaderProps) {
   const { state } = useApp();
   const xp = totalXp(state.xp);
   const { level, into, span } = levelFor(xp);
@@ -27,23 +30,15 @@ export function Header({ title, sub, showBack, hero, route }: HeaderProps) {
   return (
     <header className="app-header">
       <div className="container">
-        {showBack && (
-          <a className="backlink" href={routeOf('launcher')}>
-            <span style={{ width: 15, height: 15, display: 'inline-flex' }}>{Icons.back()}</span>
-            All modules
-          </a>
-        )}
+        <a className="backlink" href={routeOf('launcher')}>
+          <span aria-hidden style={{ width: 15, height: 15, display: 'inline-flex' }}>{Icons.back()}</span>
+          All modules
+        </a>
 
-        <div className="spread" style={{ alignItems: 'flex-start', marginTop: showBack ? 4 : 0 }}>
+        <div className="spread" style={{ alignItems: 'flex-start', marginTop: 4 }}>
           <div className="grow" style={{ minWidth: 0 }}>
-            {hero ? (
-              <p className="t-xs t-muted t-num">{fmtDateLong(todayKey())}</p>
-            ) : (
-              <>
-                <h1>{title}</h1>
-                <p className="t-sm t-sec">{sub ?? fmtDateLong(todayKey())}</p>
-              </>
-            )}
+            <h1>{title}</h1>
+            <p className="t-sm t-sec">{fmtDateLong(todayKey())}</p>
           </div>
 
           <div className="row-2" style={{ flex: 'none' }}>

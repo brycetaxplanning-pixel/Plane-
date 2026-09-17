@@ -102,15 +102,33 @@ console.log('\n5. Nothing sits under the notch');
 {
   const ctx = await browser.newContext({ viewport: { width: 393, height: 852 } });
   const page = await ctx.newPage();
+  // Whatever starts the page has to pay the inset. A module has no bar above
+  // it any more, so the check follows the job rather than the element: read the
+  // stylesheet for the rule that actually declares it.
+  const paysTop = (sel) => page.evaluate((s) => [...document.styleSheets]
+    .flatMap((sheet) => { try { return [...sheet.cssRules]; } catch { return []; } })
+    .some((r) => r.selectorText === s && /padding[^;]*safe-area-inset-top/.test(r.cssText)), sel);
+
   await page.goto(BASE + '#/habits', { waitUntil: 'networkidle' });
   await page.waitForTimeout(400);
-  const usesTop = await page.evaluate(() => {
-    const h = document.querySelector('.app-header');
-    return h ? getComputedStyle(h).paddingTop : '';
+  (await page.locator('.app-header').count()) === 0
+    ? ok('a module carries no bar above its own header') : bad('header', 'the app bar is still on a module screen');
+  const top = await page.evaluate(() => {
+    const m = document.getElementById('main');
+    return m ? getComputedStyle(m).paddingTop : '';
   });
-  usesTop !== '' ? ok(`the header pays the top inset (${usesTop} with none to pay)`) : bad('header', 'no padding');
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  await paysTop('.view-bare')
+    ? ok(`the module screen pays the top inset itself (${top} with none to pay)`) : bad('notch', 'nothing pays the inset');
+
+  let overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   overflow <= 0 ? ok('and nothing scrolls sideways at phone width') : bad('overflow', `${overflow}px wider than the screen`);
+
+  await page.goto(BASE + '#/home', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(400);
+  await paysTop('.app-header')
+    ? ok('and the screens that do keep a title block pay it there') : bad('notch', 'the header stopped paying the inset');
+  overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  overflow <= 0 ? ok('with nothing sideways there either') : bad('overflow', `${overflow}px wider than the screen`);
   await ctx.close();
 }
 

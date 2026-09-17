@@ -151,16 +151,25 @@
 .status-neutral  { color: var(--text-secondary);  background: var(--surface-2); border-color: var(--border); }
 
 /* ---------- nav ---------- */
+/* A block laid on the page, not a fixture bolted to the bottom of it. It was
+   a full-width slab with a rule along the top, which is what made the screen
+   read as content trapped between two fixtures; floating it off all three
+   edges lets the page run under it and puts it in the same family as
+   everything else on screen — a rounded surface with a hairline. */
 .nav {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  position: fixed; z-index: 40;
+  left: max(var(--sp-3), env(safe-area-inset-left, 0px));
+  right: max(var(--sp-3), env(safe-area-inset-right, 0px));
+  bottom: calc(var(--nav-gap) + env(safe-area-inset-bottom, 0px));
+  width: auto; max-width: 440px; margin: 0 auto;
   display: flex; align-items: stretch;
-  height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
-  background: color-mix(in srgb, var(--surface-1) 92%, transparent);
-  backdrop-filter: blur(12px);
-  border-top: 1px solid var(--border);
+  height: var(--nav-h);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-1) 76%, transparent);
+  backdrop-filter: blur(18px) saturate(1.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.42);
+  overflow: hidden;
 }
 .nav-item {
   flex: 1 1 0; min-width: 0;
@@ -181,12 +190,18 @@
 .nav-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 @media (min-width: 900px) {
+  /* On a wide screen it is a rail down the side, so every floating rule
+     above is undone rather than half-applied. */
   .nav {
-    top: 0; bottom: 0; right: auto; width: 232px; height: 100%;
+    top: 0; bottom: 0; left: 0; right: auto; width: 232px; max-width: none;
+    height: 100%; margin: 0;
     flex-direction: column; align-items: stretch;
     padding: var(--sp-4) var(--sp-3);
     gap: 2px;
-    border-top: none; border-right: 1px solid var(--border);
+    border: none; border-right: 1px solid var(--border);
+    border-radius: 0;
+    background: color-mix(in srgb, var(--surface-1) 92%, transparent);
+    box-shadow: none;
   }
   .nav-item {
     flex: none; flex-direction: row; justify-content: flex-start; gap: var(--sp-3);
@@ -221,14 +236,14 @@
 }
 
 /* ---------- app header ---------- */
+/* A title block, not a bar. No ground, no blur, no rule under it and nothing
+   pinned to the top of the viewport — it scrolls away like everything else and
+   the page shows through where it is not. Modules do not render it at all.
+
+   The viewport is `viewport-fit=cover`, so on a notched phone the top inset is
+   still the app's to pay, or the title sits under the status bar. */
 .app-header {
-  position: sticky; top: 0; z-index: 20;
-  background: color-mix(in srgb, var(--plane) 88%, transparent);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border);
-  /* The viewport is `viewport-fit=cover`, so on a notched phone the top inset
-     is the app's to pay — otherwise the title sits under the status bar. */
-  padding: calc(var(--sp-3) + env(safe-area-inset-top, 0px)) 0 var(--sp-3);
+  padding: calc(var(--sp-4) + env(safe-area-inset-top, 0px)) 0 0;
   margin-bottom: var(--sp-4);
 }
 
@@ -325,7 +340,7 @@
 .toast-wrap {
   position: fixed; z-index: 80;
   left: 50%; transform: translateX(-50%);
-  bottom: calc(var(--nav-h) + 14px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--nav-space) + 14px);
   display: flex; flex-direction: column; gap: var(--sp-2);
   width: min(420px, calc(100vw - 32px));
   /* Click-through, so a toast never blocks what is behind it. Anything in a
@@ -1020,16 +1035,25 @@
    arrives as the rule under the hero instead.
 ------------------------------------------------------------------ */
 
+/* The back link and the card together are the whole of a module's header. */
+.modhead {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  margin-bottom: var(--sp-4);
+}
+
 .hero {
   --mod-lift: color-mix(in srgb, var(--mod, var(--series-1)) 72%, #fff);
 
   position: relative;
+  width: 100%;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--sp-3);
-  margin-bottom: var(--sp-4);
-  padding: var(--sp-4) var(--sp-4) calc(var(--sp-4) + 4px);
+  /* One line tall. It used to run to a third of a phone screen — a 50px mark,
+     a name, a blurb and then the week's figure dropped onto a row of its own —
+     which is a lot of screen spent naming the card you just tapped. */
+  padding: 9px var(--sp-4) 11px;
   border-radius: var(--tile-radius, var(--r-lg));
   border: 1px solid color-mix(in srgb, var(--mod-lift) 24%, var(--border));
   background:
@@ -1063,8 +1087,9 @@
 .hero > :not(.hero-foil) { position: relative; z-index: 1; }
 
 .hero-mark {
+  position: relative;
   display: grid; place-items: center;
-  width: 50px; height: 50px;
+  width: 36px; height: 36px;
   flex: none;
   border-radius: var(--r-md);
   background: color-mix(in srgb, var(--mod-lift) 16%, transparent);
@@ -1081,11 +1106,14 @@
   color: var(--card-ink-dim);
 }
 .hero-name {
-  margin: 3px 0 0;
-  font-size: 19px; font-weight: 760;
+  margin: 2px 0 0;
+  font-size: 16px; font-weight: 760;
   letter-spacing: 0.05em; text-transform: uppercase;
   line-height: 1.15;
   color: var(--card-ink);
+  /* The figure on the right is the point of the line; a long module name
+     gives way to it rather than wrapping and doubling the height. */
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .hero-blurb {
   margin: 4px 0 0;
@@ -1093,16 +1121,16 @@
   color: var(--card-ink-dim);
 }
 
-.hero-stat { text-align: right; flex: none; }
+.hero-stat { text-align: right; flex: none; white-space: nowrap; }
 .hero-stat b {
   display: block;
-  font-size: 28px; font-weight: 780; letter-spacing: -0.02em;
+  font-size: 23px; font-weight: 780; letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   color: var(--card-ink);
   line-height: 1.05;
 }
 .hero-cap {
-  display: block; margin-top: 3px;
+  display: block; margin-top: 1px;
   font-family: var(--font-mono);
   font-size: 10px; letter-spacing: 0.04em;
   color: var(--card-ink-dim);
@@ -1111,20 +1139,30 @@
 /* Gold needs its own marker here. Two modules take a yellow hue, and on those
    a rank rule in the module colour is the same colour as a rank rule in gold —
    the card solves that with the medallion, so the hero carries it too. */
+/* Pinned to the mark's corner. Loose in the card's own corner it would land
+   on the module number or on the figure — a one-line card has no spare corner
+   left. The ring is the stock showing through, which is what lifts it off the
+   mark underneath. */
 .hero-medal {
-  position: absolute; top: 12px; right: 14px;
-  width: 22px; height: 22px;
+  position: absolute; top: -5px; right: -5px;
+  width: 17px; height: 17px;
   display: grid; place-items: center;
   border-radius: 50%;
+  border: 1.5px solid var(--card-stock);
   background: var(--rare-medal);
   color: var(--rare-ink);
 }
-.hero-medal svg { width: 14px; height: 14px; stroke-width: 2.6; }
+.hero-medal svg { width: 10px; height: 10px; stroke-width: 3; }
 
-/* The rank, as the rule along the bottom rather than a sweep. */
-.hero-meter {
+/* The rank, as the rule along the bottom rather than a sweep.
+
+   Selected through the parent because `.hero > :not(.hero-foil)` sets every
+   child relative to lift it over the foil, and that outweighs a bare class —
+   which left this sitting in the grid as a short row of its own, floating a
+   padding's width above the edge it is supposed to be. */
+.hero > .hero-meter {
   position: absolute; left: 0; right: 0; bottom: 0;
-  height: 4px;
+  height: 3px;
   grid-column: 1 / -1;
   background: var(--card-rule);
 }
@@ -1137,11 +1175,15 @@
 .hero-gold { border-color: color-mix(in srgb, var(--rare-gold) 62%, transparent); }
 .hero-gold .hero-meter > i { background: var(--rare-gold); }
 
+/* The blurb is the one thing that goes on a phone. Dropping the figure onto a
+   row of its own instead is what made this tall, and the figure is the half
+   worth keeping. */
 @media (max-width: 460px) {
-  .hero { grid-template-columns: auto 1fr; row-gap: var(--sp-3); }
-  .hero-stat { grid-column: 1 / -1; text-align: left; display: flex; align-items: baseline; gap: 8px; }
-  .hero-cap { margin-top: 0; }
+  .hero { gap: 10px; }
   .hero-blurb { display: none; }
+  .hero-name { font-size: 15px; }
+  .hero-stat b { font-size: 20px; }
+  .hero-cap { font-size: 9px; }
 }
 
 /* ---------- panels, cut from the same stock ---------- */
@@ -1526,7 +1568,7 @@
 .fab {
   position: fixed; z-index: 56;
   right: max(var(--sp-4), env(safe-area-inset-right, 0px));
-  bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--nav-space) + 16px);
   width: 56px; height: 56px; padding: 0;
   border: 0; border-radius: 50%;
   background: var(--fab, var(--series-1));
