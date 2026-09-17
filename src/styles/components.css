@@ -1702,3 +1702,41 @@
    another chase, not the end of one. */
 .todo-tick.is-chase svg { opacity: 0.6; }
 .todo-tick.is-chase:hover svg { opacity: 1; }
+
+
+/* ---------- people, as a list ---------- */
+
+/* One line each until you ask for more. Five people used to be five tall
+   cards of stat tiles, which is a report rather than a list — and the button
+   to add a sixth sat below all of them. */
+.people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+
+.person {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, var(--surface-1), var(--card-stock-lo));
+  overflow: hidden;
+  transition: border-color 140ms ease;
+}
+.person.is-open { border-color: color-mix(in srgb, var(--mod-dating) 45%, var(--border)); }
+
+.person-head {
+  width: 100%;
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 0; background: none;
+  text-align: left; cursor: pointer;
+}
+.person-head .disclose-mark { flex: none; color: var(--text-muted); }
+.person-head .disclose-mark svg { width: 16px; height: 16px; }
+.person-name { flex: 1 1 auto; min-width: 0; font-size: 15px; font-weight: 600; color: var(--text-primary); }
+.person-sub { flex: none; font-size: 13px; color: var(--text-muted); }
+
+/* Everything else about them, opened where they sit rather than on a page of
+   their own — the point is to put something down and get out. */
+.person-body {
+  display: flex; flex-direction: column; gap: var(--sp-3);
+  padding: 0 var(--sp-3) var(--sp-3);
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-3);
+}

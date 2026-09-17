@@ -7,10 +7,11 @@ import { uid } from '../lib/id';
 import { datingStats, shareOfBudget } from '../lib/dating';
 import { useApp } from '../state/context';
 import { Modal } from '../components/ui/Modal';
-import { EmptyState, Field, SectionHead } from '../components/ui/Field';
+import { Field, SectionHead } from '../components/ui/Field';
 import { DictateInput } from '../components/ui/Dictation';
 import { StatTile } from '../components/charts/StatTile';
 import { Icons } from '../components/layout/Icons';
+import { Fab } from '../components/ui/Fab';
 
 const ACCENT = 'var(--mod-dating)';
 
@@ -65,25 +66,112 @@ export function Dating() {
 
   if (state.dating.people.length === 0) {
     return (
-      <div className="stack">
+      <div className="stack todo-page">
+        <p className="todo-empty">
+          Nobody here yet.<br />
+          <span className="t-muted">Press the plus. A first name or initials is enough.</span>
+        </p>
         <Privacy />
-        <section className="card">
-          <EmptyState
-            icon={Icons.heart()}
-            title="Nobody tracked yet"
-            hint="Add someone by first name or initials, then log what you actually spend."
-          />
-          <button className="btn btn-accent btn-lg btn-block" style={{ ['--mod' as string]: ACCENT }} onClick={() => setEditingPerson('new')}>
-            + Add someone
-          </button>
-        </section>
+        <Fab onClick={() => setEditingPerson('new')} label="Add someone" color={ACCENT}>
+          {Icons.plus()}
+        </Fab>
         {editingPerson && <PersonForm person={null} onClose={() => setEditingPerson(null)} onSave={savePerson} />}
       </div>
     );
   }
 
   return (
-    <div className="stack">
+    <div className="stack todo-page">
+      {/* The list is the page. Five people used to mean five tall cards, each
+          with its own stat grid and log, and the button to add a sixth was
+          underneath all of them — so the one thing you came to do was the
+          furthest away. A row is a name now, and opens where it sits. */}
+      <ul className="people">
+        {stats.rows.map((row) => {
+          const isOpen = open === row.person.id;
+          return (
+            <li key={row.person.id} className={`person${isOpen ? ' is-open' : ''}`}>
+              <button
+                className="person-head"
+                aria-expanded={isOpen}
+                onClick={() => setOpen(isOpen ? null : row.person.id)}
+              >
+                <span className={`disclose-mark${isOpen ? ' is-open' : ''}`} aria-hidden>{Icons.chevron()}</span>
+                <span className="person-name truncate">{row.person.label}</span>
+                <span className={statusClass(row.person.status)}>{row.person.status}</span>
+                <span className="person-sub t-num">
+                  {row.outings.length > 0 ? fmtMoney(row.spend, cur) : '—'}
+                </span>
+              </button>
+
+              {isOpen && (
+                <div className="person-body">
+                  <p className="t-xs t-muted">
+                    {row.person.metAt ? `Met: ${row.person.metAt} · ` : ''}
+                    {row.lastSeen ? `last seen ${relativeDay(row.lastSeen)}` : 'nothing logged yet'}
+                  </p>
+                  {row.person.notes && <p className="t-sm t-sec">{row.person.notes}</p>}
+
+                  <div className="grid grid-3" style={{ gap: 'var(--sp-3)' }}>
+                    <StatTile label="Spent" value={fmtMoney(row.spend, cur)} caption={`${row.outings.length} outing${row.outings.length === 1 ? '' : 's'}`} />
+                    <StatTile
+                      label="Per outing"
+                      value={row.perOuting !== null ? fmtMoney(row.perOuting, cur) : '—'}
+                      caption={row.outings.length ? 'average' : 'nothing logged'}
+                    />
+                    <StatTile
+                      label="Per night"
+                      value={row.perNight !== null ? fmtMoney(row.perNight, cur) : '—'}
+                      caption={row.nights ? `${row.nights} logged` : 'none logged'}
+                    />
+                  </div>
+
+                  {row.outings.length > 0 && (
+                    <div className="stack-2">
+                      {row.outings.map((o) => (
+                        <div key={o.id} className="rowitem">
+                          <span className="grow" style={{ minWidth: 0 }}>
+                            <span className="t-sm t-bold truncate" style={{ display: 'block' }}>{o.what}</span>
+                            <span className="t-xs t-muted">
+                              {fmtDateFull(o.date)}{o.intimate ? ' · stayed over' : ''}{o.notes ? ` · ${o.notes}` : ''}
+                            </span>
+                          </span>
+                          <span className="t-sm t-num">{fmtMoney(o.cost, cur)}</span>
+                          <button
+                            className="btn btn-ghost btn-icon"
+                            aria-label={`Remove ${o.what}`}
+                            onClick={() => {
+                              update((s) => ({ ...s, dating: { ...s.dating, outings: s.dating.outings.filter((x) => x.id !== o.id) } }));
+                              toast('Removed');
+                            }}
+                          >
+                            <span className="btn-glyph" aria-hidden>{Icons.close()}</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="row-2 wrap">
+                    <button className="btn btn-accent btn-sm" style={{ ['--mod' as string]: ACCENT }} onClick={() => setLogging(row.person)}>
+                      + Log an outing
+                    </button>
+                    <button className="btn btn-sm" onClick={() => setEditingPerson(row.person)}>Edit</button>
+                    {/* The way back to a plain list, said out loud rather than
+                        left to whoever works out the header toggles too. */}
+                    <button className="btn btn-sm btn-ghost" style={{ marginLeft: 'auto' }} onClick={() => setOpen(null)}>
+                      Close
+                    </button>
+                  </div>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* Underneath, because it is what everything came to rather than what
+          you opened the module to do. */}
       <section className="card" style={{ ['--mod' as string]: ACCENT }}>
         <SectionHead title="What it comes to" sub="Everything logged, across everyone" />
         <div className="grid grid-3" style={{ gap: 'var(--sp-3)' }}>
@@ -112,83 +200,11 @@ export function Dating() {
         )}
       </section>
 
-      {stats.rows.map((row) => {
-        const isOpen = open === row.person.id;
-        return (
-          <section key={row.person.id} className="card" style={{ ['--mod' as string]: ACCENT }}>
-            <div className="row-2" style={{ alignItems: 'flex-start' }}>
-              <div className="grow" style={{ minWidth: 0 }}>
-                <div className="row-2" style={{ gap: 6 }}>
-                  <h3 className="t-md t-bold">{row.person.label}</h3>
-                  <span className={statusClass(row.person.status)}>{row.person.status}</span>
-                </div>
-                <p className="t-xs t-muted">
-                  {row.person.metAt ? `Met: ${row.person.metAt} · ` : ''}
-                  {row.lastSeen ? `last seen ${relativeDay(row.lastSeen)}` : 'nothing logged yet'}
-                </p>
-              </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEditingPerson(row.person)}>Edit</button>
-            </div>
-
-            {row.person.notes && <p className="t-sm t-sec" style={{ marginTop: 'var(--sp-2)' }}>{row.person.notes}</p>}
-
-            <div className="grid grid-3" style={{ gap: 'var(--sp-3)', marginTop: 'var(--sp-3)' }}>
-              <StatTile label="Spent" value={fmtMoney(row.spend, cur)} caption={`${row.outings.length} outing${row.outings.length === 1 ? '' : 's'}`} />
-              <StatTile
-                label="Per outing"
-                value={row.perOuting !== null ? fmtMoney(row.perOuting, cur) : '—'}
-                caption={row.outings.length ? 'average' : 'nothing logged'}
-              />
-              <StatTile
-                label="Per night"
-                value={row.perNight !== null ? fmtMoney(row.perNight, cur) : '—'}
-                caption={row.nights ? `${row.nights} logged` : 'none logged'}
-              />
-            </div>
-
-            <div className="row-2 wrap" style={{ marginTop: 'var(--sp-3)' }}>
-              <button className="btn btn-accent" style={{ ['--mod' as string]: ACCENT }} onClick={() => setLogging(row.person)}>
-                + Log an outing
-              </button>
-              {row.outings.length > 0 && (
-                <button className="btn" onClick={() => setOpen(isOpen ? null : row.person.id)}>
-                  {isOpen ? 'Hide' : `Show ${row.outings.length}`}
-                </button>
-              )}
-            </div>
-
-            {isOpen && (
-              <div className="stack-2" style={{ marginTop: 'var(--sp-3)' }}>
-                {row.outings.map((o) => (
-                  <div key={o.id} className="rowitem">
-                    <span className="grow" style={{ minWidth: 0 }}>
-                      <span className="t-sm t-bold truncate" style={{ display: 'block' }}>{o.what}</span>
-                      <span className="t-xs t-muted">
-                        {fmtDateFull(o.date)}{o.intimate ? ' · stayed over' : ''}{o.notes ? ` · ${o.notes}` : ''}
-                      </span>
-                    </span>
-                    <span className="t-sm t-num">{fmtMoney(o.cost, cur)}</span>
-                    <button
-                      className="btn btn-ghost btn-icon"
-                      aria-label={`Remove ${o.what}`}
-                      onClick={() => {
-                        update((s) => ({ ...s, dating: { ...s.dating, outings: s.dating.outings.filter((x) => x.id !== o.id) } }));
-                        toast('Removed');
-                      }}
-                    >
-                      <span className="btn-glyph" aria-hidden>{Icons.close()}</span>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        );
-      })}
-
-      <button className="btn btn-block" onClick={() => setEditingPerson('new')}>+ Add someone</button>
-
       <Privacy />
+
+      <Fab onClick={() => setEditingPerson('new')} label="Add someone" color={ACCENT}>
+        {Icons.plus()}
+      </Fab>
 
       {editingPerson && (
         <PersonForm

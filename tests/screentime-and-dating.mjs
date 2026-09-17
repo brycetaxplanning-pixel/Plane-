@@ -64,7 +64,7 @@ console.log('\n3. Dating: a person, an outing, and the arithmetic');
   const intro = await page.locator('.stack').first().innerText();
   /never agreed to be in it/.test(intro) ? ok('it is upfront about whose data this is') : bad('privacy note', intro.slice(0, 160));
 
-  await page.getByRole('button', { name: '+ Add someone' }).first().click();
+  await page.locator('.fab').click();
   let form = page.getByRole('dialog');
   const hint = await form.innerText();
   /no field for a surname or a number/.test(hint) ? ok('and it says why the fields are thin') : bad('hint', hint.slice(0, 160));
@@ -73,6 +73,16 @@ console.log('\n3. Dating: a person, an outing, and the arithmetic');
   await form.getByRole('button', { name: 'Save' }).click();
   await page.waitForTimeout(400);
   (await read(page)).dating.people.length === 1 ? ok('the person is stored') : bad('person', 'not stored');
+
+  // A row is a name until you ask for more, so adding several in a row does
+  // not bury the next one under the last one's stats.
+  (await page.locator('.person').count()) === 1 ? ok('and appears as one line') : bad('row', 'no compact row');
+  (await page.locator('.person-body').count()) === 0
+    ? ok('with its detail folded away') : bad('fold', 'the detail was open from the start');
+
+  await page.locator('.person-head').first().click();
+  await page.waitForTimeout(300);
+  (await page.locator('.person.is-open').count()) === 1 ? ok('opening it shows the rest') : bad('open', 'nothing opened');
 
   await page.getByRole('button', { name: '+ Log an outing' }).click();
   form = page.getByRole('dialog');
@@ -96,6 +106,14 @@ console.log('\n3. Dating: a person, an outing, and the arithmetic');
   /\$140/.test(text) ? ok('the spend totals') : bad('total', text.slice(0, 160));
   /\$70/.test(text) ? ok('per outing is the mean of the two') : bad('per outing', text.slice(0, 160));
   /\$140/.test(text) ? ok('and per night divides by the one that counted') : bad('per night', text.slice(0, 160));
+
+  // And a way back to a plain list that does not rely on knowing the header
+  // toggles too.
+  const close = page.locator('.person-body').getByRole('button', { name: 'Close' });
+  (await close.count()) === 1 ? ok('the open row says how to shut it') : bad('close', 'no way back');
+  await close.click();
+  await page.waitForTimeout(300);
+  (await page.locator('.person.is-open').count()) === 0 ? ok('and it shuts') : bad('close', 'still open');
   await ctx.close();
 }
 
@@ -104,10 +122,13 @@ console.log('\n4. With no nights logged it does not divide by zero');
   const { ctx, page } = await open();
   await page.goto(BASE + '#/dating', { waitUntil: 'networkidle' });
   await page.waitForTimeout(400);
-  await page.getByRole('button', { name: '+ Add someone' }).first().click();
+  await page.locator('.fab').click();
   let form = page.getByRole('dialog');
   await form.getByLabel('Name').fill('J');
   await form.getByRole('button', { name: 'Save' }).click();
+  await page.waitForTimeout(300);
+  // Logging lives inside the person's own fold now.
+  await page.locator('.person-head').first().click();
   await page.waitForTimeout(300);
   await page.getByRole('button', { name: '+ Log an outing' }).click();
   form = page.getByRole('dialog');
@@ -127,10 +148,13 @@ console.log('\n5. Deleting a person takes their outings with them');
   const { ctx, page } = await open();
   await page.goto(BASE + '#/dating', { waitUntil: 'networkidle' });
   await page.waitForTimeout(400);
-  await page.getByRole('button', { name: '+ Add someone' }).first().click();
+  await page.locator('.fab').click();
   let form = page.getByRole('dialog');
   await form.getByLabel('Name').fill('K');
   await form.getByRole('button', { name: 'Save' }).click();
+  await page.waitForTimeout(300);
+  // Logging lives inside the person's own fold now.
+  await page.locator('.person-head').first().click();
   await page.waitForTimeout(300);
   await page.getByRole('button', { name: '+ Log an outing' }).click();
   form = page.getByRole('dialog');
@@ -156,8 +180,10 @@ console.log('\n6. An older save with no dating data still loads');
   await page.waitForTimeout(500);
   const st = await read(page);
   Array.isArray(st.dating.people) ? ok('the slice is filled in by the migration') : bad('migrate', JSON.stringify(st.dating));
-  /Nobody tracked yet/.test(await page.locator('.stack').first().innerText())
+  /Nobody here yet/.test(await page.locator('.stack').first().innerText())
     ? ok('and the empty state renders') : bad('empty', 'missing');
+  (await page.locator('.fab').count()) === 1
+    ? ok('with the same plus as when there are people') : bad('fab', 'no way to add the first one');
   await ctx.close();
 }
 
