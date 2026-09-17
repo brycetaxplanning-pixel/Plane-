@@ -123,7 +123,7 @@ export const BADGES: BadgeDef[] = [
       && s.fitness.activities.filter((a) => inWeek(a.date) && bucketOf(a.type) === 'mma').length >= s.fitness.targets.mma,
   },
   {
-    id: 'run-21', name: 'Half marathon', description: 'Covered 21.1 km in a single run', icon: 'trophy',
+    id: 'run-21', name: 'Half marathon', description: 'Covered 13.1 miles in a single run', icon: 'trophy',
     earned: (s) => s.fitness.activities.some((a) => (a.distanceKm ?? 0) >= 21.1),
   },
   {

@@ -397,15 +397,15 @@ export function sampleState(): AppState {
   ];
 
   s.fitness.physique = [
-    { id: uid('phy'), title: 'Bigger chest', area: 'Chest', site: 'Chest', target: 108, unit: 'cm', plan: 'Two pressing sessions a week, top set plus back-offs', done: false, createdAt: addDays(today, -60) },
-    { id: uid('phy'), title: 'Wider back', area: 'Back', site: 'Shoulders', target: 128, unit: 'cm', plan: 'Row volume up, weighted pull-ups on the second session', done: false, createdAt: addDays(today, -60) },
+    { id: uid('phy'), title: 'Bigger chest', area: 'Chest', site: 'Chest', target: 42.5, unit: 'in', plan: 'Two pressing sessions a week, top set plus back-offs', done: false, createdAt: addDays(today, -60) },
+    { id: uid('phy'), title: 'Wider back', area: 'Back', site: 'Shoulders', target: 50.5, unit: 'in', plan: 'Row volume up, weighted pull-ups on the second session', done: false, createdAt: addDays(today, -60) },
     { id: uid('phy'), title: 'Straighter posture through the thoracic spine', area: 'Posture', plan: 'Daily thoracic extension and dead hangs; stop training through tight lats', done: false, createdAt: addDays(today, -30) },
   ];
 
   [
-    ['Chest', 103.5, 104.2, 105.0, 105.4],
-    ['Shoulders', 122.0, 122.8, 123.5, 124.1],
-    ['Waist', 84.0, 83.4, 83.1, 82.6],
+    ['Chest', 40.7, 41.0, 41.3, 41.5],
+    ['Shoulders', 48.0, 48.3, 48.6, 48.9],
+    ['Waist', 33.1, 32.8, 32.7, 32.5],
   ].forEach(([site, ...values]) => {
     values.forEach((value, i) => {
       s.fitness.measurements.push({
@@ -413,7 +413,7 @@ export function sampleState(): AppState {
         date: addDays(today, -63 + i * 21),
         site: site as string,
         value: value as number,
-        unit: 'cm',
+        unit: 'in',
       });
     });
   });

@@ -4,6 +4,7 @@ import { ACTIVITY_TYPES, bucketOf, type Activity, type ChatMessage } from '../li
 import { XP } from '../lib/gamification';
 import { diffDays, dowLabel, fmtDate, fmtDuration, todayKey, weekStart } from '../lib/date';
 import { uid } from '../lib/id';
+import { miles, toKm, toMiles } from '../lib/units';
 import { useApp } from '../state/context';
 import { fitnessStats } from '../state/selectors';
 import { Modal } from '../components/ui/Modal';
@@ -20,6 +21,9 @@ import { Icons } from '../components/layout/Icons';
 
 const ACCENT = 'var(--mod-fitness)';
 
+/** What counts as a long run, in the unit the log is kept in. */
+const LONG_RUN_MILES = 9.3;
+
 export function Fitness() {
   const { state, update, reward, toast } = useApp();
   const stats = fitnessStats(state);
@@ -27,7 +31,7 @@ export function Fitness() {
   const [tab, setTab] = useTabParam(['week', 'race', 'physique', 'coach'] as const, 'week');
 
   const logActivity = (a: Omit<Activity, 'id'>) => {
-    const longRun = (a.distanceKm ?? 0) >= 15;
+    const longRun = toMiles(a.distanceKm ?? 0) >= LONG_RUN_MILES;
     const completesWeek = stats.total + 1 === stats.targets.total;
     const xp = XP.fitnessSession + (longRun ? XP.fitnessLongRun : 0) + (completesWeek ? XP.weeklyTargetHit : 0);
     reward(
@@ -68,7 +72,7 @@ export function Fitness() {
             </p>
             <p className="t-xs t-muted">
               {stats.runKmThisWeek > 0
-                ? `${stats.runKmThisWeek.toFixed(1)} km covered this week.`
+                ? `${miles(stats.runKmThisWeek)} miles covered this week.`
                 : 'No distance logged this week.'}
             </p>
           </div>
@@ -132,7 +136,7 @@ export function Fitness() {
                       <span className="t-sm t-bold">{a.type}</span>
                       <span className="t-xs t-muted" style={{ display: 'block' }}>
                         {dowLabel(a.date)} · {fmtDuration(a.minutes)}
-                        {a.distanceKm ? ` · ${a.distanceKm} km` : ''}
+                        {a.distanceKm ? ` · ${miles(a.distanceKm)} mi` : ''}
                         {a.rpe ? ` · RPE ${a.rpe}` : ''}
                       </span>
                     </span>
@@ -211,20 +215,20 @@ function RacePanel() {
       <section className="card" style={{ ['--mod' as string]: ACCENT }}>
         <SectionHead title={race.name} sub={race.date ? `${fmtDate(race.date)} · ${daysOut} days out` : 'No race date set yet'} />
         <div className="grid grid-3 tight-mobile" style={{ gap: 'var(--sp-3)' }}>
-          <StatTile label="This week" value={`${stats.runKmThisWeek.toFixed(1)}`} caption="km run" small />
-          <StatTile label="Longest run" value={`${stats.longestRun.toFixed(1)}`} caption="km, all time" small />
-          <StatTile label="To go" value={`${Math.max(0, race.distanceKm - stats.longestRun).toFixed(1)}`} caption={`km short of ${race.distanceKm}`} small />
+          <StatTile label="This week" value={miles(stats.runKmThisWeek)} caption="miles run" small />
+          <StatTile label="Longest run" value={miles(stats.longestRun)} caption="miles, all time" small />
+          <StatTile label="To go" value={miles(Math.max(0, race.distanceKm - stats.longestRun))} caption={`miles short of ${miles(race.distanceKm)}`} small />
         </div>
       </section>
 
       <section className="card">
         <SectionHead title="Weekly distance" sub="Last 8 weeks" />
         <BarChart
-          data={stats.runHistory.map((h) => ({ key: h.key, value: Math.round(h.value * 10) / 10, label: fmtDate(h.key) }))}
+          data={stats.runHistory.map((h) => ({ key: h.key, value: Math.round(toMiles(h.value) * 10) / 10, label: fmtDate(h.key) }))}
           color={ACCENT}
           highlightKey={weekStart()}
-          formatValue={(n) => `${n} km`}
-          ariaLabel="Kilometres run each week over the last eight weeks"
+          formatValue={(n) => `${n} mi`}
+          ariaLabel="Miles run each week over the last eight weeks"
         />
       </section>
 
@@ -233,8 +237,8 @@ function RacePanel() {
           <p className="t-sm t-sec">
             <strong>{weeksOut} week{weeksOut === 1 ? '' : 's'} out.</strong>{' '}
             A standard build adds about 10% of weekly volume at a time and takes the long run up to
-            roughly {Math.min(race.distanceKm, 18)} km before a two-week taper. Your longest so far is{' '}
-            {stats.longestRun.toFixed(1)} km.
+            roughly {Math.round(Math.min(toMiles(race.distanceKm), 11))} miles before a two-week taper. Your longest
+            so far is {miles(stats.longestRun)}.
           </p>
         </section>
       )}
@@ -254,10 +258,10 @@ function RacePanel() {
               onChange={(e) => update((s) => ({ ...s, fitness: { ...s.fitness, race: { ...s.fitness.race, date: e.target.value || undefined } } }))}
             />
           </Field>
-          <Field label="Distance (km)">
+          <Field label="Distance (miles)">
             <NumberInput
-              min={1} step={0.1} value={race.distanceKm}
-              onChange={(n) => update((s) => ({ ...s, fitness: { ...s.fitness, race: { ...s.fitness.race, distanceKm: n } } }))}
+              min={1} step={0.1} value={Math.round(toMiles(race.distanceKm) * 10) / 10}
+              onChange={(n) => update((s) => ({ ...s, fitness: { ...s.fitness, race: { ...s.fitness.race, distanceKm: toKm(n) } } }))}
             />
           </Field>
           <Field label="Target time">
@@ -295,7 +299,7 @@ function ActivityForm({ onClose, onSave }: { onClose: () => void; onSave: (a: Om
               date,
               type,
               minutes: Math.max(1, Number(minutes) || 0),
-              distanceKm: distance ? Number(distance) : undefined,
+              distanceKm: distance ? toKm(Number(distance)) : undefined,
               rpe: rpe ? Number(rpe) : undefined,
               notes: notes.trim() || undefined,
             })}
@@ -323,7 +327,7 @@ function ActivityForm({ onClose, onSave }: { onClose: () => void; onSave: (a: Om
             <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
           {isRun && (
-            <Field label="Distance (km)">
+            <Field label="Distance (miles)">
               <input className="input" type="number" min={0} step={0.1} value={distance} onChange={(e) => setDistance(e.target.value)} />
             </Field>
           )}
@@ -345,7 +349,7 @@ function buildCoachSystem(state: ReturnType<typeof useApp>['state']): string {
   const s = fitnessStats(state);
   const recent = state.fitness.activities
     .slice(-14)
-    .map((a) => `${a.date}: ${a.type}, ${a.minutes}min${a.distanceKm ? `, ${a.distanceKm}km` : ''}${a.rpe ? `, RPE ${a.rpe}` : ''}`)
+    .map((a) => `${a.date}: ${a.type}, ${a.minutes}min${a.distanceKm ? `, ${miles(a.distanceKm)}mi` : ''}${a.rpe ? `, RPE ${a.rpe}` : ''}`)
     .join('\n') || 'nothing logged yet';
 
   const race = state.fitness.race;
@@ -364,9 +368,9 @@ ${state.fitness.physique.filter((g) => !g.done).map((g) => `- ${g.title} (${g.ar
 ${state.fitness.measurements.length ? `Latest measurements: ${[...new Map(state.fitness.measurements.map((m) => [m.site, m])).values()].map((m) => `${m.site} ${m.value}${m.unit}`).join(', ')}` : 'No measurements logged.'}
 
 RACE GOAL
-- ${race.name}, ${race.distanceKm} km${race.targetTime ? `, target time ${race.targetTime}` : ''}
+- ${race.name}, ${miles(race.distanceKm)} miles${race.targetTime ? `, target time ${race.targetTime}` : ''}
 - ${race.date ? `Race date ${race.date}, ${daysOut} days away` : 'No race date set'}
-- Longest run logged: ${s.longestRun.toFixed(1)} km. Distance this week: ${s.runKmThisWeek.toFixed(1)} km.
+- Longest run logged: ${miles(s.longestRun)} miles. Distance this week: ${miles(s.runKmThisWeek)} miles.
 
 RECENT SESSIONS (most recent last)
 ${recent}
@@ -386,8 +390,8 @@ function offlineFitnessReply(input: string, state: ReturnType<typeof useApp>['st
     const race = state.fitness.race;
     const short = Math.max(0, race.distanceKm - s.longestRun);
     return [
-      `Longest run so far: ${s.longestRun.toFixed(1)} km — ${short.toFixed(1)} km short of ${race.distanceKm}.`,
-      `This week you've covered ${s.runKmThisWeek.toFixed(1)} km.`,
+      `Longest run so far: ${miles(s.longestRun)} miles — ${miles(short)} short of ${miles(race.distanceKm)}.`,
+      `This week you've covered ${miles(s.runKmThisWeek)} miles.`,
       race.date ? `Race is ${diffDays(race.date, todayKey())} days out.` : 'No race date set yet — add one under the Half marathon tab.',
       'A safe build adds roughly 10% of weekly volume at a time, with one long run a week and every fourth week easier.',
     ].join('\n');

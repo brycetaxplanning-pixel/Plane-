@@ -256,7 +256,7 @@ function GoalForm({
   const [area, setArea] = useState<PhysiqueArea>(goal?.area ?? 'Chest');
   const [site, setSite] = useState(goal?.site ?? '');
   const [target, setTarget] = useState(String(goal?.target ?? ''));
-  const [unit, setUnit] = useState(goal?.unit ?? 'cm');
+  const [unit, setUnit] = useState(goal?.unit ?? 'in');
   const [plan, setPlan] = useState(goal?.plan ?? '');
 
   return (
@@ -329,7 +329,7 @@ function MeasureForm({
 }) {
   const [site, setSite] = useState(sites[0] ?? 'Chest');
   const [value, setValue] = useState('');
-  const [unit, setUnit] = useState('cm');
+  const [unit, setUnit] = useState('in');
   const [date, setDate] = useState(todayKey());
 
   return (

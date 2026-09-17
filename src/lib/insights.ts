@@ -1,6 +1,7 @@
 import { bucketOf, type AppState, type Habit } from './schema';
 import { addDays, fmtDate, fmtRange, lastWeeks, monthKey, todayKey, weekStart, type DateKey } from './date';
 import { allRows, dailyCompletion } from './habits';
+import { toMiles } from './units';
 
 /**
  * Weekly aggregates across every module, and the plain-arithmetic analysis
@@ -18,7 +19,7 @@ export interface WeekRow {
   fitness: number;
   mma: number;
   strength: number;
-  runKm: number;
+  runMiles: number;
   trainingMinutes: number;
   spanish: number;
   outreach: number;
@@ -34,7 +35,7 @@ export const METRICS = {
   fitness: { label: 'fitness sessions', unit: '' },
   mma: { label: 'MMA sessions', unit: '' },
   strength: { label: 'strength sessions', unit: '' },
-  runKm: { label: 'kilometres run', unit: ' km' },
+  runMiles: { label: 'miles run', unit: ' mi' },
   trainingMinutes: { label: 'minutes training', unit: ' min' },
   spanish: { label: 'minutes of Spanish', unit: ' min' },
   outreach: { label: 'outreach contacts', unit: '' },
@@ -51,7 +52,7 @@ export type MetricKey = keyof typeof METRICS;
 /** Metrics that plausibly drive an outcome, and the outcomes worth watching.
  *  Kept explicit rather than testing every pair: with this many columns,
  *  scanning all of them would surface coincidences by construction. */
-const DRIVERS: MetricKey[] = ['fitness', 'mma', 'strength', 'runKm', 'trainingMinutes', 'spanish', 'habitPct'];
+const DRIVERS: MetricKey[] = ['fitness', 'mma', 'strength', 'runMiles', 'trainingMinutes', 'spanish', 'habitPct'];
 const OUTCOMES: MetricKey[] = ['tasksDone', 'outreach', 'meetings', 'mood', 'energy', 'habitPct'];
 
 export function weeklyRows(state: AppState, weeks = 12): WeekRow[] {
@@ -70,7 +71,7 @@ export function weeklyRows(state: AppState, weeks = 12): WeekRow[] {
       fitness: acts.length,
       mma: acts.filter((a) => bucketOf(a.type) === 'mma').length,
       strength: acts.filter((a) => bucketOf(a.type) === 'strength').length,
-      runKm: Math.round(acts.reduce((n, a) => n + (a.distanceKm ?? 0), 0) * 10) / 10,
+      runMiles: Math.round(toMiles(acts.reduce((n, a) => n + (a.distanceKm ?? 0), 0)) * 10) / 10,
       trainingMinutes: acts.reduce((n, a) => n + a.minutes, 0),
       spanish: state.spanish.sessions.filter((x) => inWeekRange(x.date)).reduce((n, x) => n + x.minutes, 0),
       outreach: state.planning.outreach.filter((o) => inWeekRange(o.date)).length,

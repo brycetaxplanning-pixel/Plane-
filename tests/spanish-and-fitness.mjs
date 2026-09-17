@@ -155,7 +155,7 @@ console.log('\n6. Physique goals and measurements');
   await page.waitForTimeout(400);
   const body = await page.locator('main').innerText();
   /Bigger chest/.test(body) && /Wider back/.test(body) ? ok('physique goals render') : bad('goals', body.slice(0, 160));
-  /\+1\.9cm/.test(body) ? ok('chest shows +1.9cm since the first measurement') : bad('delta', body.replace(/\n/g, ' | ').slice(0, 300));
+  /\+0\.8in/.test(body) ? ok('chest shows +0.8in since the first measurement') : bad('delta', body.replace(/\n/g, ' | ').slice(0, 300));
   await page.getByRole('button', { name: /Thoracic extension/ }).click();
   await page.waitForTimeout(400);
   const st = await page.evaluate(() => JSON.parse(localStorage.getItem('plane.state.v1')));
@@ -322,6 +322,57 @@ console.log('\n9. Ticking a run of sessions leaves one banner, and untick gives 
 
   await page.waitForTimeout(3600);
   (await page.locator('.toast').count()) === 0 ? ok('unticking raises no banner of its own') : bad('untick banner', 'one appeared');
+  await ctx.close();
+}
+
+console.log('\n10. Distance reads and is typed in miles');
+{
+  const { ctx, page } = await fresh();
+  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('plane.state.v1'));
+    // A half marathon is 21.1 km, which is 13.1 miles and nothing else. If the
+    // race tab ever reads 21.1 again, storage has leaked onto the screen.
+    s.fitness = {
+      ...s.fitness,
+      targets: { mma: 0, strength: 0, total: 6 },
+      plan: [],
+      activities: [],
+      race: { name: 'Half marathon', distanceKm: 21.0975 },
+      chat: [], measurements: [], physique: [],
+    };
+    localStorage.setItem('plane.state.v1', JSON.stringify(s));
+  });
+  await page.goto(BASE + '#/fitness?tab=race', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(500);
+  const pop = page.locator('.pop button').first();
+  if (await pop.count()) await pop.click().catch(() => {});
+
+  const raceText = await page.locator('.stack').first().innerText();
+  /13\.1/.test(raceText) ? ok('a half marathon reads as 13.1') : bad('race', raceText.slice(0, 220));
+  /21\.1/.test(raceText) ? bad('race', 'the kilometre figure is still on screen') : ok('and never as 21.1');
+  /\bmiles?\b/i.test(raceText) ? ok('the tiles say miles') : bad('caption', raceText.slice(0, 220));
+  / km\b/.test(raceText) ? bad('caption', 'km is still captioning something') : ok('and nothing says km');
+
+  const field = await page.getByRole('tabpanel', { name: 'Half marathon' }).getByLabel('Distance (miles)').inputValue();
+  Math.abs(Number(field) - 13.1) < 0.05 ? ok('the race distance field is in miles too') : bad('field', field);
+
+  // Type six miles into the log form and it has to come back as six miles.
+  await page.goto(BASE + '#/fitness?tab=week', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(300);
+  await page.getByRole('button', { name: '+ Log a session' }).click();
+  await page.waitForTimeout(200);
+  const sheet = page.getByRole('dialog', { name: 'Log a session' });
+  await sheet.getByRole('button', { name: 'Run', exact: true }).click();
+  await sheet.getByLabel('Distance (miles)').fill('6');
+  await sheet.getByRole('button', { name: 'Log it' }).click();
+  await page.waitForTimeout(500);
+
+  const storedKm = await page.evaluate(() => JSON.parse(localStorage.getItem('plane.state.v1')).fitness.activities.at(-1).distanceKm);
+  Math.abs(storedKm - 9.656) < 0.01
+    ? ok('six miles is stored as 9.66 km') : bad('storage', String(storedKm));
+  const week = await page.locator('.card', { hasText: 'Logged this week' }).locator('.rowitem').first().innerText();
+  /6\.0 mi/.test(week) ? ok('and comes back on the row as 6.0 mi') : bad('round trip', week.slice(0, 160));
   await ctx.close();
 }
 

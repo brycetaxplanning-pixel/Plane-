@@ -1,6 +1,7 @@
 import { MODULES, type AppState, type ModuleId } from './schema';
 import { addDays, diffDays, todayKey, weekStart, type DateKey } from './date';
 import { nextDue } from './reminders';
+import { miles } from './units';
 
 export interface TimelineItem {
   id: string;
@@ -54,7 +55,7 @@ export function timelineItems(state: AppState): TimelineItem[] {
     out.push({
       id: 'race', date: race.date, kind: 'race', module: 'fitness', to: 'fitness', tab: 'race',
       title: race.name,
-      detail: `${race.distanceKm} km${race.targetTime ? ` · target ${race.targetTime}` : ''}`,
+      detail: `${miles(race.distanceKm)} miles${race.targetTime ? ` · target ${race.targetTime}` : ''}`,
     });
   }
 

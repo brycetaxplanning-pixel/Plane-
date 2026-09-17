@@ -9,6 +9,7 @@ import { backupStatus } from './backup';
 import { lastCompletedWeek } from './awards';
 import { dueLabel, dueList } from './reminders';
 import { uid } from './id';
+import { miles } from './units';
 
 /** Kept bounded: a year of daily use would otherwise grow without limit. */
 const MAX_STORED = 300;
@@ -137,7 +138,7 @@ export function candidates(state: AppState): Candidate[] {
         kind: 'due',
         module: 'fitness',
         title: `${race.name} is ${away} day${away === 1 ? '' : 's'} out`,
-        body: `Longest run so far: ${state.fitness.activities.reduce((m, a) => Math.max(m, a.distanceKm ?? 0), 0).toFixed(1)} km.`,
+        body: `Longest run so far: ${miles(state.fitness.activities.reduce((m, a) => Math.max(m, a.distanceKm ?? 0), 0))} miles.`,
         to: 'fitness',
         tab: 'race',
       });

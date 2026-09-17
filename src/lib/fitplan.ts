@@ -1,5 +1,6 @@
 import { ACTIVITY_TYPES, bucketOf, type Activity, type AppState, type PlanItem, dedupePlan } from './schema';
 import { inWeek, weekStart, type DateKey } from './date';
+import { toMiles } from './units';
 
 /** The lines in force for the current week: every locked line, plus the
  *  unlocked ones added this week. */
@@ -79,15 +80,15 @@ export function suggestions(state: AppState, week: DateKey = weekStart(), count 
 
 function reasonFor(activity: string, state: AppState): string {
   const bucket = bucketOf(activity);
-  const km = state.fitness.activities
+  const weekMiles = toMiles(state.fitness.activities
     .filter((a) => inWeek(a.date))
-    .reduce((n, a) => n + (a.distanceKm ?? 0), 0);
+    .reduce((n, a) => n + (a.distanceKm ?? 0), 0));
 
   if (activity === 'Basketball') return 'Gets you a session and some people in one go.';
   if (activity === 'Swim') return 'Nothing for the legs to absorb — good the day after sparring.';
   if (activity === 'Mobility') return 'Cheapest session of the week and it helps the posture work.';
   if (activity === 'Long run' || activity === 'Run') {
-    return km < 10 ? 'Race distance needs more weekly kilometres than this.' : 'Keeps the weekly distance ticking up.';
+    return weekMiles < 6 ? 'Race distance needs more weekly miles than this.' : 'Keeps the weekly distance ticking up.';
   }
   if (bucket === 'mma') return 'Counts toward the MMA side of the week.';
   if (bucket === 'strength') return 'Counts toward the strength side of the week.';

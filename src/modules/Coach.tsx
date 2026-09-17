@@ -3,6 +3,7 @@ import { MODULES, type ChatMessage } from '../lib/schema';
 import { XP, streakOf } from '../lib/gamification';
 import { fmtDate, todayKey } from '../lib/date';
 import { uid } from '../lib/id';
+import { miles } from '../lib/units';
 import { fmtMoney } from '../lib/finance';
 import { capacity, goalRows } from '../lib/budgetGoals';
 import { healthSummary } from '../lib/health';
@@ -262,7 +263,7 @@ MODULE 3 — Spanish
 ${e.todayMinutes} min today (goal ${e.dailyGoal}), ${e.weekMinutes} min this week (goal ${e.weeklyGoal}), ${e.hours.toFixed(1)} hours all time, studied ${e.daysStudiedThisWeek}/7 days this week.
 
 MODULE 4 — Fitness
-${f.total}/${f.targets.total} sessions this week. MMA ${f.mma}/${f.targets.mma}, strength ${f.strength}/${f.targets.strength}, flexible ${f.flexDone}/${f.flexTarget}. ${f.runKmThisWeek.toFixed(1)} km run this week; longest run ever ${f.longestRun.toFixed(1)} km. Race: ${state.fitness.race.name}${state.fitness.race.date ? ` on ${state.fitness.race.date}` : ' (no date set)'}.
+${f.total}/${f.targets.total} sessions this week. MMA ${f.mma}/${f.targets.mma}, strength ${f.strength}/${f.targets.strength}, flexible ${f.flexDone}/${f.flexTarget}. ${miles(f.runKmThisWeek)} miles run this week; longest run ever ${miles(f.longestRun)} miles. Race: ${state.fitness.race.name}${state.fitness.race.date ? ` on ${state.fitness.race.date}` : ' (no date set)'}.
 
 MODULE 5 — Finances
 ${fmtMoney(m.spent, cur)} spent this month${m.budgetTotal ? ` against a ${fmtMoney(m.budgetTotal, cur)} budget` : ' (no budget set)'}. ${m.reviewCount} transactions still need a category. Invested: ${fmtMoney(m.invested, cur)} across ${state.finance.accounts.length} accounts.
