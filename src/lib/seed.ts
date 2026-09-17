@@ -423,6 +423,10 @@ export function sampleState(): AppState {
     { id: uid('rem'), title: 'Client call with Halvorsen', repeat: 'Once', date: addDays(today, 2), time: '18:30', module: 'work', done: false, createdAt: today },
     { id: uid('rem'), title: 'Back up the app data', repeat: 'Monthly', date: addDays(today, 9), done: false, createdAt: addDays(today, -40) },
     { id: uid('rem'), title: 'Change the car oil', repeat: 'Every N days', everyDays: 120, lastDone: addDays(today, -80), done: false, createdAt: addDays(today, -200) },
+    // Business to-dos carry the business, not just the module: the second
+    // business has its own list and must not be handed the first one's work.
+    { id: uid('rem'), title: 'Chase the Q3 engagement letter', repeat: 'Once', date: addDays(today, 3), module: 'planning', sub: s.planning.businesses[0]?.id, followUp: true, done: false, createdAt: addDays(today, -6) },
+    { id: uid('rem'), title: 'Rewrite the connection note', repeat: 'Once', module: 'planning', sub: s.planning.businesses[0]?.id, done: false, createdAt: addDays(today, -2) },
   ];
 
   s.planning.ideas = [

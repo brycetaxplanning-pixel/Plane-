@@ -46,7 +46,7 @@ console.log('\n2. Each business shows only its own outreach and pipeline');
   /Dana Whitfield/.test(primary) ? ok('and its own deals') : bad('deals', 'missing');
   /Wholesale trial/.test(primary) ? bad('leak', 'the other pipeline is showing') : ok('and not the other pipeline');
 
-  await page.getByRole('button', { name: /All businesses/ }).click();
+  await page.getByRole('button', { name: 'Back' }).click();
   await page.waitForTimeout(400);
   await page.locator('.mtile').filter({ hasText: /Flaxseed gel/i }).first().click();
   await page.waitForTimeout(500);
@@ -116,6 +116,9 @@ console.log('\n6. An older save is migrated into the new shape');
       outreach: [{ id: 'o1', date, name: 'Old contact', channel: 'Call', outcome: 'Conversation' }],
       deals: [{ id: 'd1', name: 'Old deal', stage: 'Lead', value: 1000, createdAt: '2026-08-01' }],
     },
+    // Written when Business was one thing, so it names the module and nothing
+    // finer. With two businesses it would otherwise show in both.
+    reminders: { items: [{ id: 'r1', title: 'Old business to-do', repeat: 'Once', module: 'planning', done: false, createdAt: '2026-08-01' }] },
   })), thisWeek);
   await page.goto(BASE + '#/planning', { waitUntil: 'networkidle' });
   await page.reload({ waitUntil: 'networkidle' });
@@ -125,6 +128,8 @@ console.log('\n6. An older save is migrated into the new shape');
   st.planning.businesses[0].weeklyTarget === 40 ? ok('it inherits the old shared target') : bad('target', JSON.stringify(st.planning.businesses[0]));
   st.planning.outreach[0].businessId === st.planning.businesses[0].id ? ok('old outreach is assigned to it') : bad('outreach', JSON.stringify(st.planning.outreach[0]));
   st.planning.deals[0].businessId === st.planning.businesses[0].id ? ok('and old deals') : bad('deals', JSON.stringify(st.planning.deals[0]));
+  st.reminders.items[0].sub === st.planning.businesses[0].id
+    ? ok('and a business to-do written before the split') : bad('todo migration', JSON.stringify(st.reminders.items[0]));
   // "Old contact" used to be checked here, in the week's table of logged
   // contacts. Outreach is a count now and that table is gone, so what proves
   // the migrated data renders is the business it was given appearing and
@@ -180,7 +185,7 @@ console.log('\n8. The week is a number you can step, and each business keeps its
   Number(await val.inputValue()) === start + 96 ? ok('and a whole week can be typed in at once') : bad('type', await val.inputValue());
 
   // Each business counts its own week.
-  await page.getByRole('button', { name: /All businesses/ }).click();
+  await page.getByRole('button', { name: 'Back' }).click();
   await page.waitForTimeout(500);
   const other = page.locator('.mtile').filter({ hasText: /Flaxseed gel/i }).first();
   if (await other.count()) {
@@ -195,6 +200,68 @@ console.log('\n8. The week is a number you can step, and each business keeps its
 
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForTimeout(900);
+  await ctx.close();
+}
+
+console.log('\n9. One way back, and a to-do list per business');
+{
+  const { ctx, page } = await seeded(393);
+  const backs = () => page.locator('.backlink');
+  const badge = () => page.locator('.modtodo-btn').nth(1);
+
+  await page.goto(BASE + '#/planning', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(700);
+  const pop = page.locator('.pop button').first();
+  if (await pop.count()) await pop.click().catch(() => {});
+  await page.waitForTimeout(300);
+
+  // There used to be two: one pinned above the card that left the module, and
+  // one inside the module for its own depth.
+  (await backs().count()) === 1 ? ok('a module screen has exactly one back control') : bad('backs', `${await backs().count()} of them`);
+  (await backs().first().innerText()).trim() === 'Back' ? ok('and it just says Back') : bad('label', await backs().first().innerText());
+
+  await page.locator('.mtile').filter({ hasText: 'Bryce Tax Planning' }).click();
+  await page.waitForTimeout(500);
+  (await backs().count()) === 1 ? ok('still one inside a business') : bad('backs', `${await backs().count()} of them`);
+  (await badge().innerText()).trim() === '2' ? ok("Bryce Tax Planning carries the module's two to-dos") : bad('bryce todos', await badge().innerText());
+
+  // The first press steps out of the business, not out of the module.
+  await backs().first().click();
+  await page.waitForTimeout(400);
+  (await page.locator('.mtile-name').allInnerTexts()).some((t) => /Flaxseed/i.test(t))
+    ? ok('back from a business lands on the businesses') : bad('back', 'did not return to the picker');
+
+  await page.locator('.mtile').filter({ hasText: 'Flaxseed gel' }).click();
+  await page.waitForTimeout(500);
+  (await badge().innerText()).trim() === '' ? ok('and the second business starts on none of them') : bad('flax todos', await badge().innerText());
+
+  // Written in here, it belongs in here.
+  await page.locator('.modtodo-btn').first().click();
+  await page.waitForTimeout(300);
+  await page.getByLabel('What you need to do').fill('Order more xanthan gum');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await page.waitForTimeout(500);
+  (await badge().innerText()).trim() === '1' ? ok('one added in here shows in here') : bad('add', await badge().innerText());
+  const st = await read(page);
+  const added = st.reminders.items.find((r) => r.title === 'Order more xanthan gum');
+  added?.sub === 'biz_flax' ? ok('stamped with the business, not just the module') : bad('stamp', JSON.stringify(added));
+
+  await backs().first().click();
+  await page.waitForTimeout(400);
+  await page.locator('.mtile').filter({ hasText: 'Bryce Tax Planning' }).click();
+  await page.waitForTimeout(500);
+  (await badge().innerText()).trim() === '2' ? ok('and never leaks into the other one') : bad('leak', await badge().innerText());
+
+  // Above the businesses, the list is all of them.
+  await backs().first().click();
+  await page.waitForTimeout(400);
+  (await badge().innerText()).trim() === '3' ? ok("at the module's own level it is all three") : bad('module level', await badge().innerText());
+
+  // The second press is the one that leaves.
+  await backs().first().click();
+  await page.waitForTimeout(500);
+  (await page.locator('.launch-grid .mtile-name').count()) > 5
+    ? ok('back again leaves for all the modules') : bad('leave', 'did not reach the launcher');
   await ctx.close();
 }
 

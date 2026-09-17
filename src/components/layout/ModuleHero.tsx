@@ -1,6 +1,5 @@
 import { MODULES, type ModuleId } from '../../lib/schema';
 import { rankOf } from '../../lib/gamification';
-import { routeOf } from '../../lib/router';
 import { moduleSummaries } from '../../state/selectors';
 import { useApp } from '../../state/context';
 import { Icons, ModuleGlyph } from './Icons';
@@ -20,8 +19,8 @@ import { Icons, ModuleGlyph } from './Icons';
  *
  * It is the whole of a module's header, and it is deliberately short. There is
  * no bar above it: you tapped this card to get here, so the screen does not
- * need half its height to agree with you. One line — mark, number, name, the
- * week's figure — over the way back out.
+ * need half its height to agree with you. One line — mark, number, name and
+ * the week's figure — with the way back out under it rather than over it.
  */
 export function ModuleHero({ id }: { id: ModuleId }) {
   const { state } = useApp();
@@ -33,45 +32,38 @@ export function ModuleHero({ id }: { id: ModuleId }) {
   const rank = rankOf(pct);
 
   return (
-    <div className="modhead">
-      <a className="backlink" href={routeOf('launcher')}>
-        <span aria-hidden style={{ width: 15, height: 15, display: 'inline-flex' }}>{Icons.back()}</span>
-        All modules
-      </a>
+    <section className={`hero hero-${rank}${id === 'notes' ? ' hero-paper' : ''}`}>
+      {/* The card's sweep, carried inside, and softer than a tile's: the
+          band at full strength takes the mono line above the name below the
+          contrast floor. */}
+      {rank !== 'base' && <span className="hero-foil" aria-hidden><i /></span>}
 
-      <section className={`hero hero-${rank}${id === 'notes' ? ' hero-paper' : ''}`}>
-        {/* The card's sweep, carried inside, and softer than a tile's: the
-            band at full strength takes the mono line above the name below the
-            contrast floor. */}
-        {rank !== 'base' && <span className="hero-foil" aria-hidden><i /></span>}
+      {/* On the mark rather than loose in a corner: the card is one line
+          tall now, and every corner of it is already spoken for. */}
+      <span className="hero-mark">
+        <ModuleGlyph id={id} size={22} />
+        {rank === 'gold' && (
+          <span className="hero-medal" title="This week's target is met">
+            <span className="sr-only">Target met.</span>
+            {Icons.check()}
+          </span>
+        )}
+      </span>
 
-        {/* On the mark rather than loose in a corner: the card is one line
-            tall now, and every corner of it is already spoken for. */}
-        <span className="hero-mark">
-          <ModuleGlyph id={id} size={22} />
-          {rank === 'gold' && (
-            <span className="hero-medal" title="This week's target is met">
-              <span className="sr-only">Target met.</span>
-              {Icons.check()}
-            </span>
-          )}
-        </span>
+      <span className="hero-lines">
+        <span className="hero-num">Module {String(module.num).padStart(2, '0')}</span>
+        <h1 className="hero-name">{module.name}</h1>
+        <p className="hero-blurb">{module.blurb}</p>
+      </span>
 
-        <span className="hero-lines">
-          <span className="hero-num">Module {String(module.num).padStart(2, '0')}</span>
-          <h1 className="hero-name">{module.name}</h1>
-          <p className="hero-blurb">{module.blurb}</p>
-        </span>
+      <span className="hero-stat">
+        <b>{summary.headline}</b>
+        <span className="hero-cap">{summary.caption}</span>
+      </span>
 
-        <span className="hero-stat">
-          <b>{summary.headline}</b>
-          <span className="hero-cap">{summary.caption}</span>
-        </span>
-
-        <span className="hero-meter" aria-hidden>
-          <i style={{ width: `${pct * 100}%` }} />
-        </span>
-      </section>
-    </div>
+      <span className="hero-meter" aria-hidden>
+        <i style={{ width: `${pct * 100}%` }} />
+      </span>
+    </section>
   );
 }

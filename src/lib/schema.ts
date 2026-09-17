@@ -598,6 +598,17 @@ export interface Reminder {
   /** Interval reminders count from here rather than from a fixed date. */
   lastDone?: DateKey;
   module?: ModuleId;
+  /**
+   * Which part of that module, for a module that has parts.
+   *
+   * Business is the only one with any: a business's id, or `ideas`. Without
+   * this, both businesses share one to-do list and going into the second shows
+   * work that belongs to the first. Absent everywhere else, and absent on a
+   * business to-do written before the module was split — which is read as
+   * belonging to the first business, because that is the business that existed
+   * when it was written.
+   */
+  sub?: string;
   done: boolean;
   createdAt: DateKey;
 }
@@ -922,6 +933,8 @@ export function migrate(raw: unknown): AppState {
   const base = emptyState();
   if (!raw || typeof raw !== 'object') return base;
   const s = raw as Partial<AppState>;
+  // Hoisted: the to-dos are assigned against these businesses below.
+  const planning = migratePlanning(s.planning, base.planning);
 
   return {
     ...base,
@@ -932,7 +945,7 @@ export function migrate(raw: unknown): AppState {
     badges: s.badges ?? [],
     activeDays: s.activeDays ?? [],
     work: { ...base.work, ...(s.work ?? {}), projects: s.work?.projects ?? [] },
-    planning: migratePlanning(s.planning, base.planning),
+    planning,
     spanish: {
       ...base.spanish,
       ...(s.spanish ?? {}),
@@ -1011,9 +1024,23 @@ export function migrate(raw: unknown): AppState {
       items: s.notifications?.items ?? [],
       deviceAlerts: s.notifications?.deviceAlerts ?? false,
     },
-    reminders: { items: s.reminders?.items ?? [] },
+    reminders: { items: assignBusinessTodos(s.reminders?.items ?? [], planning.businesses) },
     push: s.push ?? null,
   };
+}
+
+/**
+ * Business to-dos predate the businesses.
+ *
+ * They were written when Business was one thing, so they carry the module and
+ * nothing finer, and with two businesses set up they would show in both. They
+ * belong to the first business — the one that existed when they were written —
+ * and anything added inside a business has carried its id since.
+ */
+function assignBusinessTodos(items: Reminder[], businesses: Business[]): Reminder[] {
+  const first = businesses.find((b) => !b.archived)?.id ?? businesses[0]?.id;
+  if (!first) return items;
+  return items.map((r) => (r.module === 'planning' && !r.sub ? { ...r, sub: first } : r));
 }
 
 /**

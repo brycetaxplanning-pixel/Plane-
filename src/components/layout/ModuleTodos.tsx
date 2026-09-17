@@ -8,6 +8,7 @@ import { Modal } from '../ui/Modal';
 import { AddSheet } from '../../modules/reminders/AddSheet';
 import { TodoRow } from '../../modules/Reminders';
 import { Icons } from './Icons';
+import { useCurrentSubLevel } from './SubLevel';
 
 /**
  * A module's own slice of the one to-do list.
@@ -20,6 +21,12 @@ import { Icons } from './Icons';
  * Rendered by the shell for every module rather than pasted into eleven
  * screens, so a module cannot quietly end up without one.
  *
+ * A module with parts — Business, with a business each — gets one list per
+ * part. Sharing one list between two businesses meant opening the second and
+ * being handed the first one's work; a to-do written inside a business carries
+ * its id and only comes back there. At the module's own top level, above the
+ * parts, the list is all of them.
+ *
  * It is a corner, not a card. A full list at the foot of every screen was a
  * second list competing with the module's own work; what is wanted there is
  * the two things you came for — put one down, or see what is outstanding —
@@ -29,8 +36,11 @@ export function ModuleTodos({ id }: { id: ModuleId }) {
   const { state, update, toast } = useApp();
   const [editing, setEditing] = useState<Reminder | 'new' | null>(null);
   const [listing, setListing] = useState(false);
+  const sub = useCurrentSubLevel();
 
-  const mine = dueList(state).filter((d) => d.reminder.module === id);
+  const mine = dueList(state)
+    .filter((d) => d.reminder.module === id)
+    .filter((d) => !sub || d.reminder.sub === sub.id);
 
   const save = (r: Reminder) => {
     update((s) => ({
@@ -129,6 +139,7 @@ export function ModuleTodos({ id }: { id: ModuleId }) {
         <AddSheet
           reminder={editing === 'new' ? null : editing}
           defaultModule={id}
+          defaultSub={sub?.id}
           onClose={() => setEditing(null)}
           onSave={save}
           onResolve={editing !== 'new' && editing.followUp ? () => resolve(editing) : undefined}

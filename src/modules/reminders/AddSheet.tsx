@@ -41,13 +41,17 @@ interface Parsed {
  * open, so editing never hides what is set.
  */
 export function AddSheet({
-  reminder, defaultModule, onClose, onSave, onResolve, onDelete,
+  reminder, defaultModule, defaultSub, onClose, onSave, onResolve, onDelete,
 }: {
   /** null for a new one. */
   reminder: Reminder | null;
   /** Which module a new one belongs to — set when it is being added from
    *  inside that module, or while the list is filtered to it. */
   defaultModule?: ModuleId;
+  /** Which part of that module, where it has parts: the business you are
+   *  inside. Carried silently — there is no field for it, because being in
+   *  there is the whole of the answer. */
+  defaultSub?: string;
   onClose: () => void;
   onSave: (r: Reminder) => void;
   /** Present only for a follow-up: the one action that actually closes it. */
@@ -138,6 +142,9 @@ They said: ${text}`,
       touches: reminder?.touches,
       lastDone: reminder?.lastDone,
       module: module || undefined,
+      // Only while it still belongs to the module the part belongs to. Moving
+      // a to-do out of Business has to leave the business behind with it.
+      sub: module === (reminder?.module ?? defaultModule) ? (reminder?.sub ?? defaultSub) : undefined,
       done: false,
       createdAt: reminder?.createdAt ?? todayKey(),
     });

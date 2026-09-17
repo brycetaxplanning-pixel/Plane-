@@ -46,6 +46,7 @@ import './styles/launcher.css';
 import './styles/effects.css';
 import { ModuleHero } from './components/layout/ModuleHero';
 import { ModuleTodos } from './components/layout/ModuleTodos';
+import { BackButton, SubLevelProvider } from './components/layout/SubLevel';
 
 export default function App() {
   return (
@@ -133,7 +134,12 @@ function Shell() {
         }}
       >
         {route === 'launcher' && <Launcher />}
+        <SubLevelProvider>
         {module && <ModuleHero id={module.id} />}
+        {/* One button, under the card rather than above it, and it steps out
+            one level: out of the business into the businesses, out of the
+            module into the modules. */}
+        {module && <BackButton />}
         {/* A module's chunk arrives in a few hundred milliseconds on a bad
             connection and instantly once cached, so the fallback is a quiet
             placeholder rather than a spinner that flashes. */}
@@ -160,6 +166,7 @@ function Shell() {
             excluded: it is already the whole list. */}
         {module && module.id !== 'reminders' && <ModuleTodos id={module.id} />}
         </Suspense>
+        </SubLevelProvider>
       </main>
 
       <SaveError />

@@ -1035,12 +1035,6 @@
    arrives as the rule under the hero instead.
 ------------------------------------------------------------------ */
 
-/* The back link and the card together are the whole of a module's header. */
-.modhead {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
-  margin-bottom: var(--sp-4);
-}
-
 .hero {
   --mod-lift: color-mix(in srgb, var(--mod, var(--series-1)) 72%, #fff);
 
@@ -1054,6 +1048,7 @@
      a name, a blurb and then the week's figure dropped onto a row of its own —
      which is a lot of screen spent naming the card you just tapped. */
   padding: 9px var(--sp-4) 11px;
+  margin-bottom: var(--sp-3);
   border-radius: var(--tile-radius, var(--r-lg));
   border: 1px solid color-mix(in srgb, var(--mod-lift) 24%, var(--border));
   background:
@@ -1185,6 +1180,15 @@
   .hero-stat b { font-size: 20px; }
   .hero-cap { font-size: 9px; }
 }
+
+/* The one back control, in the slot under the card. Nothing about it is
+   pinned: it scrolls with the page like everything else, and it sits next to
+   the screen it leaves rather than above the card that named it. */
+.modback {
+  margin-bottom: var(--sp-4);
+  text-decoration: none;
+}
+.modback:hover { text-decoration: none; }
 
 /* ---------- panels, cut from the same stock ---------- */
 

@@ -18,6 +18,7 @@ import { StatTile } from '../components/charts/StatTile';
 import { Icons, type IconName } from '../components/layout/Icons';
 import { MarkPicker } from '../components/ui/MarkPicker';
 import { NumberInput } from '../components/ui/NumberInput';
+import { useSubLevel } from '../components/layout/SubLevel';
 
 const ACCENT = 'var(--mod-planning)';
 
@@ -36,6 +37,15 @@ export function Planning() {
 
   const active = businesses.find((b) => b.id === activeId) ?? businesses[0];
   const stats = planningStats(state, active?.id);
+
+  /* Tell the shell which business is open, so the one back button steps out of
+     it rather than out of the module, and so the to-do corner shows this
+     business's list and not both of them. Declared before the early returns
+     below, because a hook cannot be called conditionally. */
+  useSubLevel(
+    picked ? (tab === 'ideas' ? 'ideas' : active?.id ?? null) : null,
+    () => setPicked(false),
+  );
 
 
 
@@ -142,15 +152,6 @@ export function Planning() {
 
   return (
     <div className="stack">
-      {/* The same small back link the header uses to leave a module. It was
-          written as .link-btn.backline, and .backline had no CSS at all — an
-          inline SVG with nothing constraining it expands to fill its box, so
-          the chevron grew to the height of the screen. */}
-      <button className="backlink" style={{ alignSelf: 'flex-start' }} onClick={() => setPicked(false)}>
-        <span aria-hidden style={{ width: 15, height: 15, display: 'inline-flex' }}>{Icons.back()}</span>
-        All businesses
-      </button>
-
       {tab === 'ideas' && <Ideas />}
 
       {tab === 'planning' && (

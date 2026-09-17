@@ -30,9 +30,12 @@ export function Header({ title, route }: HeaderProps) {
   return (
     <header className="app-header">
       <div className="container">
+        {/* The same one control as everywhere else, saying the same one word.
+            There is no card above it to sit under here, so it stays at the
+            top of the block it leaves. */}
         <a className="backlink" href={routeOf('launcher')}>
           <span aria-hidden style={{ width: 15, height: 15, display: 'inline-flex' }}>{Icons.back()}</span>
-          All modules
+          Back
         </a>
 
         <div className="spread" style={{ alignItems: 'flex-start', marginTop: 4 }}>
