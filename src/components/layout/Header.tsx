@@ -59,7 +59,10 @@ export function Header({ title, route }: HeaderProps) {
         <div className="row-2" style={{ marginTop: 10 }}>
           <span className="t-xs t-bold" style={{ flex: 'none' }}>Level {level}</span>
           <div className="xpbar grow"><i style={{ width: `${Math.round((into / span) * 100)}%` }} /></div>
-          <span className="t-xs t-muted t-num" style={{ flex: 'none' }}>{into}/{span}</span>
+          {/* The secondary ink, not the faintest: with no bar behind it this
+              reads straight off the page, where on the darkest skin the muted
+              ink lands under the contrast floor. */}
+          <span className="t-xs t-sec t-num" style={{ flex: 'none' }}>{into}/{span}</span>
         </div>
       </div>
     </header>

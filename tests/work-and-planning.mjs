@@ -97,7 +97,12 @@ await page.waitForTimeout(700);
 (await page.getByText('Enlightenment reached').count()) > 0 ? ok('the popup fires for a perfect week') : bad('popup', 'did not appear');
 await page.getByRole('button', { name: 'Keep it going' }).click();
 await page.waitForTimeout(400);
-(await page.locator('.enl-badge').count()) > 0 ? ok('badge is worn afterwards') : bad('badge', 'not shown');
+// Worn on the launcher, beside the level and the streak. A module screen has
+// no bar to hang it from any more, and its own card is one line.
+await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.waitForTimeout(400);
+(await page.locator('.enl-badge').count()) > 0 ? ok('badge is worn on the launcher afterwards') : bad('badge', 'not shown');
+await page.goto(BASE + '#/planning', { waitUntil: 'networkidle' });
 await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(700);
 (await page.getByText('Enlightenment reached').count()) === 0 ? ok('it does not fire again on the next load') : bad('popup repeat', 'fired twice');
