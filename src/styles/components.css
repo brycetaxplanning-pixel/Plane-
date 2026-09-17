@@ -1537,10 +1537,13 @@
 .modtodo {
   display: flex; align-items: center; gap: var(--sp-2);
 }
+/* The secondary ink, not the faintest. It was a caption under the page's own
+   work and is a label naming two controls now, and on the darkest two skins
+   the muted ink reads it at 4.25:1. */
 .modtodo-label {
   font-size: 11px; font-weight: 650;
   letter-spacing: 0.09em; text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 .modtodo-acts { display: flex; gap: var(--sp-2); }
 .modtodo-btn {
