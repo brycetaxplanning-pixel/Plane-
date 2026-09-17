@@ -59,7 +59,7 @@ await page.waitForTimeout(400);
 
 console.log('\n3. Suggestion chips fill a field before you type');
 await page.goto(BASE + '#/planning', { waitUntil: 'networkidle' });
-await page.getByRole('tab', { name: /Ideas/ }).click();
+await page.locator('.mtile').filter({ hasText: /Business ideas/i }).first().click();
 await page.getByRole('button', { name: 'Write one' }).click();
 await page.waitForTimeout(200);
 await page.locator('.modal-body').getByRole('button', { name: 'Clips channel for finance YouTubers' }).click();

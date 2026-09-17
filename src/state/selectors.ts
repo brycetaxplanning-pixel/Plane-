@@ -49,7 +49,13 @@ export function workStats(s: AppState) {
 /** Scoped to one business when an id is given, or to everything when not. */
 export function planningStats(s: AppState, businessId?: string) {
   const business = businessId ? s.planning.businesses.find((b) => b.id === businessId) : undefined;
-  const target = business?.weeklyTarget ?? s.planning.weeklyTarget;
+  // Asked about no business in particular — the module card, the launcher —
+  // the answer is every business added up. Reading the one global target and
+  // an empty tally is what made the module card say 0 of 50 while the
+  // business inside it said 163: the counts live on the businesses.
+  const rollUp = !businessId && s.planning.businesses.length > 0;
+  const target = business?.weeklyTarget
+    ?? (rollUp ? s.planning.businesses.reduce((n, b) => n + b.weeklyTarget, 0) : s.planning.weeklyTarget);
 
   const mine = businessId
     ? s.planning.outreach.filter((o) => o.businessId === businessId)
@@ -61,8 +67,11 @@ export function planningStats(s: AppState, businessId?: string) {
   // Counted by hand, for a business whose names live somewhere else. It adds
   // to the logged contacts rather than replacing them, so using one does not
   // quietly hide the other.
-  const counted = business?.countedOutreach ?? {};
-  const countedIn = (ws: string) => counted[ws] ?? 0;
+  const countedIn = (ws: string): number => {
+    if (business) return business.countedOutreach?.[ws] ?? 0;
+    if (!rollUp) return 0;
+    return s.planning.businesses.reduce((n, b) => n + (b.countedOutreach?.[ws] ?? 0), 0);
+  };
 
   const thisWeek = mine.filter((o) => inWeek(o.date));
   const countedThisWeek = countedIn(weekStart());

@@ -12,23 +12,11 @@ page.on('console', (m) => { if (m.type() === 'error') problems.push('console: ' 
 
 const readState = () => page.evaluate(() => JSON.parse(localStorage.getItem('plane.state.v1') || '{}'));
 
-console.log('\n1. Outreach logging + XP');
-await page.goto(BASE + '#/planning', { waitUntil: 'networkidle' });
-// Logging a contact with their details is the secondary path now; the
-// primary one is the counter, which records a number and no name.
-await page.getByRole('button', { name: /Log a contact with their details/ }).click();
-await page.getByPlaceholder('Name or business').fill('Test Prospect');
-await page.getByRole('button', { name: 'LinkedIn', exact: true }).click();
-await page.getByRole('button', { name: 'Meeting booked', exact: true }).click();
-await page.getByRole('button', { name: 'Log it' }).click();
-await page.waitForTimeout(500);
-let s = await readState();
-const out = s.planning?.outreach ?? [];
-out.length === 1 && out[0].name === 'Test Prospect' && out[0].outcome === 'Meeting booked'
-  ? ok('outreach persisted with channel + outcome') : bad('outreach persisted', JSON.stringify(out));
-const xp = (s.xp ?? []).reduce((n, e) => n + e.amount, 0);
-xp === 33 ? ok('XP = 8 base + 25 meeting bonus') : bad('XP award', `got ${xp}, expected 33`);
-(await page.getByText('Meeting booked').count()) > 0 ? ok('entry shows in the week table') : bad('week table', 'entry not rendered');
+let s;
+
+// Outreach is a count, not a list of people: logging a contact with their
+// name, channel and outcome was removed along with the CSV import, because
+// the names live elsewhere. The counter itself is covered in business-split.
 
 console.log('\n2. Fitness session + quota maths');
 await page.goto(BASE + '#/fitness', { waitUntil: 'networkidle' });

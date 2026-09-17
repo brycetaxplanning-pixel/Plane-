@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTabParam } from '../lib/router';
-import { CHANNELS, DEAL_STAGES, OUTCOMES, type Business, type Channel, type Deal, type DealStage, type Outcome } from '../lib/schema';
-import { XP } from '../lib/gamification';
+import { CHANNELS, DEAL_STAGES, type Business, type Channel, type Deal, type DealStage } from '../lib/schema';
+import { rankOf } from '../lib/gamification';
 import { dowLabel, fmtDate, fmtRange, todayKey, weekEnd, weekStart } from '../lib/date';
 import { uid } from '../lib/id';
 import { fmtMoney } from '../lib/finance';
@@ -10,13 +10,11 @@ import { planningStats } from '../state/selectors';
 import { DictateInput } from '../components/ui/Dictation';
 import { Ideas } from './business/Ideas';
 import { Modal } from '../components/ui/Modal';
-import { ImportOutreach } from './business/ImportOutreach';
 import { OutreachCounter } from './business/OutreachCounter';
 import { EmptyState, Field, SectionHead } from '../components/ui/Field';
 import { BarChart } from '../components/charts/BarChart';
 import { Ring } from '../components/charts/Ring';
 import { StatTile } from '../components/charts/StatTile';
-import { Tabs, panelProps } from '../components/ui/Tabs';
 import { Icons, type IconName } from '../components/layout/Icons';
 import { MarkPicker } from '../components/ui/MarkPicker';
 import { NumberInput } from '../components/ui/NumberInput';
@@ -24,24 +22,19 @@ import { NumberInput } from '../components/ui/NumberInput';
 const ACCENT = 'var(--mod-planning)';
 
 export function Planning() {
-  const { state, update, reward, toast } = useApp();
+  const { state, update, toast } = useApp();
   const businesses = state.planning.businesses.filter((b) => !b.archived);
   const [tab, setTab] = useTabParam(['planning', 'ideas'] as const, 'planning');
   const [activeId, setActiveId] = useState(() => businesses[0]?.id ?? '');
   const [editingBiz, setEditingBiz] = useState<Business | 'new' | null>(null);
-  const [logging, setLogging] = useState(false);
   const [dealOpen, setDealOpen] = useState<Deal | 'new' | null>(null);
-  const [showAll, setShowAll] = useState(false);
+  const [picked, setPicked] = useState(false);
+  const [chartOpen, setChartOpen] = useState(false);
 
   const active = businesses.find((b) => b.id === activeId) ?? businesses[0];
   const stats = planningStats(state, active?.id);
 
-  /** A business with no target and no history has nothing to chart. */
-  const showCharts = stats.target > 0 || stats.outreach.length > 0;
 
-  const thisWeek = stats.outreach
-    .filter((o) => weekStart(o.date) === weekStart())
-    .sort((a, b) => b.date.localeCompare(a.date));
 
   const saveBusiness = (b: Business) => {
     update((s) => ({
@@ -74,52 +67,82 @@ export function Planning() {
     );
   }
 
-  const logOutreach = (name: string, channel: Channel, outcome: Outcome, notes: string) => {
-    const hitTarget = stats.count + 1 === stats.target;
-    const xp = XP.outreach + (outcome === 'Meeting booked' ? XP.outreachMeeting : 0) + (hitTarget ? XP.weeklyTargetHit : 0);
-    reward(
-      'planning',
-      xp,
-      hitTarget ? `Weekly target hit — ${stats.target} reached` : `Logged outreach: ${name}`,
-      (s) => ({
-        ...s,
-        planning: {
-          ...s.planning,
-          outreach: [
-            ...s.planning.outreach,
-            { id: uid('out'), businessId: active?.id, date: todayKey(), name: name.trim(), channel, outcome, notes: notes.trim() || undefined },
-          ],
-        },
-      }),
+  /* Nothing is open until a card is picked, which is what makes this read
+     like the home screen rather than a page that happens to have tabs. */
+  if (!picked) {
+    return (
+      <div className="stack">
+        <div className="launch-grid">
+          {businesses.map((b, i) => {
+            const bs = planningStats(state, b.id);
+            const pct = bs.target ? Math.min(1, bs.count / bs.target) : 0;
+            return (
+              <button
+                key={b.id}
+                className={`mtile mtile-${rankOf(pct)}`}
+                onClick={() => { setTab('planning'); setActiveId(b.id); setPicked(true); }}
+                style={{
+                  ['--mod' as string]: ACCENT,
+                  animationDelay: `${i * 45}ms`,
+                  ['--foil-delay' as string]: `${i * -520}ms`,
+                }}
+              >
+                <span className="mtile-foil" aria-hidden><i /></span>
+                <span className="mtile-id" aria-hidden>{String(i + 1).padStart(2, '0')}</span>
+                {pct >= 1 && (
+                  <span className="mtile-medal" title={`${b.name}: this week's target is met`}>
+                    <span className="sr-only">Target met.</span>
+                    {Icons.check()}
+                  </span>
+                )}
+                <span className="glyph">{b.icon ? Icons[b.icon]() : Icons.briefcase()}</span>
+                <span className="mtile-name">{b.name}</span>
+                <span className="mtile-stat">
+                  <b>{bs.target ? `${bs.count}/${bs.target}` : String(bs.count)}</b>
+                  <span className="mtile-cap">outreach</span>
+                </span>
+                <span className="mtile-meter" aria-hidden><i style={{ width: `${pct * 100}%` }} /></span>
+              </button>
+            );
+          })}
+
+          <button
+            className="mtile mtile-alt"
+            onClick={() => { setTab('ideas'); setPicked(true); }}
+            style={{ animationDelay: `${businesses.length * 45}ms` }}
+          >
+            <span className="glyph">{Icons.bulb()}</span>
+            <span className="mtile-name">Business ideas</span>
+            <span className="mtile-stat"><b>{state.planning.ideas.length}</b><span className="mtile-cap">noted</span></span>
+          </button>
+
+          <button
+            className="mtile mtile-alt"
+            onClick={() => setEditingBiz('new')}
+            style={{ animationDelay: `${(businesses.length + 1) * 45}ms` }}
+          >
+            <span className="glyph">{Icons.plus()}</span>
+            <span className="mtile-name">Add a business</span>
+          </button>
+        </div>
+
+        {editingBiz && (
+          <BusinessForm
+            business={editingBiz === 'new' ? null : editingBiz}
+            onClose={() => setEditingBiz(null)}
+            onSave={saveBusiness}
+          />
+        )}
+      </div>
     );
-    setLogging(false);
-  };
+  }
 
   return (
     <div className="stack">
-      {/* One row, two kinds of tab: a business, or the idea list. They are
-          flattened onto one key so the row behaves as a single tablist. */}
-      <Tabs
-        idBase="business"
-        label="Businesses and ideas"
-        active={tab === 'ideas' ? 'ideas' : `biz-${active?.id ?? ''}`}
-        onChange={(id) => {
-          if (id === 'add-business') { setEditingBiz('new'); return; }
-          if (id === 'ideas') { setTab('ideas'); return; }
-          setTab('planning');
-          setActiveId(id.replace(/^biz-/, ''));
-        }}
-        tabs={[
-          ...businesses.map((b) => ({ id: `biz-${b.id}`, label: b.name })),
-          { id: 'ideas', label: `Ideas${state.planning.ideas.length ? ` (${state.planning.ideas.length})` : ''}` },
-          // Adding one belongs where the businesses are, not at the foot of a
-          // card below them — a second business is a thing you go looking for
-          // on the row that shows you the first.
-          { id: 'add-business', label: '+ Business' },
-        ]}
-      />
+      <button className="link-btn backline" onClick={() => setPicked(false)}>
+        <span aria-hidden>{Icons.back()}</span> All businesses
+      </button>
 
-      <div className="stack" {...panelProps('business', tab === 'ideas' ? 'ideas' : `biz-${active?.id ?? ''}`)}>
       {tab === 'ideas' && <Ideas />}
 
       {tab === 'planning' && (
@@ -158,8 +181,10 @@ export function Planning() {
                 {stats.counted} counted by hand · {stats.logged} from logged contacts
               </p>
             )}
-            <button className="link-btn" style={{ alignSelf: 'center' }} onClick={() => setLogging(true)}>
-              Log a contact with their details
+            {/* The chart is a thing you go and look at, not something
+                taking up the screen every time you open the module. */}
+            <button className="link-btn" style={{ alignSelf: 'center' }} onClick={() => setChartOpen(true)}>
+              See the numbers over time
             </button>
           </div>
         </div>
@@ -171,38 +196,7 @@ export function Planning() {
             sub="No outreach target set — the counter is hidden"
           />
           {active?.notes && <p className="t-sm t-sec">{active.notes}</p>}
-          <button className="btn btn-accent" style={{ ['--mod' as string]: ACCENT, marginTop: 'var(--sp-3)' }} onClick={() => setLogging(true)}>
-            + Log a contact anyway
-          </button>
         </section>
-      )}
-
-      {showCharts && (
-      <>
-      <section className="card">
-        <SectionHead title="Outreach by day" sub={`${stats.meetings} meeting${stats.meetings === 1 ? '' : 's'} booked this week`} />
-        <BarChart
-          data={stats.byDay.map((d) => ({ key: d.key, value: d.value, label: dowLabel(d.key) }))}
-          color={ACCENT}
-          target={Math.ceil(stats.target / 7)}
-          targetLabel={`Pace (${Math.ceil(stats.target / 7)}/day)`}
-          highlightKey={todayKey()}
-          ariaLabel="Outreach logged each day this week against the daily pace needed"
-        />
-      </section>
-
-      <section className="card">
-        <SectionHead title="Last 8 weeks" sub={`Target is ${stats.target} a week`} />
-        <BarChart
-          data={stats.history.map((h) => ({ key: h.key, value: h.value, label: fmtDate(h.key) }))}
-          color={ACCENT}
-          target={stats.target}
-          targetLabel={`Weekly target (${stats.target})`}
-          highlightKey={weekStart()}
-          ariaLabel="Outreach per week over the last eight weeks against the weekly target"
-        />
-      </section>
-      </>
       )}
 
       <section className="card">
@@ -228,56 +222,6 @@ export function Planning() {
                   <span className="t-sm t-num">{fmtMoney(d.value, state.settings.currency)}</span>
                 </button>
               ))}
-          </div>
-        )}
-      </section>
-
-      <section className="card">
-        <SectionHead
-          title="Logged this week"
-          sub={`${thisWeek.length} contact${thisWeek.length === 1 ? '' : 's'}`}
-          action={thisWeek.length > 6 ? <button className="link-btn" onClick={() => setShowAll((v) => !v)}>{showAll ? 'Show less' : 'Show all'}</button> : undefined}
-        />
-        {thisWeek.length === 0 ? (
-          <EmptyState
-            icon={Icons.phone()}
-            title="Nothing logged yet this week"
-            hint={stats.target > 0 ? `Every call, email and DM counts toward the ${stats.target}.` : 'Log a contact here if this business ever needs one.'}
-          />
-        ) : (
-          <div className="table-scroll">
-            <table className="table">
-              <thead>
-                <tr><th>Name</th><th className="hide-sm">Channel</th><th>Outcome</th><th>Day</th><th /></tr>
-              </thead>
-              <tbody>
-                {(showAll ? thisWeek : thisWeek.slice(0, 6)).map((o) => (
-                  <tr key={o.id}>
-                    <td>{o.name}</td>
-                    <td className="t-muted hide-sm">{o.channel}</td>
-                    <td>
-                      <span className={o.outcome === 'Meeting booked' ? 'status status-good' : o.outcome === 'Closed' ? 'status status-good' : 'status status-neutral'}>
-                        {o.outcome}
-                      </span>
-                    </td>
-                    <td className="t-muted">{dowLabel(o.date)}</td>
-                    <td className="num">
-                      <button
-                        className="btn btn-ghost btn-icon"
-                        aria-label={`Remove ${o.name}`}
-                        title="Remove"
-                        onClick={() => {
-                          update((s) => ({ ...s, planning: { ...s.planning, outreach: s.planning.outreach.filter((x) => x.id !== o.id) } }));
-                          toast('Entry removed');
-                        }}
-                      >
-                        <span className="btn-glyph" aria-hidden>{Icons.close()}</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         )}
       </section>
@@ -315,6 +259,7 @@ export function Planning() {
       </>
       )}
 
+
       {editingBiz && (
         <BusinessForm
           business={editingBiz === 'new' ? null : editingBiz}
@@ -340,14 +285,33 @@ export function Planning() {
         />
       )}
 
-      <ImportOutreach business={active} />
-
-      {logging && (
-        <OutreachForm
-          channels={active?.channels ?? [...CHANNELS]}
-          onClose={() => setLogging(false)}
-          onSave={logOutreach}
-        />
+      {chartOpen && (
+        <Modal title="Outreach over time" onClose={() => setChartOpen(false)}>
+          <div className="stack-3">
+            <div>
+              <h4 className="t-up" style={{ color: 'var(--text-muted)' }}>This week, by day</h4>
+              <BarChart
+                data={stats.byDay.map((d) => ({ key: d.key, value: d.value, label: dowLabel(d.key) }))}
+                color={ACCENT}
+                height={120}
+              />
+            </div>
+            <div>
+              <h4 className="t-up" style={{ color: 'var(--text-muted)' }}>Last 8 weeks</h4>
+              <BarChart
+                data={stats.history.map((h) => ({ key: h.key, value: h.value, label: fmtDate(h.key) }))}
+                color={ACCENT}
+                height={140}
+                target={stats.target || undefined}
+              />
+            </div>
+            <p className="t-xs t-muted">
+              The weekly bars carry whatever you counted that week. The daily ones
+              only show contacts logged with a date, so a week entered as one
+              number sits on the week and not on any day.
+            </p>
+          </div>
+        </Modal>
       )}
 
       {dealOpen && (
@@ -376,69 +340,7 @@ export function Planning() {
           }}
         />
       )}
-      </div>
     </div>
-  );
-}
-
-function OutreachForm({
-  onClose, onSave, channels,
-}: {
-  onClose: () => void;
-  onSave: (name: string, channel: Channel, outcome: Outcome, notes: string) => void;
-  /** The ways this business actually reaches people. */
-  channels: Channel[];
-}) {
-  const [name, setName] = useState('');
-  // Where there is only one way this business reaches anyone, that is the
-  // answer, and the question is not worth asking.
-  const [channel, setChannel] = useState<Channel>(channels[0] ?? 'Call');
-  const [outcome, setOutcome] = useState<Outcome>('No answer');
-  const [notes, setNotes] = useState('');
-  const onlyOne = channels.length === 1;
-
-  return (
-    <Modal
-      title={onlyOne ? `Log ${channels[0]} outreach` : 'Log outreach'}
-      onClose={onClose}
-      footer={
-        <>
-          <button className="btn" onClick={onClose}>Cancel</button>
-          <button
-            className="btn btn-accent"
-            style={{ ['--mod' as string]: ACCENT }}
-            onClick={() => onSave(name || 'Unnamed contact', channel, outcome, notes)}
-          >
-            Log it
-          </button>
-        </>
-      }
-    >
-      <div className="stack-3">
-        <Field label="Who">
-          <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Name or business" autoFocus />
-        </Field>
-        {!onlyOne && (
-          <Field label="Channel">
-            <div className="row-2 wrap">
-              {channels.map((c) => (
-                <button key={c} type="button" className="chip" aria-pressed={channel === c} onClick={() => setChannel(c)}>{c}</button>
-              ))}
-            </div>
-          </Field>
-        )}
-        <Field label="Outcome">
-          <div className="row-2 wrap">
-            {OUTCOMES.map((o) => (
-              <button key={o} type="button" className="chip" aria-pressed={outcome === o} onClick={() => setOutcome(o)}>{o}</button>
-            ))}
-          </div>
-        </Field>
-        <Field label="Notes">
-          <textarea className="textarea" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="S-corp election, ~$180k net, follow up Tuesday" />
-        </Field>
-      </div>
-    </Modal>
   );
 }
 

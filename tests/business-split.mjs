@@ -18,15 +18,19 @@ async function seeded(width = 1100) {
 }
 const read = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('plane.state.v1') || '{}'));
 
-console.log('\n1. Two businesses, each with its own tab');
+console.log('\n1. The module opens on its businesses, the way the app opens on its modules');
 {
   const { ctx, page } = await seeded();
   await page.goto(BASE + '#/planning', { waitUntil: 'networkidle' });
-  await page.waitForTimeout(500);
-  const tabs = await page.locator('[role="tab"]').allInnerTexts();
-  tabs.some((t) => /Bryce Tax Planning/.test(t)) && tabs.some((t) => /Flaxseed gel/.test(t))
-    ? ok('both businesses are tabs') : bad('tabs', tabs.join(' | '));
-  tabs.some((t) => /Ideas/.test(t)) ? ok('ideas is still its own tab') : bad('ideas', tabs.join(' | '));
+  await page.waitForTimeout(600);
+  const cards = await page.locator('.mtile-name').allInnerTexts();
+  cards.some((t) => /Bryce Tax Planning/i.test(t)) && cards.some((t) => /Flaxseed gel/i.test(t))
+    ? ok('both businesses are cards') : bad('cards', cards.join(' | '));
+  cards.some((t) => /Business ideas/i.test(t)) ? ok('ideas is a card of its own') : bad('ideas', cards.join(' | '));
+  cards.some((t) => /Add a business/i.test(t)) ? ok('and so is adding another') : bad('add', cards.join(' | '));
+  // Nothing is open until one is picked, which is what makes it a picker.
+  (await page.locator('.counter').count()) === 0
+    ? ok('nothing is opened for you') : bad('preopened', 'a business was already showing');
   await ctx.close();
 }
 
@@ -35,12 +39,16 @@ console.log('\n2. Each business shows only its own outreach and pipeline');
   const { ctx, page } = await seeded();
   await page.goto(BASE + '#/planning', { waitUntil: 'networkidle' });
   await page.waitForTimeout(500);
+  await page.locator('.mtile').filter({ hasText: /Bryce Tax Planning/i }).first().click();
+  await page.waitForTimeout(500);
   const primary = await page.locator('main').innerText();
   /24\/50/.test(primary) || /of 50/.test(primary) ? ok('the tax business shows its 50-a-week counter') : bad('counter', primary.slice(0, 200));
   /Dana Whitfield/.test(primary) ? ok('and its own deals') : bad('deals', 'missing');
   /Wholesale trial/.test(primary) ? bad('leak', 'the other pipeline is showing') : ok('and not the other pipeline');
 
-  await page.getByRole('tab', { name: /Flaxseed gel/ }).click();
+  await page.getByRole('button', { name: /All businesses/ }).click();
+  await page.waitForTimeout(400);
+  await page.locator('.mtile').filter({ hasText: /Flaxseed gel/i }).first().click();
   await page.waitForTimeout(500);
   const flax = await page.locator('main').innerText();
   /Wholesale trial/.test(flax) ? ok('switching shows the other pipeline') : bad('switch', flax.slice(0, 200));
@@ -52,46 +60,42 @@ console.log('\n3. A business with no outreach target hides the counter');
 {
   const { ctx, page } = await seeded();
   await page.goto(BASE + '#/planning', { waitUntil: 'networkidle' });
-  await page.getByRole('tab', { name: /Flaxseed gel/ }).click();
+  await page.waitForTimeout(500);
+  await page.locator('.mtile').filter({ hasText: /Flaxseed gel/i }).first().click();
   await page.waitForTimeout(500);
   const flax = await page.locator('main').innerText();
   /No outreach target set/.test(flax) ? ok('it says so rather than showing 0 of 0') : bad('zero target', flax.slice(0, 200));
   /of 0/.test(flax) ? bad('zero target', 'showed a 0-of-0 ring') : ok('no meaningless ring');
+  // No outreach target is not the same as nothing to show: it still has deals,
+  // and they used to be hidden behind the same guard as the charts.
+  /Wholesale trial/.test(flax) ? ok('but its pipeline is still there') : bad('pipeline', flax.slice(0, 200));
   await ctx.close();
 }
 
-console.log('\n4. New outreach lands on the business you are looking at');
-{
-  const { ctx, page } = await seeded();
-  await page.goto(BASE + '#/planning', { waitUntil: 'networkidle' });
-  await page.getByRole('tab', { name: /Flaxseed gel/ }).click();
-  await page.waitForTimeout(400);
-  await page.getByRole('button', { name: /Log a contact anyway/ }).click();
-  await page.getByPlaceholder('Name or business').fill('Salon on 4th');
-  await page.getByRole('button', { name: 'Log it' }).click();
-  await page.waitForTimeout(600);
-  const st = await read(page);
-  const logged = st.planning.outreach.find((o) => o.name === 'Salon on 4th');
-  logged?.businessId === 'biz_flax' ? ok('it is filed under the active business') : bad('assignment', JSON.stringify(logged));
-  await ctx.close();
-}
+// Section 4 tested that a logged contact was filed under the business you
+// were looking at. Logging contacts by name is gone — outreach is a count —
+// so what replaces it is section 8, which checks each business counts its own.
 
 console.log('\n5. Adding a business');
 {
   const { ctx, page } = await seeded();
   await page.goto(BASE + '#/planning', { waitUntil: 'networkidle' });
   await page.waitForTimeout(500);
-  await page.getByRole('button', { name: '+ Add another business' }).click();
+  // Adding one is a card on the picker, beside the businesses it will join.
+  await page.locator('.mtile').filter({ hasText: /Add a business/i }).first().click();
+  await page.waitForTimeout(400);
   await page.getByPlaceholder('Flaxseed gel').fill('Consulting');
   await page.locator('.modal-body input[type="number"]').fill('10');
   await page.getByRole('button', { name: 'Save' }).click();
   await page.waitForTimeout(600);
   const st = await read(page);
   st.planning.businesses.length === 3 ? ok('a third business is stored') : bad('add', `${st.planning.businesses.length}`);
-  const tabs = await page.locator('[role="tab"]').allInnerTexts();
-  tabs.some((t) => /Consulting/.test(t)) ? ok('and gets its own tab') : bad('tab', tabs.join(' | '));
+  const cards = await page.locator('.mtile-name').allInnerTexts();
+  cards.some((t) => /Consulting/i.test(t)) ? ok('and gets its own card') : bad('card', cards.join(' | '));
+  await page.locator('.mtile').filter({ hasText: /Consulting/i }).first().click();
+  await page.waitForTimeout(500);
   const body = await page.locator('main').innerText();
-  /of 10/.test(body) ? ok('and switches to it with its own target') : bad('switch', body.slice(0, 160));
+  /of 10/.test(body) ? ok('opening it shows its own target') : bad('switch', body.slice(0, 160));
   await ctx.close();
 }
 
@@ -121,8 +125,16 @@ console.log('\n6. An older save is migrated into the new shape');
   st.planning.businesses[0].weeklyTarget === 40 ? ok('it inherits the old shared target') : bad('target', JSON.stringify(st.planning.businesses[0]));
   st.planning.outreach[0].businessId === st.planning.businesses[0].id ? ok('old outreach is assigned to it') : bad('outreach', JSON.stringify(st.planning.outreach[0]));
   st.planning.deals[0].businessId === st.planning.businesses[0].id ? ok('and old deals') : bad('deals', JSON.stringify(st.planning.deals[0]));
+  // "Old contact" used to be checked here, in the week's table of logged
+  // contacts. Outreach is a count now and that table is gone, so what proves
+  // the migrated data renders is the business it was given appearing and
+  // opening on its inherited target.
+  const cards = await page.locator('.mtile-name').allInnerTexts();
+  cards.length > 0 ? ok('the migrated business appears as a card') : bad('render', 'no cards');
+  await page.locator('.mtile').first().click();
+  await page.waitForTimeout(500);
   const body = await page.locator('main').innerText();
-  /Old contact/.test(body) ? ok('and it all still renders') : bad('render', body.slice(0, 160));
+  /of 40/.test(body) ? ok('and opens on the target it inherited') : bad('render', body.slice(0, 200));
   await ctx.close();
 }
 
@@ -140,6 +152,9 @@ console.log('\n8. The week is a number you can step, and each business keeps its
   const pop = page.locator('.pop button').first();
   if (await pop.count()) await pop.click().catch(() => {});
   await page.waitForTimeout(300);
+  // The module opens on its businesses now; the counter lives inside one.
+  await page.locator('.mtile').filter({ hasText: /Bryce Tax Planning/i }).first().click();
+  await page.waitForTimeout(600);
 
   const val = page.getByLabel('Outreach this week');
   const start = Number(await val.inputValue());
@@ -165,9 +180,9 @@ console.log('\n8. The week is a number you can step, and each business keeps its
   Number(await val.inputValue()) === start + 96 ? ok('and a whole week can be typed in at once') : bad('type', await val.inputValue());
 
   // Each business counts its own week.
-  const tabs = await page.locator('[role=tab]').allInnerTexts();
-  tabs.some((t) => /\+ Business/.test(t)) ? ok('adding a business sits with the businesses') : bad('add tab', tabs.join(' | '));
-  const other = page.getByRole('tab', { name: 'Flaxseed gel' });
+  await page.getByRole('button', { name: /All businesses/ }).click();
+  await page.waitForTimeout(500);
+  const other = page.locator('.mtile').filter({ hasText: /Flaxseed gel/i }).first();
   if (await other.count()) {
     await other.click();
     await page.waitForTimeout(700);
