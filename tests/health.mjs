@@ -138,7 +138,7 @@ console.log('\n7. Adding a panel from the catalogue');
   await page.goto(BASE + '#/health?tab=blood', { waitUntil: 'networkidle' });
   await page.waitForTimeout(400);
   await dismiss(page);
-  await page.getByRole('button', { name: '+ Add a panel' }).click();
+  await page.getByLabel('Add a panel').click();
   const form = page.getByRole('dialog');
   await form.getByRole('button', { name: '+ HbA1c' }).click();
   await page.waitForTimeout(200);

@@ -197,7 +197,9 @@ console.log('\n5. Screen time as a ceiling habit');
   (await row.count()) > 0 ? ok('screen time is a habit like any other') : bad('habit', 'missing');
   /cap 3h/.test(await row.innerText()) ? ok('it shows as a cap, not a target') : bad('cap label', await row.innerText());
 
-  await row.getByRole('button', { name: 'Done' }).click();
+  // A cap in hours is typed, not tapped: the figure on the tally is a button
+  // and it opens the form.
+  await row.locator('.tally-value').click();
   await page.locator('.modal-body input[type="number"]').fill('1.5');
   await page.getByRole('button', { name: 'Log it' }).click();
   await page.waitForTimeout(500);
@@ -205,9 +207,7 @@ console.log('\n5. Screen time as a ceiling habit');
   let log = st.habits.logs.filter((l) => l.amount === 1.5).at(-1);
   log?.met === true ? ok('1.5h against a 3h cap counts as met') : bad('under', JSON.stringify(log));
 
-  await page.locator('.habit', { hasText: 'Screen time' }).getByRole('button', { name: 'Undo' }).click();
-  await page.waitForTimeout(300);
-  await page.locator('.habit', { hasText: 'Screen time' }).getByRole('button', { name: 'Done' }).click();
+  await page.locator('.habit', { hasText: 'Screen time' }).locator('.tally-value').click();
   await page.locator('.modal-body input[type="number"]').fill('6');
   await page.getByRole('button', { name: 'Log it' }).click();
   await page.waitForTimeout(500);

@@ -48,16 +48,22 @@
 .tally-step svg { width: 14px; height: 14px; }
 .tally-step:disabled { opacity: 0.4; cursor: default; }
 .tally-step:hover:not(:disabled) { border-color: var(--mod, var(--series-1)); color: var(--text-primary); }
-.tally > b {
-  min-width: 42px; text-align: center;
+.tally-value {
+  min-width: 46px; padding: 2px 4px;
+  border: none; background: none; cursor: pointer;
+  text-align: center;
   font-size: 14px; font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--status-good);
+  border-radius: var(--r-sm);
 }
+.tally-value:hover { background: var(--surface-2); }
 /* Over the cap is the one state worth colouring, and it ships with the row's
-   own status dot and label beside it rather than standing on colour alone. */
-.tally > b.is-over { color: var(--status-critical); }
-.tally > b > i {
+   own status dot and label beside it rather than standing on colour alone.
+   The text token, not the raw status hue: that one is for fills and rules and
+   reads at 3.6:1 as type. */
+.tally-value.is-over { color: var(--crit-text); }
+.tally-value > i {
   font-style: normal; font-weight: 600; font-size: 11px;
   color: var(--text-muted);
 }

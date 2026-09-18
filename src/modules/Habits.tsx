@@ -586,13 +586,20 @@ function HabitRowView({
       </button>
 
       {tally !== null ? (
-        <span className="tally" aria-label={`${row.habit.title}: ${tally} of ${row.habit.target ?? 0}`}>
+        <span className="tally">
           <button className="tally-step" onClick={() => onCount?.(tally - 1)} disabled={tally === 0} aria-label="One fewer">
             <span aria-hidden>{Icons.minus()}</span>
           </button>
-          <b className={tally > (row.habit.target ?? 0) ? 'is-over' : undefined}>
+          {/* The figure is a button too, and it opens the form. Stepping works
+              for a cap you count — three times on Instagram — and not for one
+              you measure: nobody taps their way to an hour and a half. */}
+          <button
+            className={`tally-value${tally > (row.habit.target ?? 0) ? ' is-over' : ''}`}
+            onClick={onLog}
+            aria-label={`${tally} of ${row.habit.target ?? 0}${row.habit.unit ?? ''} — type an exact figure`}
+          >
             {tally}<i>/{row.habit.target ?? 0}</i>
-          </b>
+          </button>
           <button className="tally-step" onClick={() => onCount?.(tally + 1)} aria-label="One more">
             <span aria-hidden>{Icons.plus()}</span>
           </button>

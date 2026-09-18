@@ -341,11 +341,11 @@ console.log('\n14. A ceiling is tallied as it happens');
   // Nothing tapped and it already counts: "no more than three" is satisfied
   // at zero, and the day is in progress.
   /Under the cap/.test(await row.innerText()) ? ok('a ceiling starts the day met') : bad('start', await row.innerText());
-  (await row.locator('.tally > b').innerText()).startsWith('0')
-    ? ok('with nothing on the tally') : bad('tally', await row.locator('.tally > b').innerText());
+  (await row.locator('.tally-value').innerText()).startsWith('0')
+    ? ok('with nothing on the tally') : bad('tally', await row.locator('.tally-value').innerText());
 
   for (let i = 0; i < 3; i += 1) { await row.getByLabel('One more').click(); await page.waitForTimeout(220); }
-  (await row.locator('.tally > b').innerText()).startsWith('3') ? ok('three taps count three') : bad('count', await row.locator('.tally > b').innerText());
+  (await row.locator('.tally-value').innerText()).startsWith('3') ? ok('three taps count three') : bad('count', await row.locator('.tally-value').innerText());
   /Under the cap/.test(await row.innerText()) ? ok('and at the cap it is still met') : bad('at cap', await row.innerText());
 
   await row.getByLabel('One more').click();
@@ -362,6 +362,19 @@ console.log('\n14. A ceiling is tallied as it happens');
   await row.getByLabel('One fewer').click();
   await page.waitForTimeout(300);
   /Under the cap/.test(await row.innerText()) ? ok('stepping back down puts it right') : bad('down', await row.innerText());
+
+  // Stepping suits a cap you count. One you measure — three hours, not three
+  // times — is typed, so the figure itself opens the form.
+  await row.locator('.tally-value').click();
+  await page.waitForTimeout(300);
+  const sheet = page.getByRole('dialog');
+  (await sheet.locator('input[type="number"]').count()) === 1
+    ? ok('and the figure opens a field for an exact one') : bad('type it', 'no number field');
+  await sheet.locator('input[type="number"]').fill('2.5');
+  await sheet.getByRole('button', { name: 'Log it' }).click();
+  await page.waitForTimeout(400);
+  (await read(page)).habits.logs.find((l) => l.habitId === 'cap1')?.amount === 2.5
+    ? ok('which takes a figure no number of taps could reach') : bad('exact', JSON.stringify((await read(page)).habits.logs));
   await ctx.close();
 }
 
