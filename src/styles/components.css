@@ -10,6 +10,58 @@
 .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-3); }
 .card-sunken { background: var(--surface-sunken); box-shadow: none; }
 
+/* The two controls that act on a card's list rather than on anything in it,
+   one in each top corner above the heading: change how it behaves on the left,
+   add to it on the right. A row of its own rather than crowded in beside the
+   title, so neither corner has to fight the heading for width. */
+.cardtools {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--sp-2);
+}
+.cardtool {
+  width: 30px; height: 30px; padding: 0;
+  display: grid; place-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease, transform 100ms ease;
+}
+.cardtool svg { width: 16px; height: 16px; }
+.cardtool:hover { border-color: var(--mod, var(--series-1)); color: var(--text-primary); }
+.cardtool:active { transform: scale(0.94); }
+
+/* A ceiling kept as it happens: minus, the count against its cap, plus. It
+   replaces the Done button on those rows, because "done" is not a thing you
+   press for something you are trying to do less of — the day decides. */
+.tally { display: inline-flex; align-items: center; gap: 2px; flex: none; }
+.tally-step {
+  width: 28px; height: 28px; padding: 0;
+  display: grid; place-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.tally-step svg { width: 14px; height: 14px; }
+.tally-step:disabled { opacity: 0.4; cursor: default; }
+.tally-step:hover:not(:disabled) { border-color: var(--mod, var(--series-1)); color: var(--text-primary); }
+.tally > b {
+  min-width: 42px; text-align: center;
+  font-size: 14px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--status-good);
+}
+/* Over the cap is the one state worth colouring, and it ships with the row's
+   own status dot and label beside it rather than standing on colour alone. */
+.tally > b.is-over { color: var(--status-critical); }
+.tally > b > i {
+  font-style: normal; font-weight: 600; font-size: 11px;
+  color: var(--text-muted);
+}
+
 /* ---------- module card (dashboard) ---------- */
 .mod-card {
   display: flex; flex-direction: column; gap: var(--sp-3);

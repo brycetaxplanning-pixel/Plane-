@@ -251,6 +251,171 @@ console.log('\n9. A habit can be swiped away, and brought back');
   await ctx.close();
 }
 
+console.log('\n13. Adding habits from the list, and the five-a-day recommendation');
+{
+  const { ctx, page } = await seeded(430);
+  await page.goto(BASE + '#/habits', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(700);
+  const pop = page.locator('.pop button').first();
+  if (await pop.count()) await pop.click().catch(() => {});
+  await page.waitForTimeout(300);
+
+  const daily = page.locator('.card', { hasText: 'Every day' }).first();
+  const tools = daily.locator('.cardtool');
+  (await tools.count()) === 2 ? ok('the daily list carries two corner controls') : bad('tools', `${await tools.count()}`);
+  // One in each corner, above the heading: settings left, add right.
+  const geo = await daily.evaluate((card) => {
+    const [a, b] = [...card.querySelectorAll('.cardtool')].map((e) => e.getBoundingClientRect());
+    const head = card.querySelector('.card-head').getBoundingClientRect();
+    return { leftFirst: a.left < b.left, aboveHead: b.bottom <= head.top + 1 };
+  });
+  geo.leftFirst && geo.aboveHead ? ok('one in each top corner, above the heading') : bad('corners', JSON.stringify(geo));
+
+  await daily.getByLabel('Habit settings').click();
+  await page.waitForTimeout(300);
+  /When a new day starts/.test(await page.getByRole('dialog').innerText())
+    ? ok('the left one opens the settings popup') : bad('settings', 'no settings popup');
+  await page.getByRole('dialog').getByRole('button', { name: 'Done' }).click();
+  await page.waitForTimeout(300);
+
+  const countDaily = async () => (await read(page)).habits.items.filter((h) => !h.archived && h.cadence === 'daily').length;
+  const was = await countDaily();
+
+  const addDaily = async (title) => {
+    await daily.getByLabel('Add a daily habit').click();
+    await page.waitForTimeout(250);
+    const form = page.getByRole('dialog');
+    await form.getByLabel('Habit', { exact: true }).fill(title);
+    await form.getByRole('button', { name: 'Save' }).click();
+    await page.waitForTimeout(400);
+  };
+
+  // The sample log runs five daily habits, so the next one is the sixth.
+  await addDaily('Read ten pages');
+  const warn = page.getByRole('dialog');
+  /more than five/i.test(await warn.innerText())
+    ? ok('the sixth daily habit is met with the recommendation') : bad('warning', (await warn.innerText()).slice(0, 160));
+  /harder to finish/.test(await warn.innerText())
+    ? ok('which says why, not just that') : bad('reason', (await warn.innerText()).slice(0, 200));
+
+  await warn.getByRole('button', { name: 'Not now' }).click();
+  await page.waitForTimeout(400);
+  (await countDaily()) === was ? ok('backing out does not add it') : bad('not now', `${await countDaily()} vs ${was}`);
+
+  await addDaily('Read ten pages');
+  await page.getByRole('dialog').getByRole('button', { name: 'Add it anyway' }).click();
+  await page.waitForTimeout(500);
+  // Recommended, not enforced. It is his list.
+  (await countDaily()) === was + 1 ? ok('and nothing is actually blocked') : bad('anyway', `${await countDaily()} vs ${was + 1}`);
+
+  // Only new daily ones. Editing the sixth is not the moment to be told.
+  await page.locator('.habit-main').filter({ hasText: 'Read ten pages' }).click();
+  await page.waitForTimeout(300);
+  await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
+  await page.waitForTimeout(400);
+  (await page.locator('.modal').count()) === 0
+    ? ok('and editing one you already have says nothing') : bad('edit', 'warned on an edit');
+  await ctx.close();
+}
+
+console.log('\n14. A ceiling is tallied as it happens');
+{
+  const { ctx, page } = await seeded(430);
+  await page.goto(BASE + '#/habits', { waitUntil: 'networkidle' });
+  await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('plane.state.v1'));
+    s.habits.items = s.habits.items.filter((h) => !(h.cadence === 'daily' && h.kind === 'under'));
+    s.habits.items.push({ id: 'cap1', title: 'Open Instagram', cadence: 'daily', kind: 'under', target: 3, unit: '×', createdAt: '2026-09-01' });
+    localStorage.setItem('plane.state.v1', JSON.stringify(s));
+  });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(700);
+  const pop = page.locator('.pop button').first();
+  if (await pop.count()) await pop.click().catch(() => {});
+  await page.waitForTimeout(300);
+
+  const row = page.locator('.habit').filter({ hasText: 'Open Instagram' });
+  const xp = () => page.evaluate(() => JSON.parse(localStorage.getItem('plane.state.v1')).xp.length);
+  const before = await xp();
+
+  // Nothing tapped and it already counts: "no more than three" is satisfied
+  // at zero, and the day is in progress.
+  /Under the cap/.test(await row.innerText()) ? ok('a ceiling starts the day met') : bad('start', await row.innerText());
+  (await row.locator('.tally > b').innerText()).startsWith('0')
+    ? ok('with nothing on the tally') : bad('tally', await row.locator('.tally > b').innerText());
+
+  for (let i = 0; i < 3; i += 1) { await row.getByLabel('One more').click(); await page.waitForTimeout(220); }
+  (await row.locator('.tally > b').innerText()).startsWith('3') ? ok('three taps count three') : bad('count', await row.locator('.tally > b').innerText());
+  /Under the cap/.test(await row.innerText()) ? ok('and at the cap it is still met') : bad('at cap', await row.innerText());
+
+  await row.getByLabel('One more').click();
+  await page.waitForTimeout(300);
+  /Over the cap today/.test(await row.innerText())
+    ? ok('one past it says so, in those words') : bad('over', await row.innerText());
+  // Not "missed 17 days running", which is true and is not the question.
+  !/Missed \d+ days/.test(await row.innerText())
+    ? ok('rather than reporting the streak instead') : bad('label', await row.innerText());
+
+  // A counter that pays per press is a counter that gets pressed.
+  (await xp()) === before ? ok('and tapping it pays no XP') : bad('farm', `${await xp()} vs ${before}`);
+
+  await row.getByLabel('One fewer').click();
+  await page.waitForTimeout(300);
+  /Under the cap/.test(await row.innerText()) ? ok('stepping back down puts it right') : bad('down', await row.innerText());
+  await ctx.close();
+}
+
+console.log('\n15. The habit day turns over at four in the morning');
+{
+  const ctx = await browser.newContext({ viewport: { width: 430, height: 950 } });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => problems.push('pageerror: ' + e.message));
+
+  // Half past one in the morning: still the night before, as far as habits go.
+  // setFixedTime rather than install: install pauses timers too, and the app
+  // needs its own to settle.
+  await page.clock.setFixedTime(new Date('2026-09-18T01:30:00'));
+  await page.goto(BASE + '#/habits', { waitUntil: 'networkidle' });
+  await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('plane.state.v1'));
+    s.habits.items = [{ id: 'h1', title: 'Pray', cadence: 'daily', kind: 'check', createdAt: '2026-09-01' }];
+    s.habits.logs = [];
+    localStorage.setItem('plane.state.v1', JSON.stringify(s));
+  });
+  // Reloaded, not navigated: a hash change leaves the running app holding the
+  // state it already had, and it writes that straight back over this.
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(700);
+  const pop = page.locator('.pop button').first();
+  if (await pop.count()) await pop.click().catch(() => {});
+  await page.waitForTimeout(300);
+
+  await page.locator('.habit').filter({ hasText: 'Pray' }).getByRole('button', { name: 'Done', exact: true }).click();
+  await page.waitForTimeout(500);
+  let st = await read(page);
+  st.habits.logs[0]?.date === '2026-09-17'
+    ? ok('something logged at 01:30 belongs to the day before') : bad('day', JSON.stringify(st.habits.logs[0]));
+
+  // Put the seam back to midnight and the same moment is the next day.
+  await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('plane.state.v1'));
+    s.habits.dayStartHour = 0;
+    s.habits.logs = [];
+    localStorage.setItem('plane.state.v1', JSON.stringify(s));
+  });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(700);
+  const pop2 = page.locator('.pop button').first();
+  if (await pop2.count()) await pop2.click().catch(() => {});
+  await page.waitForTimeout(300);
+  await page.locator('.habit').filter({ hasText: 'Pray' }).getByRole('button', { name: 'Done', exact: true }).click();
+  await page.waitForTimeout(500);
+  st = await read(page);
+  st.habits.logs[0]?.date === '2026-09-18'
+    ? ok('and at midnight it is the new day again') : bad('midnight', JSON.stringify(st.habits.logs[0]));
+  await ctx.close();
+}
+
 await browser.close();
 console.log(problems.length ? `\n${problems.length} PROBLEM(S):\n` + problems.join('\n') : '\nAll checks passed.');
 process.exit(problems.length ? 1 : 0);

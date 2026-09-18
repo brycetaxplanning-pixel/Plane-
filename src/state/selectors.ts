@@ -2,7 +2,7 @@ import { bucketOf, type AppState, type ModuleId } from '../lib/schema';
 import { inWeek, lastDays, lastWeeks, monthKey, todayKey, weekDays, weekStart, type DateKey } from '../lib/date';
 import { needsReview, spendByCategory } from '../lib/finance';
 import { reminderStats } from '../lib/reminders';
-import { allRows, attention, dailyCompletion, type HabitRow } from '../lib/habits';
+import { allRows, attention, dailyCompletion, habitDay, type HabitRow } from '../lib/habits';
 import { startingTotal } from '../lib/invest';
 import { goalRows } from '../lib/budgetGoals';
 import { healthSummary } from '../lib/health';
@@ -221,6 +221,7 @@ export interface HabitSummary {
 
 export function habitStats(s: AppState): HabitSummary {
   const rows = allRows(s);
+  const today = habitDay(s);
   const daily = rows.filter((r) => r.habit.cadence === 'daily');
   return {
     rows,
@@ -229,7 +230,7 @@ export function habitStats(s: AppState): HabitSummary {
     needsAttention: attention(rows),
     todayDone: daily.filter((r) => r.metNow).length,
     todayTotal: daily.length,
-    completion: dailyCompletion(rows),
+    completion: dailyCompletion(rows, today, today),
   };
 }
 

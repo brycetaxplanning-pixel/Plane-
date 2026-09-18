@@ -819,7 +819,17 @@ export interface AppState {
     panels: BloodPanel[];
   };
   dating: { people: Person[]; outings: Outing[] };
-  habits: { items: Habit[]; logs: HabitLog[]; tone: CoachTone };
+  habits: {
+    items: Habit[];
+    logs: HabitLog[];
+    tone: CoachTone;
+    /**
+     * The hour a habit day rolls over, 0–11. Four in the morning by default:
+     * midnight is the wrong seam for anything done late, and a habit logged at
+     * half past twelve belongs to the day that is ending.
+     */
+    dayStartHour: number;
+  };
   notes: { items: Note[] };
   /** Week-start keys for weeks where every habit was met, and the ones
    *  already celebrated so the popup only fires once. */
@@ -915,7 +925,7 @@ export function emptyState(): AppState {
       panels: [],
     },
     dating: { people: [], outings: [] },
-    habits: { items: [], logs: [], tone: 'direct' },
+    habits: { items: [], logs: [], tone: 'direct', dayStartHour: 4 },
     notes: { items: [] },
     awards: { enlightened: [], acknowledged: [] },
     goals: { items: [] },
@@ -999,6 +1009,9 @@ export function migrate(raw: unknown): AppState {
       ...(s.habits ?? {}),
       items: s.habits?.items ?? [],
       logs: s.habits?.logs ?? [],
+      // Spelled out rather than left to the spread: a save carrying the key
+      // with nothing in it would otherwise put the day back to midnight.
+      dayStartHour: s.habits?.dayStartHour ?? base.habits.dayStartHour,
     },
     notes: { items: s.notes?.items ?? [] },
     awards: {

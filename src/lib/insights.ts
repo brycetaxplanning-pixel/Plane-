@@ -1,6 +1,6 @@
 import { bucketOf, type AppState, type Habit } from './schema';
 import { addDays, fmtDate, fmtRange, lastWeeks, monthKey, todayKey, weekStart, type DateKey } from './date';
-import { allRows, dailyCompletion } from './habits';
+import { allRows, dailyCompletion, habitDay } from './habits';
 import { toMiles } from './units';
 
 /**
@@ -57,6 +57,7 @@ const OUTCOMES: MetricKey[] = ['tasksDone', 'outreach', 'meetings', 'mood', 'ene
 
 export function weeklyRows(state: AppState, weeks = 12): WeekRow[] {
   const rows = allRows(state);
+  const today = habitDay(state);
 
   return lastWeeks(weeks).map((week) => {
     const inWeekRange = (d: DateKey) => weekStart(d) === week;
@@ -77,7 +78,7 @@ export function weeklyRows(state: AppState, weeks = 12): WeekRow[] {
       outreach: state.planning.outreach.filter((o) => inWeekRange(o.date)).length,
       meetings: state.planning.outreach.filter((o) => inWeekRange(o.date) && o.outcome === 'Meeting booked').length,
       tasksDone: state.work.projects.flatMap((p) => p.tasks).filter((t) => t.doneAt && inWeekRange(t.doneAt)).length,
-      habitPct: Math.round((days.reduce((n, d) => n + dailyCompletion(rows, d), 0) / 7) * 100),
+      habitPct: Math.round((days.reduce((n, d) => n + dailyCompletion(rows, d, today), 0) / 7) * 100),
       mood: avg(checkIns.map((c) => c.mood)),
       energy: avg(checkIns.map((c) => c.energy)),
       notes: state.notes.items.filter((n) => inWeekRange(n.createdAt)).length,

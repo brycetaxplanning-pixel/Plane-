@@ -17,6 +17,22 @@ export function fromKey(key: DateKey): Date {
 
 export const todayKey = (): DateKey => toKey(new Date());
 
+/**
+ * The day a moment belongs to when the day is taken to start at `startHour`.
+ *
+ * Midnight is the wrong seam for anything you do late. Praying at midnight, a
+ * workout that runs past twelve, a book finished at one in the morning — all of
+ * them belong to the day that is ending, not to the one that has technically
+ * begun. Shifting the clock back by the start hour before the date is read puts
+ * them where they belong, and leaves every stored date exactly as it was.
+ */
+export function dayKeyAt(startHour: number, now: Date = new Date()): DateKey {
+  if (!startHour) return toKey(now);
+  const d = new Date(now);
+  d.setHours(d.getHours() - startHour);
+  return toKey(d);
+}
+
 export function addDays(key: DateKey, n: number): DateKey {
   const d = fromKey(key);
   d.setDate(d.getDate() + n);

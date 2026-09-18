@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Cadence, CoachTone, Habit, HabitKind } from '../lib/schema';
 import { XP } from '../lib/gamification';
 import { dowLabel, todayKey } from '../lib/date';
-import { meetsTarget, statusColor, statusIcon, weekCompletion, type HabitRow } from '../lib/habits';
+import { habitDay, meetsTarget, statusColor, statusIcon, weekCompletion, type HabitRow } from '../lib/habits';
 import { uid } from '../lib/id';
 import { useApp } from '../state/context';
 import { habitStats } from '../state/selectors';
@@ -18,6 +18,15 @@ import { SwipeRow } from '../components/ui/SwipeRow';
 import { SortableList } from '../components/ui/SortableList';
 
 const ACCENT = 'var(--mod-habits)';
+
+/**
+ * How many daily habits this will take on without saying something.
+ *
+ * Not a limit — nothing is blocked. The point of the module is to finish all
+ * of them, and a list you finish is short. Past this it warns once, each time,
+ * and then does what it is told.
+ */
+const RECOMMENDED_DAILY = 5;
 
 /** The same fact in three registers, matching the tone set below. It states
  *  the number and stops — no lecture attached. */
@@ -40,7 +49,12 @@ const TONES: { id: CoachTone; label: string; blurb: string }[] = [
 export function Habits() {
   const { state, update, reward, toast } = useApp();
   const stats = habitStats(state);
-  const [editing, setEditing] = useState<Habit | 'new' | null>(null);
+  const today = habitDay(state);
+  /** 'new' opens a blank form; a cadence opens one already set to it. */
+  const [editing, setEditing] = useState<Habit | 'new' | Cadence | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  /** A habit held at the door by the recommendation, waiting on an answer. */
+  const [confirming, setConfirming] = useState<Habit | null>(null);
 
   /** Removes the habit and its logs, and offers the whole lot straight back —
    *  a swipe is easy to do by accident and a habit carries its history. */
@@ -94,7 +108,7 @@ export function Habits() {
 
   const commitLog = (habit: Habit, value: { amount?: number; time?: string }) => {
     const met = meetsTarget(habit, value);
-    const today = todayKey();
+    const today = habitDay(state);
     const xp = habit.cadence === 'weekly' ? XP.habitWeekly : XP.habitDone;
 
     const apply = (s: typeof state) => ({
@@ -122,8 +136,34 @@ export function Habits() {
     else setLogging(row);
   };
 
+  /**
+   * One more of the thing you are trying to do less of.
+   *
+   * "Only open Instagram three times" is not a number you sit down and type at
+   * the end of the day — it is a tally you keep as it happens, so it is a
+   * button you press each time, and the habit reads as met for as long as the
+   * tally is inside the cap.
+   *
+   * Deliberately pays no XP. A counter that pays per press is a counter that
+   * gets pressed; staying under a cap is the day's work, not the tap's.
+   */
+  const countUnder = (habit: Habit, next: number) => {
+    const today = habitDay(state);
+    const amount = Math.max(0, next);
+    update((s) => ({
+      ...s,
+      habits: {
+        ...s.habits,
+        logs: [
+          ...s.habits.logs.filter((l) => !(l.habitId === habit.id && l.date === today)),
+          { id: uid('hl'), habitId: habit.id, date: today, met: amount <= (habit.target ?? 0), amount },
+        ],
+      },
+    }));
+  };
+
   const undoToday = (habit: Habit) => {
-    const today = todayKey();
+    const today = habitDay(state);
     update((s) => ({
       ...s,
       habits: { ...s.habits, logs: s.habits.logs.filter((l) => !(l.habitId === habit.id && l.date === today)) },
@@ -149,6 +189,40 @@ export function Habits() {
       </div>
     );
   }
+
+  /** Writes it. Everything that saves a habit ends up here. */
+  const putHabit = (h: Habit) => {
+    update((s) => ({
+      ...s,
+      habits: {
+        ...s.habits,
+        items: s.habits.items.some((x) => x.id === h.id)
+          ? s.habits.items.map((x) => (x.id === h.id ? h : x))
+          : [...s.habits.items, h],
+      },
+    }));
+    setEditing(null);
+    setConfirming(null);
+    toast('Habit saved');
+  };
+
+  /**
+   * Saves it, unless it would be the sixth daily habit and is new.
+   *
+   * Only new ones are stopped, and only daily ones: editing the sixth habit you
+   * already have is not the moment to be told you have six, and a weekly habit
+   * is not competing for the same day.
+   */
+  const saveHabit = (h: Habit) => {
+    const isNew = !state.habits.items.some((x) => x.id === h.id);
+    const dailyAfter = state.habits.items.filter((x) => !x.archived && x.cadence === 'daily').length + 1;
+    if (isNew && h.cadence === 'daily' && dailyAfter > RECOMMENDED_DAILY) {
+      setEditing(null);
+      setConfirming(h);
+      return;
+    }
+    putHabit(h);
+  };
 
   const sinks = sinkTotals(state);
 
@@ -186,6 +260,16 @@ export function Habits() {
 
       {stats.daily.length > 0 && (
         <section className="card">
+          {/* The two things you do to the list itself, one in each top corner:
+              change how it behaves on the left, add to it on the right. */}
+          <div className="cardtools">
+            <button className="cardtool" onClick={() => setSettingsOpen(true)} aria-label="Habit settings">
+              <span aria-hidden>{Icons.gear()}</span>
+            </button>
+            <button className="cardtool" onClick={() => setEditing('daily')} aria-label="Add a daily habit">
+              <span aria-hidden>{Icons.plus()}</span>
+            </button>
+          </div>
           <SectionHead title="Every day" sub={`${stats.todayDone} of ${stats.todayTotal} done today`} />
           <SortableList
             ids={stats.daily.map((r) => r.habit.id)}
@@ -194,7 +278,13 @@ export function Habits() {
           >
             {stats.daily.map((row) => (
               <SwipeRow key={row.habit.id} label={row.habit.title} onDelete={() => removeHabit(row.habit)}>
-                <HabitRowView row={row} onLog={() => quickLog(row)} onUndo={() => undoToday(row.habit)} onEdit={() => setEditing(row.habit)} />
+                <HabitRowView
+                  row={row}
+                  onLog={() => quickLog(row)}
+                  onUndo={() => undoToday(row.habit)}
+                  onEdit={() => setEditing(row.habit)}
+                  onCount={(n) => countUnder(row.habit, n)}
+                />
               </SwipeRow>
             ))}
           </SortableList>
@@ -203,6 +293,12 @@ export function Habits() {
 
       {stats.weekly.length > 0 && (
         <section className="card">
+          <div className="cardtools">
+            <span />
+            <button className="cardtool" onClick={() => setEditing('weekly')} aria-label="Add a weekly habit">
+              <span aria-hidden>{Icons.plus()}</span>
+            </button>
+          </div>
           <SectionHead title="Every week" sub="Counts reset on Monday" />
           <SortableList
             ids={stats.weekly.map((r) => r.habit.id)}
@@ -223,11 +319,11 @@ export function Habits() {
         <section className="card">
           <SectionHead title="Daily habits hit" sub="Share of your daily habits, last 7 days" />
           <BarChart
-            data={weekCompletion(stats.rows).map((d) => ({ key: d.key, value: d.value, label: dowLabel(d.key) }))}
+            data={weekCompletion(stats.rows, today).map((d) => ({ key: d.key, value: d.value, label: dowLabel(d.key) }))}
             color={ACCENT}
             target={100}
             targetLabel="All of them"
-            highlightKey={todayKey()}
+            highlightKey={today}
             formatValue={(n) => `${n}%`}
             ariaLabel="Percentage of daily habits completed each day this week"
           />
@@ -305,35 +401,24 @@ export function Habits() {
         </section>
       )}
 
-      <section className="card">
-        <SectionHead title="How hard should it push?" sub="Changes the wording here and how the Life Coach talks to you" />
-        <div className="row-2 wrap">
-          {TONES.map((t) => (
-            <button
-              key={t.id}
-              className="chip"
-              aria-pressed={state.habits.tone === t.id}
-              onClick={() => update((s) => ({ ...s, habits: { ...s.habits, tone: t.id } }))}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-        <p className="t-xs t-muted" style={{ marginTop: 6 }}>
-          {TONES.find((t) => t.id === state.habits.tone)?.blurb}
-        </p>
-      </section>
+      {settingsOpen && <HabitSettings onClose={() => setSettingsOpen(false)} />}
 
-      <button className="btn btn-accent btn-lg btn-block" style={{ ['--mod' as string]: ACCENT }} onClick={() => setEditing('new')}>
-        + Add a habit
-      </button>
+      {confirming && (
+        <TooManyHabits
+          count={state.habits.items.filter((h) => !h.archived && h.cadence === 'daily').length + 1}
+          title={confirming.title}
+          onCancel={() => setConfirming(null)}
+          onConfirm={() => putHabit(confirming)}
+        />
+      )}
 
       {editing && (
         <HabitForm
-          habit={editing === 'new' ? null : editing}
+          habit={typeof editing === 'string' ? null : editing}
+          defaultCadence={editing === 'daily' || editing === 'weekly' ? editing : undefined}
           onClose={() => setEditing(null)}
-          onDelete={editing === 'new' ? undefined : () => {
-            const id = (editing as Habit).id;
+          onDelete={typeof editing === 'string' ? undefined : () => {
+            const id = editing.id;
             update((s) => ({
               ...s,
               habits: { ...s.habits, items: s.habits.items.filter((h) => h.id !== id), logs: s.habits.logs.filter((l) => l.habitId !== id) },
@@ -341,17 +426,7 @@ export function Habits() {
             setEditing(null);
             toast('Habit removed');
           }}
-          onSave={(h) => {
-            update((s) => ({
-              ...s,
-              habits: {
-                ...s.habits,
-                items: s.habits.items.some((x) => x.id === h.id) ? s.habits.items.map((x) => (x.id === h.id ? h : x)) : [...s.habits.items, h],
-              },
-            }));
-            setEditing(null);
-            toast('Habit saved');
-          }}
+          onSave={saveHabit}
         />
       )}
 
@@ -366,15 +441,118 @@ export function Habits() {
   );
 }
 
+/**
+ * The recommendation, once, at the door.
+ *
+ * It does not block anything — the button that goes through is the primary
+ * one, and nothing is disabled. The point of the module is to finish all of
+ * them, and the honest thing to say when the list grows past the length people
+ * actually finish is to say it and then get out of the way.
+ */
+function TooManyHabits({
+  count, title, onCancel, onConfirm,
+}: {
+  count: number; title: string; onCancel: () => void; onConfirm: () => void;
+}) {
+  return (
+    <Modal
+      title="That would be more than five"
+      onClose={onCancel}
+      footer={
+        <>
+          <button className="btn" onClick={onCancel}>Not now</button>
+          <button className="btn btn-accent" style={{ ['--mod' as string]: ACCENT }} onClick={onConfirm}>
+            Add it anyway
+          </button>
+        </>
+      }
+    >
+      <div className="stack-3">
+        <p className="t-sm">
+          <b>{title}</b> would be your {count}th habit every day. We strongly recommend staying at five or fewer.
+        </p>
+        <p className="t-sm t-sec">
+          Every one you add makes the whole set harder to finish, and this module is scored on finishing all of them —
+          not most of them. Six habits done four days a week is a worse week than four habits done every day.
+        </p>
+        <p className="t-sm t-sec">
+          If it matters enough to add, it may be worth taking one off first.
+        </p>
+      </div>
+    </Modal>
+  );
+}
+
+/** Everything about how the module behaves, rather than what is in it. */
+function HabitSettings({ onClose }: { onClose: () => void }) {
+  const { state, update } = useApp();
+  const hour = state.habits.dayStartHour ?? 0;
+
+  return (
+    <Modal
+      title="Habit settings"
+      onClose={onClose}
+      footer={<button className="btn btn-accent" style={{ ['--mod' as string]: ACCENT }} onClick={onClose}>Done</button>}
+    >
+      <div className="stack-4">
+        <Field
+          label="When a new day starts"
+          hint={hour === 0
+            ? 'Midnight. Anything after twelve counts for the next day.'
+            : `${hour}am. Anything logged before ${hour}am still counts for the day before — so something done late at night lands on the day you were actually having.`}
+        >
+          <div className="row-2 wrap">
+            {[0, 2, 3, 4, 5, 6].map((h) => (
+              <button
+                key={h}
+                type="button"
+                className="chip"
+                aria-pressed={hour === h}
+                onClick={() => update((s) => ({ ...s, habits: { ...s.habits, dayStartHour: h } }))}
+              >
+                {h === 0 ? 'Midnight' : `${h}am`}
+              </button>
+            ))}
+          </div>
+        </Field>
+
+        <Field label="How hard should it push?" hint="Changes the wording here and how the Life Coach talks to you.">
+          <div className="row-2 wrap">
+            {TONES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className="chip"
+                aria-pressed={state.habits.tone === t.id}
+                onClick={() => update((s) => ({ ...s, habits: { ...s.habits, tone: t.id } }))}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <p className="t-xs t-muted" style={{ marginTop: 6 }}>
+            {TONES.find((t) => t.id === state.habits.tone)?.blurb}
+          </p>
+        </Field>
+      </div>
+    </Modal>
+  );
+}
+
 function HabitRowView({
-  row, onLog, onUndo, onEdit,
+  row, onLog, onUndo, onEdit, onCount,
 }: {
   row: HabitRow;
   onLog: () => void;
   onUndo: () => void;
   onEdit: () => void;
+  /** Present on a daily list, where a ceiling is tallied rather than typed. */
+  onCount?: (n: number) => void;
 }) {
   const weekly = row.habit.cadence === 'weekly';
+  /* A ceiling you keep during the day rather than report at the end of it. */
+  const tally = !weekly && row.habit.kind === 'under' && onCount
+    ? row.tally : null;
 
   return (
     <div className="habit" style={{ ['--stat' as string]: statusColor(row.status) }}>
@@ -407,7 +585,19 @@ function HabitRowView({
         )}
       </button>
 
-      {row.metNow && !weekly ? (
+      {tally !== null ? (
+        <span className="tally" aria-label={`${row.habit.title}: ${tally} of ${row.habit.target ?? 0}`}>
+          <button className="tally-step" onClick={() => onCount?.(tally - 1)} disabled={tally === 0} aria-label="One fewer">
+            <span aria-hidden>{Icons.minus()}</span>
+          </button>
+          <b className={tally > (row.habit.target ?? 0) ? 'is-over' : undefined}>
+            {tally}<i>/{row.habit.target ?? 0}</i>
+          </b>
+          <button className="tally-step" onClick={() => onCount?.(tally + 1)} aria-label="One more">
+            <span aria-hidden>{Icons.plus()}</span>
+          </button>
+        </span>
+      ) : row.metNow && !weekly ? (
         <button className="btn btn-sm btn-ghost" onClick={onUndo}>Undo</button>
       ) : (
         <button className="btn btn-sm btn-accent" style={{ ['--mod' as string]: ACCENT }} onClick={onLog}>
@@ -462,16 +652,18 @@ function LogForm({
 }
 
 function HabitForm({
-  habit, onClose, onSave, onDelete,
+  habit, defaultCadence, onClose, onSave, onDelete,
 }: {
   habit: Habit | null;
+  /** Set when the form was opened from one list's own plus button. */
+  defaultCadence?: Cadence;
   onClose: () => void;
   onSave: (h: Habit) => void;
   onDelete?: () => void;
 }) {
   const [title, setTitle] = useState(habit?.title ?? '');
   const [icon, setIcon] = useState<IconName | undefined>(habit?.icon);
-  const [cadence, setCadence] = useState<Cadence>(habit?.cadence ?? 'daily');
+  const [cadence, setCadence] = useState<Cadence>(habit?.cadence ?? defaultCadence ?? 'daily');
   const [kind, setKind] = useState<HabitKind>(habit?.kind ?? 'check');
   const [timesPerWeek, setTimesPerWeek] = useState(String(habit?.timesPerWeek ?? 1));
   const [target, setTarget] = useState(String(habit?.target ?? ''));

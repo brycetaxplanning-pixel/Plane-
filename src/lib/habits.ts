@@ -1,6 +1,16 @@
 import type { IconName } from '../components/layout/Icons';
 import type { AppState, Habit, HabitLog } from './schema';
-import { addDays, diffDays, inWeek, lastDays, todayKey, weekStart, type DateKey } from './date';
+import { addDays, dayKeyAt, diffDays, inWeek, lastDays, todayKey, weekStart, type DateKey } from './date';
+
+/**
+ * Which day the habits are currently on.
+ *
+ * Not necessarily the calendar day: the module keeps its own seam, four in the
+ * morning by default, so that something done at half past midnight counts for
+ * the day that is ending rather than starting a fresh one you have barely
+ * begun. Everything the module calls "today" comes through here.
+ */
+export const habitDay = (state: AppState): DateKey => dayKeyAt(state.habits.dayStartHour ?? 0);
 
 export type HabitStatus = 'done' | 'due' | 'yellow' | 'red' | 'new';
 
@@ -13,6 +23,8 @@ export interface HabitRow {
   daysSince: number | null;
   /** Daily: met today. Weekly: hit this week's count. */
   metNow: boolean;
+  /** For a ceiling habit: how many so far today. 0 when nothing is logged. */
+  tally: number;
   /** Weekly only. */
   weekCount: number;
   weekTarget: number;
@@ -47,8 +59,7 @@ export function meetsTarget(habit: Habit, value: { amount?: number; time?: strin
   return true;
 }
 
-export function habitRow(habit: Habit, logs: HabitLog[]): HabitRow {
-  const today = todayKey();
+export function habitRow(habit: Habit, logs: HabitLog[], today: DateKey = todayKey()): HabitRow {
   const relevant = logs.filter((l) => l.habitId === habit.id && l.met).map((l) => l.date).sort();
   const lastMet = relevant.at(-1) ?? null;
   const daysSince = lastMet ? diffDays(today, lastMet) : null;
@@ -81,12 +92,19 @@ export function habitRow(habit: Habit, logs: HabitLog[]): HabitRow {
 
     return {
       habit, status, statusLabel: labelFor(status, habit.cadence, missStreak),
-      daysSince, metNow, weekCount, weekTarget: target, missStreak, last7,
+      daysSince, metNow, tally: 0, weekCount, weekTarget: target, missStreak, last7,
       nudge: '',
     };
   }
 
-  const metNow = metLog(logs, habit.id, today);
+  // A ceiling is met until it is broken. "No more than three" is satisfied at
+  // zero, so a day with nothing tapped yet counts — the day is in progress and
+  // you are under the cap so far. Past days are not read this way: a day with
+  // nothing entered was never recorded, and the rest of the module is careful
+  // not to assume those were zeroes.
+  const logged = logs.find((l) => l.habitId === habit.id && l.date === today);
+  const metNow = habit.kind === 'under' && !logged ? true : metLog(logs, habit.id, today);
+
   let missStreak = 0;
   for (let d = 1; d <= 60; d++) {
     const date = addDays(today, -d);
@@ -100,9 +118,16 @@ export function habitRow(habit: Habit, logs: HabitLog[]): HabitRow {
     : missStreak === 0 ? 'due'
     : missStreak === 1 ? 'yellow' : 'red';
 
+  /* A ceiling says what it is doing today, not how long the streak of missed
+     days is. "Missed 17 days running" is true and is not the answer to "how am
+     I doing on this right now", which is the question the row is asked. */
+  const ceiling = habit.kind === 'under'
+    ? metNow ? 'Under the cap' : 'Over the cap today'
+    : null;
+
   return {
-    habit, status, statusLabel: labelFor(status, habit.cadence, missStreak),
-    daysSince, metNow, weekCount: 0, weekTarget: 1, missStreak, last7,
+    habit, status, statusLabel: ceiling ?? labelFor(status, habit.cadence, missStreak),
+    daysSince, metNow, tally: logged?.amount ?? 0, weekCount: 0, weekTarget: 1, missStreak, last7,
     nudge: '',
   };
 }
@@ -179,10 +204,11 @@ export function nudgeFor(row: HabitRow, tone: keyof typeof TONE): string {
 
 export function allRows(state: AppState): HabitRow[] {
   const tone = state.habits.tone;
+  const today = habitDay(state);
   return state.habits.items
     .filter((h) => !h.archived)
     .map((h) => {
-      const row = habitRow(h, state.habits.logs);
+      const row = habitRow(h, state.habits.logs, today);
       return { ...row, nudge: nudgeFor(row, tone) };
     });
 }
@@ -192,15 +218,21 @@ export const attention = (rows: HabitRow[]): HabitRow[] =>
   rows.filter((r) => r.status === 'red' || r.status === 'yellow')
     .sort((a, b) => (a.status === b.status ? b.missStreak - a.missStreak : a.status === 'red' ? -1 : 1));
 
-/** Share of daily habits met, for the module's ring. */
-export function dailyCompletion(rows: HabitRow[], day: DateKey = todayKey()): number {
+/**
+ * Share of daily habits met, for the module's ring.
+ *
+ * The current day reads `metNow` rather than the history, because that is the
+ * one day where a ceiling with nothing tapped yet still counts. Every other day
+ * is read off what was actually logged.
+ */
+export function dailyCompletion(rows: HabitRow[], day: DateKey = todayKey(), today: DateKey = todayKey()): number {
   const daily = rows.filter((r) => r.habit.cadence === 'daily');
   if (daily.length === 0) return 0;
-  const met = daily.filter((r) => r.last7.find((d) => d.date === day)?.met).length;
+  const met = daily.filter((r) => (day === today ? r.metNow : r.last7.find((d) => d.date === day)?.met)).length;
   return met / daily.length;
 }
 
 /** Daily completion over the last seven days, for the bar chart. */
-export function weekCompletion(rows: HabitRow[]): { key: DateKey; value: number }[] {
-  return lastDays(7).map((d) => ({ key: d, value: Math.round(dailyCompletion(rows, d) * 100) }));
+export function weekCompletion(rows: HabitRow[], today: DateKey = todayKey()): { key: DateKey; value: number }[] {
+  return lastDays(7, today).map((d) => ({ key: d, value: Math.round(dailyCompletion(rows, d, today) * 100) }));
 }
