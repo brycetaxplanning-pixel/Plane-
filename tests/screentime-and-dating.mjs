@@ -62,7 +62,8 @@ console.log('\n3. Dating: a person, an outing, and the arithmetic');
   await page.goto(BASE + '#/dating', { waitUntil: 'networkidle' });
   await page.waitForTimeout(500);
   const intro = await page.locator('.stack').first().innerText();
-  /never agreed to be in it/.test(intro) ? ok('it is upfront about whose data this is') : bad('privacy note', intro.slice(0, 160));
+  !/never agreed to be in it/.test(intro)
+    ? ok('no standing notice takes up the top of the module') : bad('notice', intro.slice(0, 160));
 
   await page.locator('.fab').click();
   let form = page.getByRole('dialog');

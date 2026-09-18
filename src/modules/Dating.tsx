@@ -71,7 +71,6 @@ export function Dating() {
           Nobody here yet.<br />
           <span className="t-muted">Press the plus. A first name or initials is enough.</span>
         </p>
-        <Privacy />
         <Fab onClick={() => setEditingPerson('new')} label="Add someone" color={ACCENT}>
           {Icons.plus()}
         </Fab>
@@ -205,8 +204,6 @@ export function Dating() {
         )}
       </section>
 
-      <Privacy />
-
       <Fab onClick={() => setEditingPerson('new')} label="Add someone" color={ACCENT}>
         {Icons.plus()}
       </Fab>
@@ -222,18 +219,6 @@ export function Dating() {
 
       {logging && <OutingForm person={logging} onClose={() => setLogging(null)} onSave={saveOuting} />}
     </div>
-  );
-}
-
-function Privacy() {
-  return (
-    <section className="card card-sunken">
-      <p className="t-sm t-sec" style={{ margin: 0 }}>
-        This is the one part of the app holding information about someone who never agreed to be in it, so it asks for
-        as little as it can: a first name or initials, and what you spent. It is stored on this device like everything
-        else, and it is in the export — worth knowing before you send that file anywhere.
-      </p>
-    </section>
   );
 }
 
