@@ -105,7 +105,13 @@ console.log('\n3. Dating: a person, an outing, and the arithmetic');
   const text = await card.innerText();
   /\$140/.test(text) ? ok('the spend totals') : bad('total', text.slice(0, 160));
   /\$70/.test(text) ? ok('per outing is the mean of the two') : bad('per outing', text.slice(0, 160));
-  /\$140/.test(text) ? ok('and per night divides by the one that counted') : bad('per night', text.slice(0, 160));
+  /\$140/.test(text) ? ok('and the cost per nut divides by the one that counted') : bad('per nut', text.slice(0, 160));
+  /COST PER NUT/i.test(text) ? ok('which is what the tile calls it') : bad('label', text.slice(0, 200));
+
+  // The row used to carry a bare dollar figure with nothing saying what it
+  // stood for. It is the rate now, and it says so in the same breath.
+  const row = await page.locator('.person-head').first().innerText();
+  /\$140\/nut/.test(row) ? ok('and the row reads as a rate, not a bare total') : bad('row', row.replace(/\n/g, ' | '));
 
   // And a way back to a plain list that does not rely on knowing the header
   // toggles too.
@@ -138,8 +144,14 @@ console.log('\n4. With no nights logged it does not divide by zero');
   await page.waitForTimeout(400);
   const card = page.locator('section.card').filter({ hasText: 'What it comes to' }).first();
   const text = await card.innerText();
-  /none logged/.test(text) ? ok('per night reads as none logged, not as zero or infinity') : bad('per night', text.slice(0, 200));
+  /none logged/.test(text) ? ok('the cost per nut reads as none logged, not as zero or infinity') : bad('per nut', text.slice(0, 200));
   !/NaN|Infinity/.test(text) ? ok('and no broken number appears anywhere') : bad('NaN', text.slice(0, 200));
+
+  // Nothing to divide by, so the row falls back to the spend — and labels it,
+  // rather than going back to a number that stands for nothing.
+  const row = await page.locator('.person-head').first().innerText();
+  /\$60 spent/.test(row) && !/\/nut/.test(row)
+    ? ok('and the row says what the figure is instead of implying a rate') : bad('row', row.replace(/\n/g, ' | '));
   await ctx.close();
 }
 

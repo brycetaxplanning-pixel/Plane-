@@ -99,8 +99,13 @@ export function Dating() {
                 <span className={`disclose-mark${isOpen ? ' is-open' : ''}`} aria-hidden>{Icons.chevron()}</span>
                 <span className="person-name truncate">{row.person.label}</span>
                 <span className={statusClass(row.person.status)}>{row.person.status}</span>
+                {/* What the money comes to per nut, not a bare total with
+                    nothing saying what it stands for. With nothing to divide
+                    by it falls back to the spend and says that instead. */}
                 <span className="person-sub t-num">
-                  {row.outings.length > 0 ? fmtMoney(row.spend, cur) : '—'}
+                  {row.perNight !== null
+                    ? `${fmtMoney(row.perNight, cur)}/nut`
+                    : row.outings.length > 0 ? `${fmtMoney(row.spend, cur)} spent` : '—'}
                 </span>
               </button>
 
@@ -120,7 +125,7 @@ export function Dating() {
                       caption={row.outings.length ? 'average' : 'nothing logged'}
                     />
                     <StatTile
-                      label="Per night"
+                      label="Cost per nut"
                       value={row.perNight !== null ? fmtMoney(row.perNight, cur) : '—'}
                       caption={row.nights ? `${row.nights} logged` : 'none logged'}
                     />
@@ -186,7 +191,7 @@ export function Dating() {
             caption={`${stats.totalOutings} logged`}
           />
           <StatTile
-            label="Per night together"
+            label="Cost per nut"
             value={stats.perNight !== null ? fmtMoney(stats.perNight, cur) : '—'}
             caption={stats.totalNights ? `${stats.totalNights} logged` : 'none logged'}
           />
