@@ -13,6 +13,7 @@ import { Nav } from './components/layout/Nav';
 import { Header } from './components/layout/Header';
 import { Toasts } from './components/ui/Toasts';
 import { SaveError } from './components/SaveError';
+import { UpdateBar } from './components/UpdateBar';
 import { Launcher } from './modules/Launcher';
 
 /**
@@ -179,6 +180,7 @@ function Shell() {
       </main>
 
       <SaveError />
+      <UpdateBar />
       <Toasts />
 
       {insight && (

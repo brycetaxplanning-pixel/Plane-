@@ -1,10 +1,16 @@
 /* Offline shell for Plane.
    Navigations are network-first so a deploy is picked up immediately, with the
    cached shell as the offline fallback. Static assets are cache-first because
-   Vite fingerprints their filenames. */
+   Vite fingerprints their filenames.
 
-const CACHE = 'plane-v2';
+   version.json is the exception to both: it is the one file whose entire job is
+   to say what the server has right now, so a cached answer is a wrong answer.
+   Cached once, it would report the running build forever and the app would
+   never learn that anything had shipped. */
+
+const CACHE = 'plane-v3';
 const SHELL = './index.html';
+const VERSION = 'version.json';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -26,6 +32,13 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return; // never touch API calls
+
+  // Straight to the network, cached by nobody. Offline it simply fails, which
+  // the caller reads as "cannot ask" rather than as "no update".
+  if (url.pathname.endsWith(VERSION)) {
+    event.respondWith(fetch(request, { cache: 'no-store' }).catch(() => Response.error()));
+    return;
+  }
 
   if (request.mode === 'navigate') {
     event.respondWith(
