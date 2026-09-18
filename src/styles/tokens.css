@@ -78,6 +78,8 @@
   --mod-health:    var(--series-4);
   --mod-dating:    var(--series-8);
   --mod-reminders: var(--series-6);
+  /* Shares Goals' hue — see the note beside the module list. */
+  --mod-bucket:    var(--series-7);
 
   /* Type */
   --font-ui: system-ui, -apple-system, "Segoe UI", sans-serif;

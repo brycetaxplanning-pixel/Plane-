@@ -20,6 +20,9 @@ export const XP = {
   habitDone: 6,
   habitWeekly: 14,
   goalDone: 120,
+  /* Between a goal and a session. Crossing one of these off is a day you will
+     remember, and there are only ever a few dozen of them in a life. */
+  bucketDone: 90,
   savingDeposit: 10,
   savingGoalFunded: 150,
   meal: 4,
@@ -179,6 +182,6 @@ export const MODULE_XP_LABEL: Record<ModuleId | 'general', string> = {
   work: 'Abitos', planning: 'Tax Planning', spanish: 'Spanish',
   fitness: 'Fitness', finance: 'Finances', habits: 'Habits',
   goals: 'Goals', notes: 'Notes', coach: 'Life Coach', health: 'Health', dating: 'Dating',
-  reminders: 'To Do',
+  reminders: 'To Do', bucket: 'Bucket list',
   general: 'General',
 };

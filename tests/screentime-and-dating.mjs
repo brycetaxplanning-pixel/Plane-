@@ -200,13 +200,17 @@ console.log('\n6. An older save with no dating data still loads');
   await ctx.close();
 }
 
-console.log('\n7. Twelve modules on the launcher');
+console.log('\n7. Every module has a launcher button');
 {
   const { ctx, page } = await open();
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.waitForTimeout(500);
-  const tiles = await page.locator('.mtile:not(.mtile-alt)').count();
-  tiles === 12 ? ok('every module has a button') : bad('tiles', String(tiles));
+  // Named rather than counted, so this says which one went missing.
+  const names = (await page.locator('.mtile:not(.mtile-alt) .mtile-name').allInnerTexts()).map((t) => t.trim());
+  const want = ['Abitos Tax Prep', 'Business', 'Spanish', 'Fitness', 'Finances', 'Habits', 'Goals',
+    'Notes', 'Life Coach', 'Health', 'Dating', 'To Do', 'Bucket list'];
+  const missing = want.filter((w) => !names.some((n) => n.toLowerCase() === w.toLowerCase()));
+  missing.length === 0 ? ok(`all ${want.length} modules have a button`) : bad('tiles', `missing ${missing.join(', ')}`);
   await page.locator('.mtile', { hasText: 'Dating' }).click();
   await page.waitForTimeout(500);
   /#\/dating/.test(page.url()) ? ok('and the new one opens') : bad('route', page.url());

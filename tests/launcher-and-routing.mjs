@@ -15,7 +15,11 @@ console.log('\n1. Launcher is the root and drills into a module');
 await page.goto(BASE, { waitUntil: 'networkidle' });
 const moduleTiles = await page.locator('.mtile:not(.mtile-alt)').count();
 const allTiles = await page.locator('.mtile').count();
-moduleTiles === 12 && allTiles === 15 ? ok('twelve module buttons plus Tracker, Progress and Settings') : bad('launcher tiles', `${moduleTiles} modules / ${allTiles} total`);
+// Bump both when a module is added — that is the point of them: a module
+// dropped from the launcher is reachable from nowhere.
+moduleTiles === 13 && allTiles === 16 ? ok('thirteen module buttons plus Tracker, Progress and Settings') : bad('launcher tiles', `${moduleTiles} modules / ${allTiles} total`);
+const altTiles = await page.locator('.mtile-alt').count();
+altTiles === 3 ? ok('and exactly three that are not modules') : bad('alt tiles', String(altTiles));
 await page.locator('.mtile', { hasText: 'Habits' }).click();
 await page.waitForTimeout(400);
 (await page.getByRole('heading', { name: 'Habits' }).count()) > 0 ? ok('pressing a tile opens the module') : bad('drill in', 'Habits heading not found');
@@ -38,7 +42,7 @@ const xp1 = (s.xp ?? []).reduce((n, e) => n + e.amount, 0);
 xp1 === 6 ? ok('XP awarded for the habit') : bad('habit XP', `got ${xp1}`);
 
 console.log('\n3. An amount habit only counts when it clears the target');
-await page.getByRole('button', { name: '+ Add a habit' }).click();
+await page.getByLabel('Add a daily habit').click();
 await page.getByPlaceholder('Stretch').fill('Protein');
 await page.getByRole('button', { name: 'Hit a number' }).click();
 await page.getByPlaceholder('180').fill('180');
@@ -53,7 +57,7 @@ const short = s.habits.logs.find((l) => l.amount === 120);
 short && short.met === false ? ok('120g against a 180g target is logged but not met') : bad('amount target', JSON.stringify(short));
 
 console.log('\n4. A bed-time habit treats after-midnight as the night before');
-await page.getByRole('button', { name: '+ Add a habit' }).click();
+await page.getByLabel('Add a daily habit').click();
 await page.getByPlaceholder('Stretch').fill('Bed by 11:30');
 await page.getByRole('button', { name: 'By a time' }).click();
 await page.locator('.modal-body input[type="time"]').fill('23:30');
@@ -68,9 +72,14 @@ const bed = s.habits.logs.find((l) => l.time === '00:20');
 bed && bed.met === false ? ok('00:20 misses an 11:30 target rather than passing as "early"') : bad('bedtime wrap', JSON.stringify(bed));
 
 console.log('\n5. Tone changes the wording');
-await page.getByRole('button', { name: 'Drill sergeant' }).click();
+// It lives in the settings popup now, with the rest of how the module behaves.
+await page.getByLabel('Habit settings').click();
+await page.waitForTimeout(300);
+await page.getByRole('dialog').getByRole('button', { name: 'Drill sergeant' }).click();
 await page.waitForTimeout(300);
 (await read()).habits.tone === 'drill' ? ok('tone persisted') : bad('tone', 'not saved');
+await page.getByRole('dialog').getByRole('button', { name: 'Done' }).click();
+await page.waitForTimeout(300);
 
 console.log('\n6. Goals: a purchase goal renders the three lines');
 await page.goto(BASE + '#/goals', { waitUntil: 'networkidle' });

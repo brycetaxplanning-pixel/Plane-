@@ -290,6 +290,7 @@ export const MODULE_GLYPH: Record<ModuleId, () => React.ReactNode> = {
   fitness: Icons.run, finance: Icons.wallet, habits: Icons.repeat,
   goals: Icons.flag, notes: Icons.note, coach: Icons.compass,
   health: Icons.pulse, dating: Icons.heart, reminders: Icons.checklist,
+  bucket: Icons.mountain,
 };
 
 /** A module's mark at a given size, tinted by whatever `color` is in scope. */

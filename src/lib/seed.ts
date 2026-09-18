@@ -418,6 +418,14 @@ export function sampleState(): AppState {
     });
   });
 
+  s.bucket.items = [
+    { id: uid('buck'), title: 'Kitesurfing', when: 'Next summer', createdAt: addDays(today, -120) },
+    { id: uid('buck'), title: 'Visit Asia', when: 'Before 35', notes: 'Japan first, then Vietnam. Three weeks minimum or it is not worth the flight.', createdAt: addDays(today, -200) },
+    { id: uid('buck'), title: 'Go to a UFC event', when: 'Any card in Vegas', createdAt: addDays(today, -60) },
+    { id: uid('buck'), title: 'Run a sub-1:50 half', createdAt: addDays(today, -40) },
+    { id: uid('buck'), title: 'Skydive', done: true, doneAt: addDays(today, -310), createdAt: addDays(today, -400) },
+  ];
+
   s.reminders.items = [
     { id: uid('rem'), title: 'Get a haircut', repeat: 'Every N days', everyDays: 21, lastDone: addDays(today, -27), done: false, createdAt: addDays(today, -90) },
     { id: uid('rem'), title: 'Client call with Halvorsen', repeat: 'Once', date: addDays(today, 2), time: '18:30', module: 'work', done: false, createdAt: today },

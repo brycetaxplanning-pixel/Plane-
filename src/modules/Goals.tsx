@@ -80,15 +80,20 @@ export function Goals() {
 
   return (
     <div className="stack">
+      {/* Above the grid, not under it. Opening a module to put something down
+          should not mean scrolling past everything already in it. */}
+      <div className="cardtools">
+        <span />
+        <button className="cardtool" onClick={() => setEditing('new')} aria-label="Add a goal">
+          <span aria-hidden>{Icons.plus()}</span>
+        </button>
+      </div>
+
       <div className="goal-grid">
         {stats.open.map((g) => (
           <GoalCard key={g.id} goal={g} onEdit={() => setEditing(g)} onFinish={() => finish(g)} />
         ))}
       </div>
-
-      <button className="btn btn-accent btn-lg btn-block" style={{ ['--mod' as string]: ACCENT }} onClick={() => setEditing('new')}>
-        + Add a goal
-      </button>
 
       {stats.done.length > 0 && (
         <section className="card">

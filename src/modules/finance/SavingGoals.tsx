@@ -132,6 +132,14 @@ export function SavingGoals() {
         </section>
       ) : (
         <>
+          {/* Above the list, not under it. */}
+          <div className="cardtools">
+            <span />
+            <button className="cardtool" onClick={() => setPicking(true)} aria-label="Add another saving goal">
+              <span aria-hidden>{Icons.plus()}</span>
+            </button>
+          </div>
+
           {rows.map((row) => (
             <GoalCard
               key={row.goal.id}
@@ -141,7 +149,6 @@ export function SavingGoals() {
               onAnswer={() => setAsking(row.goal)}
             />
           ))}
-          <button className="btn btn-block" onClick={() => setPicking(true)}>+ Another saving goal</button>
         </>
       )}
 

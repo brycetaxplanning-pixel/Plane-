@@ -8,6 +8,7 @@ import { goalRows } from '../lib/budgetGoals';
 import { healthSummary } from '../lib/health';
 import { datingStats } from '../lib/dating';
 import { weekPlan } from '../lib/fitplan';
+import { bucketStats } from '../lib/bucket';
 
 export interface ModuleSummary {
   id: ModuleId;
@@ -278,6 +279,7 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
   const hl = healthSummary(s);
   const dat = datingStats(s);
   const rem = reminderStats(s);
+  const buck = bucketStats(s);
 
   return {
     work: {
@@ -417,6 +419,20 @@ export function moduleSummaries(s: AppState): Record<ModuleId, ModuleSummary> {
             : rem.doneThisWeek > 0
               ? `${rem.doneThisWeek} done this week`
               : undefined,
+    },
+    bucket: {
+      id: 'bucket',
+      // Share of the list crossed off, and nothing about a week: a bucket list
+      // has no weekly quota and never will. An empty list reads as nothing
+      // done rather than as finished, for the reason the to-do list does.
+      progress: buck.progress,
+      headline: `${buck.done.length}/${buck.done.length + buck.open.length}`,
+      caption: 'crossed off',
+      nudge: buck.open.length === 0 && buck.done.length === 0
+        ? 'Nothing on the list yet'
+        : buck.open.length > 0
+          ? `${buck.open.length} still to do`
+          : 'Every one of them done',
     },
   };
 }

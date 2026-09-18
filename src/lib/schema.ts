@@ -6,7 +6,7 @@ export const SCHEMA_VERSION = 1;
 
 export type ModuleId =
   | 'work' | 'planning' | 'spanish' | 'fitness' | 'finance'
-  | 'habits' | 'goals' | 'notes' | 'coach' | 'health' | 'dating' | 'reminders';
+  | 'habits' | 'goals' | 'notes' | 'coach' | 'health' | 'dating' | 'reminders' | 'bucket';
 
 /* ------------------------------------------------------------------ */
 /* Module 1 — Abitos Tax Prep (day job)                               */
@@ -613,6 +613,31 @@ export interface Reminder {
   createdAt: DateKey;
 }
 
+/* ------------------------------------------------------------------ */
+/* Module 13 — Bucket list                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Something you want to have done before you are done.
+ *
+ * Shaped like a to-do on purpose — a title and, behind one press, whatever
+ * detail you want to put on it — because that is what it is. What it is not is
+ * a goal with a plan and a target: a goal is something you are working at this
+ * quarter, and this is a list you are meant to raid.
+ */
+export interface BucketItem {
+  id: string;
+  title: string;
+  /** Anything worth keeping with it: where, who with, what it would cost. */
+  notes?: string;
+  /** Roughly when, if there is a when. Free text — "next winter", "before 40". */
+  when?: string;
+  /** Ticked off, and the day it happened. */
+  done?: boolean;
+  doneAt?: DateKey;
+  createdAt: DateKey;
+}
+
 /** Anything the app wants to tell you about, whether or not you were looking.
  *  Sources are the modules themselves — a habit going red, a project past due,
  *  a finding in the log. External sources (a saved search for a car, say) will
@@ -831,6 +856,7 @@ export interface AppState {
     dayStartHour: number;
   };
   notes: { items: Note[] };
+  bucket: { items: BucketItem[] };
   /** Week-start keys for weeks where every habit was met, and the ones
    *  already celebrated so the popup only fires once. */
   awards: { enlightened: DateKey[]; acknowledged: DateKey[] };
@@ -927,6 +953,16 @@ export function emptyState(): AppState {
     dating: { people: [], outings: [] },
     habits: { items: [], logs: [], tone: 'direct', dayStartHour: 4 },
     notes: { items: [] },
+    /* Three to start, rather than an empty page telling you to think of
+       something. Emptying the list keeps it empty — migrate only fills in a
+       slice that is missing entirely, not one you have cleared. */
+    bucket: {
+      items: [
+        { id: 'buck_kite', title: 'Kitesurfing', createdAt: '2026-09-18' },
+        { id: 'buck_asia', title: 'Visit Asia', createdAt: '2026-09-18' },
+        { id: 'buck_ufc', title: 'Go to a UFC event', createdAt: '2026-09-18' },
+      ],
+    },
     awards: { enlightened: [], acknowledged: [] },
     goals: { items: [] },
     coach: { checkIns: [], chat: [], mode: 'coach' },
@@ -1014,6 +1050,7 @@ export function migrate(raw: unknown): AppState {
       dayStartHour: s.habits?.dayStartHour ?? base.habits.dayStartHour,
     },
     notes: { items: s.notes?.items ?? [] },
+    bucket: { items: s.bucket?.items ?? base.bucket.items },
     awards: {
       enlightened: s.awards?.enlightened ?? [],
       acknowledged: s.awards?.acknowledged ?? [],
@@ -1167,4 +1204,8 @@ export const MODULES: { id: ModuleId; num: number; name: string; blurb: string; 
   // XP ledger, stored notifications) for a word nobody sees, which is the same
   // trade this codebase already took when `emoji` became `icon`.
   { id: 'reminders', num: 12, name: 'To Do',          blurb: 'Everything you owe yourself, from every module', color: 'var(--mod-reminders)' },
+  // Shares the Goals hue, for the reason Health shares Fitness's: eight
+  // categorical slots, and these two are the same shape of wanting. Goals are
+  // what you are working at; this is the list you raid.
+  { id: 'bucket',   num: 13, name: 'Bucket list',    blurb: 'The things you would regret never doing', color: 'var(--mod-bucket)' },
 ];

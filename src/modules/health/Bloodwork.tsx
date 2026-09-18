@@ -96,11 +96,18 @@ export function Bloodwork() {
             </section>
           )}
 
+          {/* Above the panels rather than under them: the list only grows, and
+              the button to add to it should not keep moving further away. */}
+          <div className="cardtools">
+            <span />
+            <button className="cardtool" onClick={() => setEditing('new')} aria-label="Add a panel">
+              <span aria-hidden>{Icons.plus()}</span>
+            </button>
+          </div>
+
           {panels.map((p) => (
             <PanelCard key={p.id} panel={p} onEdit={() => setEditing(p)} onTrend={setTrend} />
           ))}
-
-          <button className="btn btn-block" onClick={() => setEditing('new')}>+ Add a panel</button>
         </>
       )}
 
