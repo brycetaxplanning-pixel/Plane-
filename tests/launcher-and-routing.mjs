@@ -83,7 +83,11 @@ await page.waitForTimeout(300);
 
 console.log('\n6. Goals: a purchase goal renders the three lines');
 await page.goto(BASE + '#/goals', { waitUntil: 'networkidle' });
-await page.getByRole('button', { name: '+ Add your first goal' }).click();
+await page.waitForTimeout(400);
+await page.getByLabel('Add a goal').click();
+await page.waitForTimeout(300);
+// The form opens on Custom, so a purchase says so before it is asked about money.
+await page.getByRole('dialog').getByRole('button', { name: 'Purchase', exact: true }).click();
 await page.getByPlaceholder('Own a used Tesla').fill('Own a used Tesla');
 await page.getByPlaceholder('24000').first().fill('24000');
 await page.getByPlaceholder('400', { exact: true }).fill('400');
@@ -92,7 +96,9 @@ await page.getByPlaceholder('6500').fill('6500');
 await page.getByPlaceholder('24000').nth(1).fill('24000');
 await page.getByRole('button', { name: 'Save' }).click();
 await page.waitForTimeout(500);
-const card = await page.locator('.goal').first().innerText();
+// Addressed by name: the list is no longer guaranteed to start empty.
+const tesla = page.locator('.goal').filter({ hasText: 'Own a used Tesla' });
+const card = await tesla.innerText();
 /Own a used Tesla/.test(card) ? ok('title on the card') : bad('title', card.slice(0, 80));
 /\$24,000 cash/.test(card) && /\$400\/mo/.test(card) ? ok('cost line shows cash and monthly') : bad('cost line', card.replace(/\n/g, ' | '));
 /Make \$400 more a month/.test(card) ? ok('plan line shows how to get there') : bad('plan line', card.replace(/\n/g, ' | '));
@@ -100,10 +106,10 @@ const card = await page.locator('.goal').first().innerText();
 
 console.log('\n7. Finishing a goal awards XP and moves it to Done');
 const before = (await read()).xp.reduce((n, e) => n + e.amount, 0);
-await page.locator('.goal').first().getByRole('button', { name: 'Done' }).click();
+await tesla.getByRole('button', { name: 'Done', exact: true }).click();
 await page.waitForTimeout(500);
 s = await read();
-s.goals.items[0].done ? ok('goal marked done') : bad('goal done', 'still open');
+s.goals.items.find((g) => g.title === 'Own a used Tesla')?.done ? ok('goal marked done') : bad('goal done', 'still open');
 s.xp.reduce((n, e) => n + e.amount, 0) - before === 120 ? ok('120 XP for finishing a goal') : bad('goal XP', `${s.xp.reduce((n, e) => n + e.amount, 0) - before}`);
 
 console.log('\n8. Legacy save with goals under coach still loads');
@@ -116,7 +122,8 @@ await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(500);
 (await page.getByText('Old goal').count()) > 0 ? ok('a goal saved under the old shape is lifted into the new module') : bad('migration', 'goal lost');
 const migrated = await read();
-migrated.goals.items[0]?.plan === 'do the thing' ? ok('its target text becomes the plan line') : bad('migration field', JSON.stringify(migrated.goals.items[0]));
+migrated.goals.items.find((g) => g.id === 'g1')?.plan === 'do the thing'
+  ? ok('its target text becomes the plan line') : bad('migration field', JSON.stringify(migrated.goals.items));
 
 await browser.close();
 console.log(problems.length ? `\n${problems.length} PROBLEM(S):\n` + problems.join('\n') : '\nAll checks passed.');

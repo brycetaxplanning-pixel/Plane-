@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { GOAL_KINDS, MODULES, type Goal, type GoalKind, type ModuleId } from '../lib/schema';
+import { MODULES, type Goal, type GoalKind, type ModuleId } from '../lib/schema';
 import { XP } from '../lib/gamification';
-import { DEFAULT_UNIT, goalLines, goalProgress, goalProgressLabel, kindFields, resizeImage } from '../lib/goals';
+import { DEFAULT_UNIT, KIND_SHAPE, goalLines, goalProgress, goalProgressLabel, resizeImage } from '../lib/goals';
 import { todayKey } from '../lib/date';
 import { uid } from '../lib/id';
 import { deleteImage, getImage, putImage } from '../lib/images';
@@ -15,11 +15,16 @@ import { MarkPicker } from '../components/ui/MarkPicker';
 const ACCENT = 'var(--mod-goals)';
 
 const KIND_HINT: Record<GoalKind, string> = {
+  Custom: 'Anything you want to count toward. Pick another only if it is really about money or a training block.',
   Purchase: 'Something you buy once — a car, a watch, a trip.',
   'Recurring cost': 'Something with a monthly price — an apartment, a gym, a lease.',
   Training: 'Something you train for over a number of weeks.',
-  Custom: 'Anything else you want to count toward.',
 };
+
+/* Custom first, and first is the default. Most things worth wanting are not a
+   car, and opening on Purchase meant every goal started by being asked what it
+   cost. */
+const KIND_ORDER: GoalKind[] = ['Custom', 'Purchase', 'Recurring cost', 'Training'];
 
 export function Goals() {
   const { state, update, reward, toast } = useApp();
@@ -46,6 +51,7 @@ export function Goals() {
     update((s) => ({
       ...s,
       goals: {
+        ...s.goals,
         items: s.goals.items.some((g) => g.id === next.id)
           ? s.goals.items.map((g) => (g.id === next.id ? next : g))
           : [...s.goals.items, next],
@@ -58,7 +64,7 @@ export function Goals() {
   const finish = (goal: Goal) => {
     reward('goals', XP.goalDone, `Goal reached: ${goal.title}`, (s) => ({
       ...s,
-      goals: { items: s.goals.items.map((g) => (g.id === goal.id ? { ...g, done: true } : g)) },
+      goals: { ...s.goals, items: s.goals.items.map((g) => (g.id === goal.id ? { ...g, done: true } : g)) },
     }));
   };
 
@@ -105,7 +111,7 @@ export function Goals() {
                 <span className="rowitem-title grow t-sm">{g.title}</span>
                 <button
                   className="link-btn"
-                  onClick={() => update((s) => ({ ...s, goals: { items: s.goals.items.map((x) => (x.id === g.id ? { ...x, done: false } : x)) } }))}
+                  onClick={() => update((s) => ({ ...s, goals: { ...s.goals, items: s.goals.items.map((x) => (x.id === g.id ? { ...x, done: false } : x)) } }))}
                 >
                   Reopen
                 </button>
@@ -123,7 +129,7 @@ export function Goals() {
             const gone = editing as Goal;
             // The photo goes with it; nothing else refers to it.
             if (gone.imageId) void deleteImage(gone.imageId);
-            update((s) => ({ ...s, goals: { items: s.goals.items.filter((g) => g.id !== gone.id) } }));
+            update((s) => ({ ...s, goals: { ...s.goals, items: s.goals.items.filter((g) => g.id !== gone.id) } }));
             setEditing(null);
             toast('Goal removed');
           }}
@@ -189,6 +195,12 @@ function GoalCard({ goal, onEdit, onFinish }: { goal: Goal; onEdit: () => void; 
             {lines.plan}
           </p>
         )}
+        {lines.notes && (
+          <p className="goal-line goal-notes">
+            <span className="goal-key">Notes</span>
+            {lines.notes}
+          </p>
+        )}
 
         {progress !== null && (
           <div className="goal-progress">
@@ -221,7 +233,7 @@ function GoalForm({
   onDelete?: () => void;
 }) {
   const [title, setTitle] = useState(goal?.title ?? '');
-  const [kind, setKind] = useState<GoalKind>(goal?.kind ?? 'Purchase');
+  const [kind, setKind] = useState<GoalKind>(goal?.kind ?? 'Custom');
   const [icon, setIcon] = useState<IconName | undefined>(goal?.icon);
   // Seeded from the store when the goal already has a photo. It is handed back
   // inline on save and moved out again by the caller.
@@ -238,14 +250,15 @@ function GoalForm({
   const [weeks, setWeeks] = useState(String(goal?.weeks ?? ''));
   const [current, setCurrent] = useState(String(goal?.current ?? ''));
   const [target, setTarget] = useState(String(goal?.target ?? ''));
-  const [unit, setUnit] = useState(goal?.unit ?? DEFAULT_UNIT[goal?.kind ?? 'Purchase']);
+  const [unit, setUnit] = useState(goal?.unit ?? DEFAULT_UNIT[goal?.kind ?? 'Custom']);
+  const [notes, setNotes] = useState(goal?.notes ?? '');
   const [plan, setPlan] = useState(goal?.plan ?? '');
   const [module, setModule] = useState<ModuleId | ''>(goal?.module ?? '');
   const [due, setDue] = useState(goal?.due ?? '');
   const [imgError, setImgError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const fields = kindFields(kind);
+  const shape = KIND_SHAPE[kind];
 
   const pickKind = (k: GoalKind) => {
     setKind(k);
@@ -271,14 +284,15 @@ function GoalForm({
               icon,
               image,
               imageId: image ? goal?.imageId : undefined,
-              cost: fields.cost && cost ? Number(cost) : undefined,
-              monthly: fields.monthly && monthly ? Number(monthly) : undefined,
-              costNote: costNote.trim() || undefined,
-              weeks: fields.weeks && weeks ? Number(weeks) : undefined,
+              cost: shape.cost && cost ? Number(cost) : undefined,
+              monthly: shape.monthly && monthly ? Number(monthly) : undefined,
+              costNote: shape.costNote ? costNote.trim() || undefined : undefined,
+              weeks: shape.weeks && weeks ? Number(weeks) : undefined,
               current: current ? Number(current) : undefined,
               target: target ? Number(target) : undefined,
               unit: unit.trim() || undefined,
               plan: plan.trim() || undefined,
+              notes: notes.trim() || undefined,
               module: module || undefined,
               due: due || undefined,
               done: goal?.done ?? false,
@@ -292,12 +306,12 @@ function GoalForm({
     >
       <div className="stack-3">
         <Field label="What is the goal">
-          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Own a used Tesla" autoFocus />
+          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={shape.title} autoFocus />
         </Field>
 
         <Field label="Kind" hint={KIND_HINT[kind]}>
           <div className="row-2 wrap">
-            {GOAL_KINDS.map((k) => (
+            {KIND_ORDER.map((k) => (
               <button key={k} type="button" className="chip" aria-pressed={kind === k} onClick={() => pickKind(k)}>{k}</button>
             ))}
           </div>
@@ -327,42 +341,62 @@ function GoalForm({
 
         {!image && <MarkPicker value={icon} onChange={setIcon} label="Or pick a mark" />}
 
-        {(fields.cost || fields.monthly) && (
+        {(shape.cost || shape.monthly) && (
           <div className="grid grid-2" style={{ gap: 'var(--sp-3)' }}>
-            {fields.cost && (
-              <Field label={kind === 'Recurring cost' ? 'Up front' : 'Cash price'}>
-                <input className="input" type="number" min={0} value={cost} onChange={(e) => setCost(e.target.value)} placeholder="24000" />
+            {shape.cost && (
+              <Field label={shape.costLabel}>
+                <input className="input" type="number" min={0} value={cost} onChange={(e) => setCost(e.target.value)} placeholder={shape.costHint} />
               </Field>
             )}
-            {fields.monthly && (
-              <Field label="Per month">
-                <input className="input" type="number" min={0} value={monthly} onChange={(e) => setMonthly(e.target.value)} placeholder="400" />
+            {shape.monthly && (
+              <Field label={shape.monthlyLabel}>
+                <input className="input" type="number" min={0} value={monthly} onChange={(e) => setMonthly(e.target.value)} placeholder={shape.monthlyHint} />
               </Field>
             )}
           </div>
         )}
 
-        {fields.weeks && (
+        {shape.weeks && (
           <Field label="Training window (weeks)">
             <input className="input" type="number" min={1} value={weeks} onChange={(e) => setWeeks(e.target.value)} placeholder="9" />
           </Field>
         )}
 
-        <Field label="Anything else about the cost">
-          <input className="input" value={costNote} onChange={(e) => setCostNote(e.target.value)} placeholder="or ~$3k down on a lease" />
-        </Field>
-
-        <Field label="How you get there" hint="The one line that says what has to change.">
-          <input className="input" value={plan} onChange={(e) => setPlan(e.target.value)} placeholder="Make $400 more a month" />
-        </Field>
-
-        {fields.progress && (
-          <div className="grid grid-3 tight-mobile" style={{ gap: 'var(--sp-3)' }}>
-            <Field label="So far"><input className="input" type="number" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder="6500" /></Field>
-            <Field label="Out of"><input className="input" type="number" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="24000" /></Field>
-            <Field label="Unit"><input className="input" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="$" /></Field>
-          </div>
+        {/* Only where there is a cost to say anything else about. It used to
+            show on every kind, so a goal about posting on Instagram asked what
+            else there was to know about its price. */}
+        {shape.costNote && (
+          <Field label="Anything else about the cost">
+            <input className="input" value={costNote} onChange={(e) => setCostNote(e.target.value)} placeholder="or ~$3k down on a lease" />
+          </Field>
         )}
+
+        <Field label={shape.planLabel} hint="The one line that says what has to change.">
+          <input className="input" value={plan} onChange={(e) => setPlan(e.target.value)} placeholder={shape.planHint} />
+        </Field>
+
+        {shape.progress && (
+          <Field label={shape.progressLabel} hint="Optional. Fill these in and the card grows a bar.">
+            <div className="grid grid-3 tight-mobile" style={{ gap: 'var(--sp-3)' }}>
+              <Field label="So far"><input className="input" type="number" value={current} onChange={(e) => setCurrent(e.target.value)} placeholder={shape.currentHint} /></Field>
+              <Field label="Out of"><input className="input" type="number" value={target} onChange={(e) => setTarget(e.target.value)} placeholder={shape.targetHint} /></Field>
+              <Field label="Unit"><input className="input" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder={shape.unitHint} /></Field>
+            </div>
+          </Field>
+        )}
+
+        {/* The field the record always had and the form never asked for. It is
+            where everything that is not a number goes — the ideas, the reasons,
+            the things you want in front of you when you open this again. */}
+        <Field label="Notes" hint="Anything you want to remember with it.">
+          <textarea
+            className="input"
+            rows={4}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Content ideas, who to talk to, what worked last time"
+          />
+        </Field>
 
         <div className="grid grid-2" style={{ gap: 'var(--sp-3)' }}>
           <Field label="Module">

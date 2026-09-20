@@ -1312,6 +1312,15 @@
 .updatebar-close svg { width: 15px; height: 15px; }
 .updatebar-close:hover { color: var(--text-primary); background: var(--surface-2); }
 
+/* Notes on a goal card are read, not scanned, so they get more than one line —
+   and a ceiling, so one long note cannot make a card twice the height of the
+   one beside it. */
+.goal-notes {
+  white-space: pre-line;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+
 /* ---------- panels, cut from the same stock ---------- */
 
 /* The hairline is what makes a panel read as a surface laid on the page

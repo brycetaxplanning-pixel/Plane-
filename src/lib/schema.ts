@@ -860,7 +860,15 @@ export interface AppState {
   /** Week-start keys for weeks where every habit was met, and the ones
    *  already celebrated so the popup only fires once. */
   awards: { enlightened: DateKey[]; acknowledged: DateKey[] };
-  goals: { items: Goal[] };
+  goals: {
+    items: Goal[];
+    /**
+     * Goals the app has put on the list once, by id, so it never puts one back
+     * after it has been deleted. Offering a starting goal to somebody who
+     * already has goals needs a memory of having offered it.
+     */
+    offered?: string[];
+  };
   coach: { checkIns: CheckIn[]; chat: ChatMessage[]; mode: CoachMode };
   /** Which findings have been shown or waved away, so the app does not keep
    *  raising the same one. */
@@ -964,7 +972,10 @@ export function emptyState(): AppState {
       ],
     },
     awards: { enlightened: [], acknowledged: [] },
-    goals: { items: [] },
+    // A fresh install never goes through migrate, so the starters are put in
+    // here as well — otherwise the only person who gets them is somebody who
+    // already had a saved state.
+    goals: { items: [...STARTER_GOALS], offered: STARTER_GOALS.map((g) => g.id) },
     coach: { checkIns: [], chat: [], mode: 'coach' },
     insights: { dismissed: [], lastPopup: null, enabled: true },
     notifications: { items: [], deviceAlerts: false },
@@ -1057,7 +1068,7 @@ export function migrate(raw: unknown): AppState {
     },
     // Goals used to live inside the coach slice; lift any legacy ones out so
     // an older save keeps them.
-    goals: { items: s.goals?.items ?? liftLegacyGoals(raw) },
+    goals: offerStarterGoals(s.goals, liftLegacyGoals(raw)),
     coach: {
       ...base.coach,
       ...(s.coach ?? {}),
@@ -1117,6 +1128,37 @@ function migratePlanning(saved: AppState['planning'] | undefined, base: AppState
     deals: deals.map((d) => ({ ...d, businessId: d.businessId ?? first.id })),
     ideas: saved?.ideas ?? [],
   };
+}
+
+/**
+ * The goals the app puts on the list itself, once each.
+ *
+ * Asked for by name, so they exist rather than being a prompt to write them.
+ * Offered exactly once: the id goes in `offered` at the same time the goal goes
+ * in `items`, so deleting one is final and a reload does not hand it back.
+ */
+const STARTER_GOALS: Goal[] = [
+  {
+    id: 'goal_instagram',
+    kind: 'Custom',
+    title: 'Gain traction on Instagram',
+    icon: 'chat',
+    plan: 'Post consistently and keep to one subject',
+    notes: 'Content ideas:\n',
+    done: false,
+    createdAt: '2026-09-20',
+  },
+];
+
+function offerStarterGoals(
+  saved: AppState['goals'] | undefined,
+  legacy: Goal[],
+): AppState['goals'] {
+  const items = saved?.items ?? legacy;
+  const offered = saved?.offered ?? [];
+  const fresh = STARTER_GOALS.filter((g) => !offered.includes(g.id) && !items.some((x) => x.id === g.id));
+  if (fresh.length === 0) return { items, offered };
+  return { items: [...items, ...fresh], offered: [...offered, ...fresh.map((g) => g.id)] };
 }
 
 /** Legacy saves kept goals under `coach.goals` with a much thinner shape. */
