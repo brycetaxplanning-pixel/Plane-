@@ -110,7 +110,11 @@ console.log('\n4. Erase and re-import brings the photo back');
   }));
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForTimeout(600);
-  (await read(page)).goals?.items?.length ? bad('erase', 'data survived the wipe') : ok('everything is wiped');
+  // The module seeds one starter goal on a fresh install, so an empty list is
+  // no longer what a wipe looks like. What must be gone is what was there.
+  const left = (await read(page)).goals?.items ?? [];
+  left.some((g) => g.title === 'Used Tesla')
+    ? bad('erase', 'data survived the wipe') : ok('everything that was there is wiped');
 
   await page.goto(BASE + '#/settings', { waitUntil: 'networkidle' });
   await page.locator('input[type=file][accept*="json"]').setInputFiles(path);
@@ -159,7 +163,9 @@ console.log('\n6. Removing the photo, and deleting the goal, clean up after them
   let imgs = await images(page);
   const before = imgs.length;
 
-  await page.locator('.goal-cover').first().click();
+  // By name, not by position: the list carries a starter goal now and the
+  // first card is not necessarily the one with the photo on it.
+  await page.locator('.goal', { hasText: 'Used Tesla' }).locator('.goal-cover').click();
   let form = page.getByRole('dialog');
   await form.getByRole('button', { name: 'Remove' }).click();
   await form.getByRole('button', { name: /^Save/ }).click();
@@ -167,7 +173,8 @@ console.log('\n6. Removing the photo, and deleting the goal, clean up after them
   imgs = await images(page);
   imgs.length === before - 1 ? ok('removing the photo deletes it from the store') : bad('remove', `${imgs.length} left`);
   const st = await read(page);
-  !st.goals.items[0].imageId ? ok('and the reference goes with it') : bad('ref', 'still referenced');
+  !st.goals.items.find((g) => g.title === 'Used Tesla')?.imageId
+    ? ok('and the reference goes with it') : bad('ref', 'still referenced');
 
   await addGoalWithPhoto(page, 'Another one');
   await page.locator('.goal', { hasText: 'Another one' }).locator('.goal-cover').click();

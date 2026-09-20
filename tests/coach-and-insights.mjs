@@ -223,8 +223,19 @@ console.log('\n5. Screen time as a ceiling habit');
   const body = await sink.innerText();
   /over your own 3h-a-day cap/.test(body)
     ? ok('a heavy logged day reads as over, not under') : bad('overage', body.replace(/\n/g, ' | ').slice(0, 200));
-  /the week lands around/.test(body)
-    ? ok('it projects the week from the days actually logged') : bad('projection', body.replace(/\n/g, ' | ').slice(0, 200));
+  // Read off the card rather than assumed: the projection exists to finish an
+  // unfinished week, so on a Sunday there is nothing left to project and the
+  // line is correctly absent. Asserting it unconditionally passed six days a
+  // week and failed on the seventh — the fourth test in here to rot on what
+  // day it happened to run.
+  const logged = Number(/across (\d+) day/.exec(body)?.[1] ?? 0);
+  const projects = /the week lands around/.test(body);
+  logged > 0 ? ok(`the week has ${logged} day${logged === 1 ? '' : 's'} logged`) : bad('setup', body.slice(0, 160));
+  projects === logged < 7
+    ? ok(logged < 7
+      ? 'it projects the rest of the week from the days actually logged'
+      : 'and says nothing about a week that is already complete')
+    : bad('projection', `${logged} days logged, projection ${projects ? 'shown' : 'missing'}`);
   /no public API for Screen Time/.test(body) ? ok('it is honest that the number is typed in') : bad('honesty', 'missing');
   await ctx.close();
 }
