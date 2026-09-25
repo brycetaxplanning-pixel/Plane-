@@ -5,6 +5,7 @@ import { useApp } from './state/context';
 import { MODULES } from './lib/schema';
 import { todayKey } from './lib/date';
 import { resolveSkin } from './lib/themes';
+import { trackKeyboard } from './lib/keyboard';
 import { pendingAward } from './lib/awards';
 import { popupInsight } from './lib/insights';
 import { InsightPopup } from './components/InsightPopup';
@@ -71,6 +72,10 @@ function Shell() {
     if (skin === 'classic') root.removeAttribute('data-skin');
     else root.setAttribute('data-skin', skin);
   }, [state.settings]);
+
+  // Published for as long as the app is up, so anything that has to sit clear
+  // of the on-screen keyboard can read it without each screen arranging it.
+  useEffect(trackKeyboard, []);
 
   const depth = depthOf(route);
   const direction = depth >= prevDepth.current ? 'view-in' : 'view-out';
