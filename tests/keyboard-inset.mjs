@@ -48,22 +48,36 @@ async function open({ ios = true } = {}) {
 
 const geo = (page) => page.evaluate(() => {
   const m = document.querySelector('.modal')?.getBoundingClientRect();
+  const b = document.querySelector('.modal-backdrop')?.getBoundingClientRect();
   const i = document.querySelector('.askline-input')?.getBoundingClientRect();
+  const round = (r) => (r ? { top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right) } : null);
   return {
     kb: getComputedStyle(document.documentElement).getPropertyValue('--kb').trim(),
-    modalBottom: m ? Math.round(m.bottom) : null,
-    modalTop: m ? Math.round(m.top) : null,
+    modal: round(m),
+    // The backdrop is what the keyboard fix actually moves; the box floats
+    // inside it by a gutter, so the two are checked separately.
+    backdrop: round(b),
+    radius: m ? getComputedStyle(document.querySelector('.modal')).borderBottomLeftRadius : null,
     inputBottom: i ? Math.round(i.bottom) : null,
     page: window.innerHeight,
+    width: window.innerWidth,
   };
 });
 
-console.log('\n1. With no keyboard the sheet sits on the bottom of the screen');
+console.log('\n1. With no keyboard it is a box floating near the bottom');
 {
   const { ctx, page } = await open();
   const g = await geo(page);
   g.kb === '0px' ? ok('nothing is claimed') : bad('kb', g.kb);
-  Math.abs(g.modalBottom - g.page) <= 1 ? ok('and the sheet reaches the bottom') : bad('sheet', JSON.stringify(g));
+  Math.abs(g.backdrop.bottom - g.page) <= 1 ? ok('the backdrop covers the page') : bad('backdrop', JSON.stringify(g));
+
+  // A box on the page, not a sheet welded to the edge of it.
+  const gap = g.backdrop.bottom - g.modal.bottom;
+  gap >= 8 && gap <= 40 ? ok(`it stands ${gap}px clear of the bottom`) : bad('gutter', `${gap}px`);
+  g.modal.left >= 8 && g.width - g.modal.right >= 8
+    ? ok('and clear of both sides') : bad('sides', JSON.stringify(g));
+  parseFloat(g.radius) > 0
+    ? ok('rounded on the bottom corners too, not cut off by the frame') : bad('radius', g.radius);
   await ctx.close();
 }
 
@@ -75,13 +89,16 @@ console.log('\n2. The keyboard opening lifts the sheet clear of it');
   const g = await geo(page);
 
   g.kb === `${KB}px` ? ok('the covered strip is measured') : bad('kb', g.kb);
-  // This is the bug: the sheet used to stay at the bottom of the layout
-  // viewport, which iOS does not shrink, so it sat underneath the keyboard.
-  Math.abs(g.modalBottom - (g.page - KB)) <= 1
-    ? ok('the sheet now ends where the keyboard starts') : bad('sheet', JSON.stringify(g));
+  // This is the bug: the backdrop used to keep the full height of the layout
+  // viewport, which iOS does not shrink, so the box sat underneath the
+  // keyboard.
+  Math.abs(g.backdrop.bottom - (g.page - KB)) <= 1
+    ? ok('the backdrop now ends where the keyboard starts') : bad('backdrop', JSON.stringify(g));
+  g.modal.bottom <= g.page - KB
+    ? ok('and the box is above it') : bad('box', JSON.stringify(g));
   g.inputBottom <= g.page - KB
-    ? ok('and the field you are typing into is on screen') : bad('field', JSON.stringify(g));
-  g.modalTop >= 0 ? ok('without being pushed off the top') : bad('top', JSON.stringify(g));
+    ? ok('with the field you are typing into on screen') : bad('field', JSON.stringify(g));
+  g.modal.top >= 0 ? ok('and nothing pushed off the top') : bad('top', JSON.stringify(g));
 
   // Both buttons have to stay reachable, or Save is behind the keyboard.
   const save = await page.getByRole('button', { name: 'Save' }).boundingBox();
@@ -98,7 +115,7 @@ console.log('\n3. Putting it away puts the sheet back');
   await page.evaluate(() => window.__keyboard(0));
   await page.waitForTimeout(400);
   const g = await geo(page);
-  g.kb === '0px' && Math.abs(g.modalBottom - g.page) <= 1
+  g.kb === '0px' && Math.abs(g.backdrop.bottom - g.page) <= 1
     ? ok('back to the bottom of the screen') : bad('restore', JSON.stringify(g));
   await ctx.close();
 }
@@ -120,7 +137,7 @@ console.log('\n5. A browser with no visual viewport is left alone');
   const { ctx, page } = await open({ ios: false });
   const g = await geo(page);
   g.kb === '0px' ? ok('nothing is claimed') : bad('kb', g.kb);
-  Math.abs(g.modalBottom - g.page) <= 1 ? ok('and the sheet is where it always was') : bad('sheet', JSON.stringify(g));
+  Math.abs(g.backdrop.bottom - g.page) <= 1 ? ok('and the backdrop is where it always was') : bad('backdrop', JSON.stringify(g));
   await ctx.close();
 }
 
